@@ -13,6 +13,7 @@ from devices import (
     DISTANCE_THRESHOLD_M,
 )
 
+# https://github.com/hbldh/bleak
 # pip install bleak
 
 # Global buffer to store recent RSSI values for our single target device
