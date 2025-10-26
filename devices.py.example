@@ -1,0 +1,26 @@
+# --- Configuration Constants ---
+# This should be the real, non-randomized MAC address.
+TARGET_DEVICES = [
+    {
+        "mac": "XX:XX:XX:XX:XX:XX",
+        "uuid": "XXXXXXXX-XXXX-XXXX-XXXX-XXXXXXXXXXXX",
+        "name": "XXXX's iPhone",
+        "device_type": "iPhone",
+        "tx_power": -59,
+    },
+    {
+        "mac": "YY:YY:YY:YY:YY:YY",
+        "uuid": "YYYYYYYY-YYYY-YYYY-YYYY-YYYYYYYYYYYY",
+        "name": "YYYY's Apple Watch",
+        "device_type": "Apple Watch",
+        "tx_power": -59,
+    }
+]
+
+# Path-loss exponent. Varies depending on the environment.
+PATH_LOSS_EXPONENT = 2.8
+# The number of recent RSSI samples to average for smoothing.
+SAMPLE_WINDOW = 25
+# The distance in meters beyond which an alert will be triggered.
+DISTANCE_THRESHOLD_M = 2.0
+# -----------------------------
