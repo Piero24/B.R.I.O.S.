@@ -187,10 +187,28 @@ async def run_monitor_mode(
             )
 
         if distance_m > DISTANCE_THRESHOLD_M and not alert_triggered:
+            # Lock the MacBook when device is too far - requires password to unlock
+            try:
+                # First, ensure password is required immediately after sleep
+                subprocess.run([
+                    'defaults', 'write', 'com.apple.screensaver', 
+                    'askForPassword', '-int', '1'
+                ], check=True, capture_output=True)
+                subprocess.run([
+                    'defaults', 'write', 'com.apple.screensaver', 
+                    'askForPasswordDelay', '-int', '0'
+                ], check=True, capture_output=True)
+                
+                # Now lock the screen by putting display to sleep
+                subprocess.run(['pmset', 'displaysleepnow'], check=True, capture_output=True)
+                lock_status = "🔒 MacBook locked (password required)"
+            except Exception as e:
+                lock_status = f"⚠️  Failed to lock MacBook: {e}"
+            
             if daemon_mode:
                 print(
                     f"⚠️  ALERT: Device '{TARGET_DEVICE_NAME}' is far away! "
-                    f"(~{distance_m:.2f} m)"
+                    f"(~{distance_m:.2f} m) - {lock_status}"
                 )
             else:
                 print(
@@ -199,6 +217,7 @@ async def run_monitor_mode(
                     f"   Device:    {TARGET_DEVICE_NAME}\n"
                     f"   Distance:  ~{distance_m:.2f}m (threshold: {DISTANCE_THRESHOLD_M}m)\n"
                     f"   Time:      {timestamp}\n"
+                    f"   Action:    {lock_status}\n"
                     f"{Colors.RED}{'─' * 50}{Colors.RESET}\n"
                 )
             alert_triggered = True
@@ -214,8 +233,9 @@ async def run_monitor_mode(
                     f"\n{Colors.GREEN}{'─' * 50}{Colors.RESET}\n"
                     f"{Colors.GREEN}✓{Colors.RESET}  {Colors.BOLD}Device back in range{Colors.RESET}\n"
                     f"   Device:    {TARGET_DEVICE_NAME}\n"
-                    f"   Distance:  ~{distance_m:.2f}m\n"
+                    f"   Distance:  ~{distance_m:.2f}m (threshold: {DISTANCE_THRESHOLD_M}m)\n"
                     f"   Time:      {timestamp}\n"
+                    f"   Status:    🔓 Ready to unlock MacBook\n"
                     f"{Colors.GREEN}{'─' * 50}{Colors.RESET}\n"
                 )
             alert_triggered = False
