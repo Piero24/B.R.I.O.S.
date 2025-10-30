@@ -217,6 +217,6 @@ __marimo__/
 
 # Other
 devices.py
-main.py
+main_old.py
 .DS_Store
 DS_Store
