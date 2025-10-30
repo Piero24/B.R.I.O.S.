@@ -15,16 +15,16 @@ from bleak.backends.scanner import AdvertisementData
 load_dotenv(".env")
 
 # --- Configuration Constants ---
-TARGET_DEVICE_MAC_ADDRESS = os.getenv.get('TARGET_DEVICE_MAC_ADDRESS')
-TARGET_DEVICE_UUID_ADDRESS = os.getenv.get('TARGET_DEVICE_UUID_ADDRESS')
-TARGET_DEVICE_NAME = os.getenv.get('TARGET_DEVICE_NAME', "Unknown Device Name")
-TARGET_DEVICE_TYPE = os.getenv.get('TARGET_DEVICE_TYPE', 'Unknown Device')
+TARGET_DEVICE_MAC_ADDRESS = os.getenv('TARGET_DEVICE_MAC_ADDRESS')
+TARGET_DEVICE_UUID_ADDRESS = os.getenv('TARGET_DEVICE_UUID_ADDRESS')
+TARGET_DEVICE_NAME = os.getenv('TARGET_DEVICE_NAME', "Unknown Device Name")
+TARGET_DEVICE_TYPE = os.getenv('TARGET_DEVICE_TYPE', 'Unknown Device')
 
 # --- Physics & Monitoring Constants ---
-TX_POWER_AT_1M = int(os.getenv.get('TX_POWER_AT_1M', '-59'))
-PATH_LOSS_EXPONENT = float(os.getenv.get('PATH_LOSS_EXPONENT', '2.8'))
-SAMPLE_WINDOW = int(os.getenv.get('SAMPLE_WINDOW', '12'))
-DISTANCE_THRESHOLD_M = float(os.getenv.get('DISTANCE_THRESHOLD_M', '2.0'))
+TX_POWER_AT_1M = int(os.getenv('TX_POWER_AT_1M', '-59'))
+PATH_LOSS_EXPONENT = float(os.getenv('PATH_LOSS_EXPONENT', '2.8'))
+SAMPLE_WINDOW = int(os.getenv('SAMPLE_WINDOW', '12'))
+DISTANCE_THRESHOLD_M = float(os.getenv('DISTANCE_THRESHOLD_M', '2.0'))
 
 # --- Daemon/Service Control ---
 # The PID file stores the process ID of the running monitor.
