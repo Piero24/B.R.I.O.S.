@@ -4,6 +4,7 @@ import signal
 import asyncio
 import argparse
 import subprocess
+from datetime import datetime
 
 import statistics
 from dotenv import load_dotenv
@@ -176,118 +177,139 @@ async def run_monitor_mode(
         device: BLEDevice, 
         adv_data: AdvertisementData
     ) -> None:
+        
         nonlocal alert_triggered, rssi_buffer, log_file
 
         if device.address != target_address:
             return
         
-        current_rssi = int(adv_data.rssi)
-        
-        # Always get timestamp for logging and alerts
-        import datetime
-        timestamp = datetime.datetime.now().strftime("%H:%M:%S")
+        try:
+            current_rssi = int(adv_data.rssi)
             
-        rssi_buffer.append(current_rssi)
-        if len(rssi_buffer) > SAMPLE_WINDOW:
-            rssi_buffer.pop(0)
+            # Always get timestamp for logging and alerts
+            timestamp = datetime.now().strftime("%H:%M:%S")
+                
+            rssi_buffer.append(current_rssi)
+            if len(rssi_buffer) > SAMPLE_WINDOW:
+                rssi_buffer.pop(0)
 
-        smoothed_rssi = smooth_rssi(rssi_buffer)
-        if smoothed_rssi is None:
-            return 
-        
-        distance_m = estimate_distance(smoothed_rssi)
-
-        # Log details based on verbose and file_logging flags
-        # -v only: terminal output
-        # -f only: file output
-        # -v -f: both terminal and file
-        if verbose or file_logging:
-            log_message = f"[{timestamp}] RSSI: {current_rssi:4d} dBm → Smoothed: {smoothed_rssi:5.1f} dBm │ Distance: {distance_m:5.2f}m"
+            smoothed_rssi = smooth_rssi(rssi_buffer)
+            if smoothed_rssi is None:
+                return 
             
-            if daemon_mode:
-                # In daemon mode, only print if file_logging is enabled (goes to log file via stdout redirect)
-                if file_logging:
-                    print(log_message)
+            distance_m = estimate_distance(smoothed_rssi)
+
+            # Log details based on verbose and file_logging flags
+            # -v only: terminal output
+            # -f only: file output
+            # -v -f: both terminal and file
+            if verbose or file_logging:
+                log_message = f"[{timestamp}] RSSI: {current_rssi:4d} dBm → Smoothed: {smoothed_rssi:5.1f} dBm │ Distance: {distance_m:5.2f}m"
+                
+                if daemon_mode:
+                    # In daemon mode, only print if file_logging is enabled (goes to log file via stdout redirect)
+                    if file_logging:
+                        print(log_message)
+                        sys.stdout.flush()  # Force write to file immediately
+                else:
+                    # In foreground mode
+                    if verbose:
+                        # Show fancy colored output to console
+                        signal_strength = "Strong" if smoothed_rssi > -50 else "Medium" if smoothed_rssi > -70 else "Weak"
+                        signal_color = Colors.GREEN if smoothed_rssi > -50 else Colors.YELLOW if smoothed_rssi > -70 else Colors.RED
+                        print(
+                            f"{Colors.BLUE}[{timestamp}]{Colors.RESET} RSSI: {current_rssi:4d} dBm → "
+                            f"Smoothed: {smoothed_rssi:5.1f} dBm │ "
+                            f"Distance: {Colors.BOLD}{distance_m:5.2f}m{Colors.RESET} │ "
+                            f"Signal: {signal_color}{signal_strength}{Colors.RESET}"
+                        )
+                    
+                    # Write to log file if file_logging is enabled (regardless of verbose)
+                    if file_logging and log_file:
+                        log_file.write(log_message + "\n")
+                        log_file.flush()
+
+            if distance_m > DISTANCE_THRESHOLD_M and not alert_triggered:
+                # Lock the MacBook when device is too far - requires password to unlock
+                try:
+                    # First, ensure password is required immediately after sleep
+                    subprocess.run([
+                        'defaults', 'write', 'com.apple.screensaver', 
+                        'askForPassword', '-int', '1'
+                    ], check=True, capture_output=True)
+                    subprocess.run([
+                        'defaults', 'write', 'com.apple.screensaver', 
+                        'askForPasswordDelay', '-int', '0'
+                    ], check=True, capture_output=True)
+                    
+                    # Now lock the screen by putting display to sleep
+                    subprocess.run(['pmset', 'displaysleepnow'], check=True, capture_output=True)
+                    lock_status = "🔒 MacBook locked (password required)"
+                except Exception as e:
+                    lock_status = f"⚠️  Failed to lock MacBook: {e}"
+                
+                alert_msg = f"⚠️  ALERT: Device '{TARGET_DEVICE_NAME}' is far away! (~{distance_m:.2f} m) - {lock_status}"
+                
+                if daemon_mode:
+                    print(alert_msg)
                     sys.stdout.flush()  # Force write to file immediately
-            else:
-                # In foreground mode
-                if verbose:
-                    # Show fancy colored output to console
-                    signal_strength = "Strong" if smoothed_rssi > -50 else "Medium" if smoothed_rssi > -70 else "Weak"
-                    signal_color = Colors.GREEN if smoothed_rssi > -50 else Colors.YELLOW if smoothed_rssi > -70 else Colors.RED
+                else:
                     print(
-                        f"{Colors.BLUE}[{timestamp}]{Colors.RESET} RSSI: {current_rssi:4d} dBm → "
-                        f"Smoothed: {smoothed_rssi:5.1f} dBm │ "
-                        f"Distance: {Colors.BOLD}{distance_m:5.2f}m{Colors.RESET} │ "
-                        f"Signal: {signal_color}{signal_strength}{Colors.RESET}"
+                        f"\n{Colors.RED}{'─' * 50}{Colors.RESET}\n"
+                        f"{Colors.RED}⚠{Colors.RESET}  {Colors.BOLD}ALERT: Device moved out of range{Colors.RESET}\n"
+                        f"   Device:    {TARGET_DEVICE_NAME}\n"
+                        f"   Distance:  ~{distance_m:.2f}m (threshold: {DISTANCE_THRESHOLD_M}m)\n"
+                        f"   Time:      {timestamp}\n"
+                        f"   Action:    {lock_status}\n"
+                        f"{Colors.RED}{'─' * 50}{Colors.RESET}\n"
                     )
-                
-                # Write to log file if file_logging is enabled (regardless of verbose)
-                if file_logging and log_file:
-                    log_file.write(log_message + "\n")
-                    log_file.flush()
+                    # Write to log file if enabled
+                    if file_logging and log_file:
+                        log_file.write(f"[{timestamp}] {alert_msg}\n")
+                        log_file.flush()
+                alert_triggered = True
 
-        if distance_m > DISTANCE_THRESHOLD_M and not alert_triggered:
-            # Lock the MacBook when device is too far - requires password to unlock
-            try:
-                # First, ensure password is required immediately after sleep
-                subprocess.run([
-                    'defaults', 'write', 'com.apple.screensaver', 
-                    'askForPassword', '-int', '1'
-                ], check=True, capture_output=True)
-                subprocess.run([
-                    'defaults', 'write', 'com.apple.screensaver', 
-                    'askForPasswordDelay', '-int', '0'
-                ], check=True, capture_output=True)
+            elif distance_m <= DISTANCE_THRESHOLD_M and alert_triggered:
+                back_msg = f"✅  Device '{TARGET_DEVICE_NAME}' is back in range. (~{distance_m:.2f} m)"
                 
-                # Now lock the screen by putting display to sleep
-                subprocess.run(['pmset', 'displaysleepnow'], check=True, capture_output=True)
-                lock_status = "🔒 MacBook locked (password required)"
-            except Exception as e:
-                lock_status = f"⚠️  Failed to lock MacBook: {e}"
-            
-            alert_msg = f"⚠️  ALERT: Device '{TARGET_DEVICE_NAME}' is far away! (~{distance_m:.2f} m) - {lock_status}"
-            
-            if daemon_mode:
-                print(alert_msg)
-                sys.stdout.flush()  # Force write to file immediately
-            else:
-                print(
-                    f"\n{Colors.RED}{'─' * 50}{Colors.RESET}\n"
-                    f"{Colors.RED}⚠{Colors.RESET}  {Colors.BOLD}ALERT: Device moved out of range{Colors.RESET}\n"
-                    f"   Device:    {TARGET_DEVICE_NAME}\n"
-                    f"   Distance:  ~{distance_m:.2f}m (threshold: {DISTANCE_THRESHOLD_M}m)\n"
-                    f"   Time:      {timestamp}\n"
-                    f"   Action:    {lock_status}\n"
-                    f"{Colors.RED}{'─' * 50}{Colors.RESET}\n"
-                )
-                # Write to log file if enabled
-                if file_logging and log_file:
-                    log_file.write(f"[{timestamp}] {alert_msg}\n")
-                    log_file.flush()
-            alert_triggered = True
+                if daemon_mode:
+                    print(back_msg)
+                    sys.stdout.flush()  # Force write to file immediately
+                else:
+                    print(
+                        f"\n{Colors.GREEN}{'─' * 50}{Colors.RESET}\n"
+                        f"{Colors.GREEN}✓{Colors.RESET}  {Colors.BOLD}Device back in range{Colors.RESET}\n"
+                        f"   Device:    {TARGET_DEVICE_NAME}\n"
+                        f"   Distance:  ~{distance_m:.2f}m (threshold: {DISTANCE_THRESHOLD_M}m)\n"
+                        f"   Time:      {timestamp}\n"
+                        f"   Status:    🔓 Ready to unlock MacBook\n"
+                        f"{Colors.GREEN}{'─' * 50}{Colors.RESET}\n"
+                    )
+                    # Write to log file if enabled
+                    if file_logging and log_file:
+                        log_file.write(f"[{timestamp}] {back_msg}\n")
+                        log_file.flush()
+                alert_triggered = False
 
-        elif distance_m <= DISTANCE_THRESHOLD_M and alert_triggered:
-            back_msg = f"✅  Device '{TARGET_DEVICE_NAME}' is back in range. (~{distance_m:.2f} m)"
-            
-            if daemon_mode:
-                print(back_msg)
-                sys.stdout.flush()  # Force write to file immediately
-            else:
+        except AttributeError:
+            # This will catch the specific "NoneType has no attribute 'hex'" error.
+            if verbose:
                 print(
-                    f"\n{Colors.GREEN}{'─' * 50}{Colors.RESET}\n"
-                    f"{Colors.GREEN}✓{Colors.RESET}  {Colors.BOLD}Device back in range{Colors.RESET}\n"
-                    f"   Device:    {TARGET_DEVICE_NAME}\n"
-                    f"   Distance:  ~{distance_m:.2f}m (threshold: {DISTANCE_THRESHOLD_M}m)\n"
-                    f"   Time:      {timestamp}\n"
-                    f"   Status:    🔓 Ready to unlock MacBook\n"
-                    f"{Colors.GREEN}{'─' * 50}{Colors.RESET}\n"
+                    f"\n{Colors.YELLOW}{'─' * 60}{Colors.RESET}\n"
+                    f"{Colors.YELLOW}DEBUG: Malformed Packet Ignored{Colors.RESET}\n"
+                    f"{Colors.GREY}   └─> Cause: This is expected when the host Mac is locked or sleeping.{Colors.RESET}\n"
+                    f"{Colors.YELLOW}{'─' * 60}{Colors.RESET}\n"
                 )
-                # Write to log file if enabled
-                if file_logging and log_file:
-                    log_file.write(f"[{timestamp}] {back_msg}\n")
-                    log_file.flush()
-            alert_triggered = False
+        except Exception as e:
+            # Catch any other unexpected errors to keep the scanner alive.
+            if verbose:
+                print(
+                    f"\n{Colors.RED}{'─' * 60}{Colors.RESET}\n"
+                    f"{Colors.RED}CRITICAL: Unexpected Callback Error{Colors.RESET}\n"
+                    f"{Colors.GREY}   An error was caught, but the scanner will continue to run.{Colors.RESET}\n"
+                    f"   └─> {Colors.BOLD}Error Details:{Colors.RESET} {e}\n"
+                    f"{Colors.RED}{'─' * 60}{Colors.RESET}\n"
+                )
 
     scanner = BleakScanner(
         detection_callback=detection_callback, 
