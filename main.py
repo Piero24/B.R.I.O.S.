@@ -159,10 +159,17 @@ async def run_monitor_mode(
         if use_bdaddr: 
             print(f"Mode:       {Colors.BLUE}BD_ADDR (MAC){Colors.RESET}")
         print("─" * 50)
-        if file_logging:
-            print(f"Log file:   {LOG_FILE} {Colors.GREEN}(enabled){Colors.RESET}")
-        if verbose:
-            print(f"{Colors.YELLOW}Verbose mode enabled{Colors.RESET}")
+        
+        # Show logging configuration
+        if verbose and file_logging:
+            print(f"Output:     {Colors.GREEN}Terminal + File{Colors.RESET}")
+            print(f"Log file:   {LOG_FILE}")
+        elif verbose:
+            print(f"Output:     {Colors.GREEN}Terminal only{Colors.RESET}")
+        elif file_logging:
+            print(f"Output:     {Colors.GREEN}File only{Colors.RESET}")
+            print(f"Log file:   {LOG_FILE}")
+        
         print(f"\n{Colors.GREEN}●{Colors.RESET} Monitoring active - Press Ctrl+C to stop\n")
 
     def detection_callback(
@@ -190,27 +197,32 @@ async def run_monitor_mode(
         
         distance_m = estimate_distance(smoothed_rssi)
 
-        # Log details in verbose mode (works in both daemon and foreground)
-        if verbose:
+        # Log details based on verbose and file_logging flags
+        # -v only: terminal output
+        # -f only: file output
+        # -v -f: both terminal and file
+        if verbose or file_logging:
             log_message = f"[{timestamp}] RSSI: {current_rssi:4d} dBm → Smoothed: {smoothed_rssi:5.1f} dBm │ Distance: {distance_m:5.2f}m"
             
             if daemon_mode:
-                # In daemon mode, only print if file_logging is enabled
+                # In daemon mode, only print if file_logging is enabled (goes to log file via stdout redirect)
                 if file_logging:
                     print(log_message)
                     sys.stdout.flush()  # Force write to file immediately
             else:
-                # In foreground mode, show fancy colored output to console
-                signal_strength = "Strong" if smoothed_rssi > -50 else "Medium" if smoothed_rssi > -70 else "Weak"
-                signal_color = Colors.GREEN if smoothed_rssi > -50 else Colors.YELLOW if smoothed_rssi > -70 else Colors.RED
-                print(
-                    f"{Colors.BLUE}[{timestamp}]{Colors.RESET} RSSI: {current_rssi:4d} dBm → "
-                    f"Smoothed: {smoothed_rssi:5.1f} dBm │ "
-                    f"Distance: {Colors.BOLD}{distance_m:5.2f}m{Colors.RESET} │ "
-                    f"Signal: {signal_color}{signal_strength}{Colors.RESET}"
-                )
+                # In foreground mode
+                if verbose:
+                    # Show fancy colored output to console
+                    signal_strength = "Strong" if smoothed_rssi > -50 else "Medium" if smoothed_rssi > -70 else "Weak"
+                    signal_color = Colors.GREEN if smoothed_rssi > -50 else Colors.YELLOW if smoothed_rssi > -70 else Colors.RED
+                    print(
+                        f"{Colors.BLUE}[{timestamp}]{Colors.RESET} RSSI: {current_rssi:4d} dBm → "
+                        f"Smoothed: {smoothed_rssi:5.1f} dBm │ "
+                        f"Distance: {Colors.BOLD}{distance_m:5.2f}m{Colors.RESET} │ "
+                        f"Signal: {signal_color}{signal_strength}{Colors.RESET}"
+                    )
                 
-                # Also write to log file if file_logging is enabled
+                # Write to log file if file_logging is enabled (regardless of verbose)
                 if file_logging and log_file:
                     log_file.write(log_message + "\n")
                     log_file.flush()
