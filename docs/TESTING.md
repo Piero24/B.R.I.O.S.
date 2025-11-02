@@ -1,6 +1,6 @@
 # 🧪 Testing Guide
 
-Complete guide to testing Bleissant, running tests, and writing new tests.
+Complete guide to testing 🥐 B.R.I.O.S. (Bluetooth Reactive Intelligent Operator for Croissant Safety), running tests, and writing new tests.
 
 > [!IMPORTANT]
 > **Testing Environment Notice**
@@ -14,7 +14,7 @@ Complete guide to testing Bleissant, running tests, and writing new tests.
 
 ## Overview
 
-Bleissant maintains **100% test coverage** with a comprehensive pytest-based test suite that includes:
+B.R.I.O.S. maintains **100% test coverage** with a comprehensive pytest-based test suite that includes:
 - ✅ Unit tests for individual functions
 - ✅ Integration tests for class interactions
 - ✅ End-to-end tests for complete workflows

@@ -1,9 +1,11 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
-"""A professional BLE monitoring tool for device tracking and proximity alerts.
+"""🥐 B.R.I.O.S. - Bluetooth Reactive Intelligent Operator for Croissant Safety
 
-This script provides a command-line interface to scan for Bluetooth Low Energy
-(BLE) devices and monitor a specific target device's proximity based on its
+A professional proximity monitoring tool for device tracking and automated security.
+
+This script provides a command-line interface to scan for Bluetooth devices
+and monitor a specific target device's proximity based on its
 Received Signal Strength Indicator (RSSI). It can be run as a foreground
 process for immediate monitoring or as a background daemon for continuous
 operation.
@@ -12,7 +14,7 @@ Key features include:
   - Real-time RSSI signal strength monitoring.
   - Distance estimation using the Log-Distance Path Loss model.
   - Proximity alerts when a device moves beyond a configurable threshold.
-  - A discovery scanner to find nearby BLE devices.
+  - A discovery scanner to find nearby devices.
   - Service management for starting, stopping, and checking the monitor's
     status as a background process.
 """
@@ -234,7 +236,9 @@ class ServiceManager:
         command = self._reconstruct_command()
         target_address = Application.determine_target_address(self.args)
 
-        print(f"\n{Colors.BOLD}Starting Background Monitor{Colors.RESET}")
+        print(
+            f"\n{Colors.BOLD}Starting 🥐 B.R.I.O.S. Background Monitor{Colors.RESET}"
+        )
         print("─" * 50)
 
         if self.args.verbose:
@@ -266,12 +270,14 @@ class ServiceManager:
         pid, is_running = self._get_pid_status()
 
         if not is_running:
-            print(f"{Colors.YELLOW}●{Colors.RESET} Monitor is not running")
+            print(
+                f"{Colors.YELLOW}●{Colors.RESET} 🥐 B.R.I.O.S. is not running"
+            )
             if os.path.exists(PID_FILE):
                 os.remove(PID_FILE)
             return
 
-        print(f"Stopping monitor process (PID {pid})...")
+        print(f"Stopping 🥐 B.R.I.O.S. (PID {pid})...")
 
         try:
             # Type guard: pid is guaranteed to be int here since is_running is True
@@ -279,7 +285,9 @@ class ServiceManager:
                 pid is not None
             ), "PID should not be None when is_running is True"
             os.kill(pid, signal.SIGTERM)
-            print(f"{Colors.GREEN}✓{Colors.RESET} Monitor stopped successfully")
+            print(
+                f"{Colors.GREEN}✓{Colors.RESET} 🥐 B.R.I.O.S. stopped successfully"
+            )
         except OSError:
             print(
                 f"{Colors.YELLOW}!{Colors.RESET} Process {pid} already stopped"
@@ -291,7 +299,7 @@ class ServiceManager:
 
     def restart(self) -> None:
         """Restarts the background monitor."""
-        print(f"\n{Colors.BOLD}Restarting monitor...{Colors.RESET}")
+        print(f"\n{Colors.BOLD}Restarting 🥐 B.R.I.O.S...{Colors.RESET}")
         self.stop()
         time.sleep(1)
         self.start()
@@ -300,7 +308,7 @@ class ServiceManager:
         """Displays the current status of the background monitor."""
         pid, is_running = self._get_pid_status()
 
-        print(f"\n{Colors.BOLD}BLE Monitor Status{Colors.RESET}")
+        print(f"\n{Colors.BOLD}🥐 B.R.I.O.S. Monitor Status{Colors.RESET}")
         print("─" * 50)
 
         if is_running:
@@ -352,12 +360,14 @@ class ServiceManager:
         pid, is_running = self._get_pid_status()
 
         if not is_running:
-            print(f"{Colors.RED}✗{Colors.RESET} Failed to start monitor")
+            print(f"{Colors.RED}✗{Colors.RESET} Failed to start 🥐 B.R.I.O.S.")
             print(f"Log file:   {LOG_FILE}")
             print("─" * 50 + "\n")
             return
 
-        print(f"{Colors.GREEN}✓{Colors.RESET} Monitor started successfully")
+        print(
+            f"{Colors.GREEN}✓{Colors.RESET} 🥐 B.R.I.O.S. started successfully"
+        )
         print(f"PID:        {pid}")
         print("─" * 50)
         print(f"Target:     {TARGET_DEVICE_NAME} ({TARGET_DEVICE_TYPE})")
@@ -383,7 +393,9 @@ class ServiceManager:
         else:
             print(f"Logging:    Disabled (use -f to enable)")
 
-        print(f"\n{Colors.GREEN}●{Colors.RESET} Monitor running in background")
+        print(
+            f"\n{Colors.GREEN}●{Colors.RESET} 🥐 B.R.I.O.S. running in background"
+        )
         print(
             f"\nUse `{sys.argv[0]} --status` to check status or "
             f"`--stop` to terminate."
@@ -441,7 +453,7 @@ class DeviceScanner:
 
     def _print_summary(self) -> None:
         """Prints a summary of the scanner configuration."""
-        print(f"\n{Colors.BOLD}BLE Device Scanner{Colors.RESET}")
+        print(f"\n{Colors.BOLD}🥐 B.R.I.O.S. Device Scanner{Colors.RESET}")
         print("─" * 70)
         print(f"Duration:   {self.duration} seconds")
 
@@ -565,9 +577,9 @@ class DeviceMonitor:
         )
 
     def _print_start_status(self) -> None:
-        """Prints the startup status of the BLE monitoring process.
+        """Prints the startup status of the monitoring process.
 
-        This method displays formatted information about the current BLE
+        This method displays formatted information about the current
             monitor configuration, including target device details, distance
             and power parameters, and output settings. It is primarily used to
             provide user-friendly feedback in the terminal when the monitoring
@@ -578,7 +590,7 @@ class DeviceMonitor:
         if self.flags.daemon_mode:
             return
 
-        print(f"\n{Colors.BOLD}Starting BLE Monitor{Colors.RESET}")
+        print(f"\n{Colors.BOLD}Starting 🥐 B.R.I.O.S. Monitor{Colors.RESET}")
         print("─" * 50)
         print(f"Target:     {TARGET_DEVICE_NAME} ({TARGET_DEVICE_TYPE})")
         print(f"Address:    {self.target_address}")
@@ -907,7 +919,7 @@ class DeviceMonitor:
                 self.log_file.close()
 
             if not self.flags.daemon_mode:
-                print(f"{Colors.GREEN}✓{Colors.RESET} Monitoring stopped.\n")
+                print(f"{Colors.GREEN}✓{Colors.RESET} 🥐 B.R.I.O.S. stopped.\n")
 
 
 # ==============================================================================
@@ -1043,7 +1055,9 @@ class Application:
         """
         parser = argparse.ArgumentParser(
             description=(
-                "BLE device proximity monitor with distance-based alerting"
+                "🥐 B.R.I.O.S. - Bluetooth Reactive Intelligent Operator for "
+                "Croissant Safety\n Device proximity monitor with "
+                "distance-based alerting"
             ),
             formatter_class=argparse.RawTextHelpFormatter,
             epilog=help_epilog,

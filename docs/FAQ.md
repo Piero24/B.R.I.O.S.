@@ -1,14 +1,14 @@
-# ❓ Frequently Asked Questions (FAQ)
+# ❓ Frequently Asked Questions
 
-Quick answers to common questions about Bleissant.
+Quick answers to common questions about 🥐 B.R.I.O.S. (Bluetooth Reactive Intelligent Operator for Croissant Safety).
 
 ---
 
-## General Questions
+## General
 
-### What is Bleissant?
+### What is B.R.I.O.S.?
 
-Bleissant is a professional BLE (Bluetooth Low Energy) proximity monitoring system for macOS that automatically locks your Mac when your iPhone, Apple Watch, or other BLE device moves out of range.
+B.R.I.O.S. (Bluetooth Reactive Intelligent Operator for Croissant Safety) is a professional proximity monitoring system for macOS that automatically locks your Mac when your iPhone, Apple Watch, or other Bluetooth device moves out of range.
 
 ### Why would I use this?
 
@@ -111,7 +111,7 @@ python3 main.py --stop
 
 ### Can I monitor multiple devices?
 
-Currently, Bleissant monitors one device at a time. Multi-device support is planned for a future release.
+Currently, B.R.I.O.S. monitors one device at a time. Multi-device support is planned for a future release.
 
 ### How do I view logs?
 
@@ -205,7 +205,7 @@ pmset displaysleepnow
 
 ### High CPU usage
 
-This is unexpected. Bleissant should use minimal CPU (<1%).
+This is unexpected. B.R.I.O.S. should use minimal CPU (<1%).
 
 **Diagnose:**
 ```bash
@@ -240,7 +240,7 @@ python3 main.py --target-uuid "XXXXXXXX-XXXX..." -v
 
 ### How does the signal smoothing work?
 
-Bleissant maintains a rolling buffer (default: 12 samples) and calculates the statistical mean:
+B.R.I.O.S. maintains a rolling buffer (default: 12 samples) and calculates the statistical mean:
 
 ```python
 smoothed_rssi = mean([-60, -62, -58, -61, ...])  # ≈ -60.25 dBm
@@ -310,7 +310,7 @@ SAMPLE_WINDOW=20  # Slower response, more stable
 
 ### Is my data sent anywhere?
 
-**No!** Bleissant:
+**No!** B.R.I.O.S.:
 - ✅ Runs 100% locally
 - ✅ No internet connection required
 - ✅ No data collection

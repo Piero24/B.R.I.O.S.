@@ -61,7 +61,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### v1.0.0 - Initial Release
 
-Bleissant is now production-ready with enterprise-grade features:
+🥐 B.R.I.O.S. is now production-ready with enterprise-grade features:
 
 **🔍 Smart Device Tracking**
 - Automatic BLE device discovery
@@ -118,7 +118,7 @@ If you were using pre-release versions:
 
 ## Versioning
 
-Bleissant follows [Semantic Versioning](https://semver.org/):
+🥐 B.R.I.O.S. follows [Semantic Versioning](https://semver.org/):
 
 - **MAJOR** version: Incompatible API changes
 - **MINOR** version: New functionality (backwards-compatible)

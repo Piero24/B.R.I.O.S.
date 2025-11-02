@@ -1,13 +1,15 @@
-# Bleissant
+# 🥐 B.R.I.O.S.
 
 <p align="center">
   <img src="https://cdn-icons-png.flaticon.com/512/3145/3145073.png" width="100">
 </p>
 
 <p align="center">
-  <strong>Enterprise-grade BLE proximity monitoring for macOS security automation</strong>
+  <strong>🥐 Bluetooth Reactive Intelligent Operator for Croissant Safety</strong>
   <br/>
-  Automatically lock your Mac when your iPhone, Apple Watch, or BLE device moves out of range
+  Enterprise-grade proximity monitoring for macOS security automation
+  <br/>
+  Automatically lock your Mac when your iPhone, Apple Watch, or device moves out of range
 </p>
 
 <p align="center">

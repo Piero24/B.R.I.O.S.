@@ -1,6 +1,6 @@
-# 🤝 Contributing to Bleissant
+# 🤝 Contributing to 🥐 B.R.I.O.S.
 
-Thank you for considering contributing to Bleissant! This document provides guidelines and instructions for contributing.
+Thank you for considering contributing to B.R.I.O.S. (Bluetooth Reactive Intelligent Operator for Croissant Safety)! This document provides guidelines and instructions for contributing.
 
 ## Table of Contents
 
@@ -382,4 +382,4 @@ Contributors will be recognized in:
 - Release notes
 - GitHub contributors page
 
-Thank you for making Bleissant better! 🎉
+Thank you for making B.R.I.O.S. better! 🎉

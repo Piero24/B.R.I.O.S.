@@ -6,7 +6,7 @@
   <img src="https://cdn-icons-png.flaticon.com/512/3145/3145073.png" width="105" height="100">
 </p>
 <h1 align="center">
-    <a href="https://github.com/Piero24/Bleissant">Bleissant</a>
+    <a href="https://github.com/Piero24/Bleissant">🥐 B.R.I.O.S.</a>
 </h1>
 <p align="center">
     <!-- BADGE -->
@@ -33,7 +33,9 @@
     </a>
 </p>
 <p align="center">
-    <strong>Enterprise-grade BLE proximity monitoring for macOS security automation</strong>
+    <strong>🥐 Bluetooth Reactive Intelligent Operator for Croissant Safety</strong>
+    <br/>
+    <em>Enterprise-grade proximity monitoring for macOS security automation</em>
     <br/>
     Automatically lock your Mac when your iPhone, Apple Watch, or BLE device moves out of range
     <br/>
@@ -83,13 +85,12 @@
 <br/><br/>
 <h2 id="introduction">📔  Introduction</h2>
 
-<p>
-    <strong>Bleissant</strong> is an enterprise-grade Bluetooth Low Energy (BLE) proximity monitoring system designed specifically for macOS. It provides automated security by continuously tracking the distance to a designated BLE device (iPhone, Apple Watch, AirTag, or any BLE beacon) and automatically locking your Mac when the device moves beyond a configurable threshold.
+<p align="left">
+    <strong>🥐 B.R.I.O.S.</strong> (Bluetooth Reactive Intelligent Operator for Croissant Safety) is an enterprise-grade proximity monitoring system designed specifically for macOS. It provides automated security by continuously tracking the distance to a designated Bluetooth device (iPhone, Apple Watch, AirTag, or any BLE beacon) and automatically locking your Mac when the device moves beyond a configurable threshold.
 </p>
 
-<p>
-    Built with production-ready code architecture, comprehensive test coverage, and CI/CD integration, Bleissant employs sophisticated signal processing algorithms to deliver accurate distance estimation and reliable proximity detection. The system uses the <strong>Log-Distance Path Loss Model</strong> combined with statistical RSSI smoothing to filter environmental noise and provide stable, actionable proximity alerts.
-</p>
+<p align="left">
+    Built with production-ready code architecture, comprehensive test coverage, and CI/CD integration, B.R.I.O.S. employs sophisticated signal processing algorithms to deliver accurate distance estimation and reliable proximity detection. The system uses the <strong>Log-Distance Path Loss Model</strong> combined with statistical RSSI smoothing to filter environmental noise and provide stable, actionable proximity alerts.
 
 <br/>
 
@@ -181,7 +182,7 @@
 <h2 id="how-it-works">🔬  How It Works</h2>
 
 <p>
-    Bleissant implements a sophisticated four-stage pipeline for accurate proximity detection and automated security enforcement:
+    B.R.I.O.S. implements a sophisticated four-stage pipeline for accurate proximity detection and automated security enforcement:
 </p>
 
 ### 1️⃣ **Signal Collection & Processing**
@@ -194,7 +195,7 @@ BLE Device → Advertisement → RSSI Extraction → Signal Buffer
 
 ### 2️⃣ **Statistical Smoothing**
 
-Raw RSSI values are inherently noisy due to environmental factors (walls, interference, multipath propagation). Bleissant maintains a configurable rolling buffer (default: 12 samples) and calculates the statistical mean to eliminate transient fluctuations:
+Raw RSSI values are inherently noisy due to environmental factors (walls, interference, multipath propagation). B.R.I.O.S. maintains a configurable rolling buffer (default: 12 samples) and calculates the statistical mean to eliminate transient fluctuations:
 
 ```python
 smoothed_rssi = statistics.mean(rssi_buffer)
@@ -204,7 +205,7 @@ This ensures stable distance measurements and prevents false-positive alerts fro
 
 ### 3️⃣ **Distance Estimation**
 
-Using the **Log-Distance Path Loss Model**, Bleissant converts smoothed RSSI values into accurate distance measurements:
+Using the **Log-Distance Path Loss Model**, B.R.I.O.S. converts smoothed RSSI values into accurate distance measurements:
 
 ```python
 distance = 10 ** ((TX_POWER_AT_1M - smoothed_rssi) / (10 * PATH_LOSS_EXPONENT))
@@ -219,7 +220,7 @@ distance = 10 ** ((TX_POWER_AT_1M - smoothed_rssi) / (10 * PATH_LOSS_EXPONENT))
 
 ### 4️⃣ **Proximity Alerting & Action**
 
-When the calculated distance exceeds your configured threshold (default: 2.0m), Bleissant triggers an automated security response:
+When the calculated distance exceeds your configured threshold (default: 2.0m), B.R.I.O.S. triggers an automated security response:
 
 1. **System Lock**: Executes macOS native commands to lock the screen immediately
 2. **Alert Logging**: Records the event with timestamp, distance, and device info
@@ -243,7 +244,7 @@ When the calculated distance exceeds your configured threshold (default: 2.0m), 
 <br/>
 <h2 id="quick-start">⚡  Quick Start</h2>
 
-Get Bleissant running in less than 2 minutes:
+Get B.R.I.O.S. running in less than 2 minutes:
 
 ```bash
 # 1. Clone and navigate
@@ -280,7 +281,7 @@ python3 main.py --status  # Check service status
 <br/><br/>
 <h2 id="made-in">�  Built With</h2>
 <p>
-    Bleissant is built entirely in Python using industry-standard libraries for cross-platform BLE communication, native macOS integration, and enterprise-grade testing infrastructure.
+    B.R.I.O.S. is built entirely in Python using industry-standard libraries for cross-platform Bluetooth communication, native macOS integration, and enterprise-grade testing infrastructure.
 </p>
 
 ### Core Technologies
@@ -323,7 +324,7 @@ python3 main.py --status  # Check service status
 <br/><br/>
 <h2 id="documentation">📚  Documentation</h2>
 
-Bleissant provides comprehensive documentation for all skill levels:
+B.R.I.O.S. provides comprehensive documentation for all skill levels:
 
 ### 📖 **User Documentation**
 
@@ -349,7 +350,7 @@ Bleissant provides comprehensive documentation for all skill levels:
 > **First Time Using BLE?** Start with the [Quick Start](#quick-start) guide above, then explore the scanner mode to understand BLE device discovery: `python3 main.py --scanner 15 -m`
 
 > [!WARNING]  
-> **macOS Privacy Settings**: Ensure Bluetooth permissions are granted for your terminal application in *System Settings → Privacy & Security → Bluetooth*. Without these permissions, Bleissant cannot scan for devices.
+> **macOS Privacy Settings**: Ensure Bluetooth permissions are granted for your terminal application in *System Settings → Privacy & Security → Bluetooth*. Without these permissions, B.R.I.O.S. cannot scan for devices.
 
 <p align="right"><a href="#top">⇧</a></p>
 
@@ -518,7 +519,7 @@ pip install -r requirements/dev.txt
 **Example Output (Monitor Mode):**
 
 ```
-Starting BLE Monitor
+Starting 🥐 B.R.I.O.S.
 ──────────────────────────────────────────────────
 Target:     Pietro's iPhone (iPhone 15 Pro)
 Address:    A1:B2:C3:D4:E5:F6
@@ -552,7 +553,7 @@ Mode:       BD_ADDR (MAC)
 <br/>
 <h2 id="configuration">🔧  Configuration</h2>
 
-Bleissant is highly configurable via the `.env` file. All settings are documented below.
+B.R.I.O.S. is highly configurable via the `.env` file. All settings are documented below.
 
 ### Configuration File Reference
 
@@ -731,7 +732,7 @@ python3 main.py --restart
 
 **Service Status Output:**
 ```
-BLE Monitor Status
+🥐 B.R.I.O.S. Status
 ──────────────────────────────────────────────────
 Status:     ● RUNNING
 PID:        12345
@@ -820,7 +821,7 @@ python3 main.py --target-mac -v
 <br/>
 <h2 id="architecture">🏗️  Architecture</h2>
 
-Bleissant follows a clean, modular architecture for maintainability and extensibility.
+B.R.I.O.S. follows a clean, modular architecture for maintainability and extensibility.
 
 ### System Components
 
@@ -866,7 +867,7 @@ Bleissant follows a clean, modular architecture for maintainability and extensib
 <br/>
 <h2 id="testing">🧪  Testing</h2>
 
-Bleissant maintains 100% test coverage with comprehensive pytest-based tests.
+B.R.I.O.S. maintains 100% test coverage with comprehensive pytest-based tests.
 
 ### Running Tests
 
@@ -977,7 +978,7 @@ For detailed guidelines, see [docs/CONTRIBUTING.md](docs/CONTRIBUTING.md).
 **Example Output (Monitor Mode):**
 
 ```
-Starting BLE Monitor
+Starting 🥐 B.R.I.O.S.
 ──────────────────────────────────────────────────
 Target:     Pietro's iPhone (iPhone 15 Pro)
 <p>
@@ -1084,7 +1085,7 @@ the individual licenses are indicated in the following section.
 
 ## 🌟 Project Status
 
-**Bleissant is production-ready** with enterprise-grade features:
+**🥐 B.R.I.O.S. is production-ready** with enterprise-grade features:
 
 - ✅ 100% test coverage
 - ✅ CI/CD pipeline with automated checks
@@ -1108,7 +1109,7 @@ Planned features for future releases:
 
 ### Versioning
 
-Bleissant follows [Semantic Versioning](https://semver.org/):
+B.R.I.O.S. follows [Semantic Versioning](https://semver.org/):
 - **MAJOR**: Incompatible API changes
 - **MINOR**: New features (backwards-compatible)
 - **PATCH**: Bug fixes (backwards-compatible)
