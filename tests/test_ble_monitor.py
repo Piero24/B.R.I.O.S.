@@ -15,8 +15,6 @@ sys.modules["bleak.backends.device"] = MagicMock()
 sys.modules["bleak.backends.scanner"] = MagicMock()
 
 # Now, import the script to be tested.
-# The name 'main_new' is based on your traceback.
-# If you rename your file, change this import accordingly.
 import main
 
 
