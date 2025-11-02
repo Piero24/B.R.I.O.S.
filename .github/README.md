@@ -31,6 +31,9 @@
     <a href="https://www.apple.com/macos/">
     <img src="https://img.shields.io/badge/Platform-macOS-lightgrey.svg">
     </a>
+    <a href="https://github.com/Piero24/Bleissant/releases">
+    <img src="https://img.shields.io/badge/Version-1.0.0-blue.svg">
+    </a>
 </p>
 <p align="center">
     <strong>🥐 Bluetooth Reactive Intelligent Operator for Croissant Safety</strong>

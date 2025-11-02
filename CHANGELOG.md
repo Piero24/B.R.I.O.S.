@@ -1,6 +1,6 @@
 # Changelog
 
-All notable changes to this project will be documented in this file.
+All notable changes to 🥐 B.R.I.O.S. (Bluetooth Reactive Intelligent Operator for Croissant Safety) will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
@@ -8,17 +8,24 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 ### Added
-- Comprehensive documentation suite (API, Architecture, Testing, Contributing)
-- Enhanced README with professional formatting and detailed sections
-- GitHub Actions CI/CD pipeline integration badges
+- Project rebranded to 🥐 B.R.I.O.S. (Bluetooth Reactive Intelligent Operator for Croissant Safety)
+- `--version` argument to display version information
+- Version constants in main.py (`__version__`, `__app_name__`, `__app_full_name__`)
+- Comprehensive help documentation with all parameters and examples
+- Configuration section in help showing all .env variables
+- Files section in help explaining project files
 
 ### Changed
+- All terminal output messages now display "🥐 B.R.I.O.S." branding
+- Help documentation completely redesigned with enhanced structure
+- Updated all documentation files to use B.R.I.O.S. naming
 - Reorganized requirements files into `requirements/` folder structure
 - Improved test imports with `conftest.py` for better maintainability
 
 ## [1.0.0] - 2024-11-02
 
 ### Added
+- Initial release of 🥐 B.R.I.O.S.
 - Initial release of Bleissant
 - BLE device discovery scanner
 - Real-time proximity monitoring

@@ -19,6 +19,13 @@ Key features include:
     status as a background process.
 """
 
+# --- Version Information ---
+__version__ = "1.0.0"
+__app_name__ = "🥐 B.R.I.O.S."
+__app_full_name__ = (
+    "Bluetooth Reactive Intelligent Operator for Croissant Safety"
+)
+
 import os
 import sys
 import time
@@ -1021,46 +1028,105 @@ class Application:
         """
         help_epilog = """
         DESCRIPTION:
-        A professional BLE (Bluetooth Low Energy) monitoring tool that provides 
-        real-time device tracking and proximity alerts based on RSSI signal strength.
+        🥐 B.R.I.O.S. (Bluetooth Reactive Intelligent Operator for Croissant Safety)
+        
+        A professional proximity monitoring tool that provides real-time device 
+        tracking and automated security based on Bluetooth signal strength (RSSI).
+        Automatically locks your Mac when your iPhone, Apple Watch, or any Bluetooth 
+        device moves beyond a configurable distance threshold.
 
         OPERATING MODES:
-        Scanner Mode    Discover nearby BLE devices and display their addresses
-        Monitor Mode    Track a specific device and alert on distance changes
-        Service Mode    Run monitor as a background daemon process
+        Scanner Mode    Discover nearby Bluetooth devices and display their information
+        Monitor Mode    Track a specific device and trigger alerts on distance changes
+        Service Mode    Run as a background daemon with service management
 
         EXAMPLES:
-        Discover devices (recommended for macOS):
+        Discover nearby devices (recommended for macOS):
             $ python3 main.py --scanner 10 -m
+
+        Quick scan with default 15 seconds:
+            $ python3 main.py --scanner
 
         Monitor device in foreground with verbose output:
             $ python3 main.py --target-mac -v
 
+        Monitor specific device by MAC address:
+            $ python3 main.py --target-mac "AA:BB:CC:DD:EE:FF" -m -v
+
+        Monitor device by UUID (macOS privacy mode):
+            $ python3 main.py --target-uuid "XXXXXXXX-XXXX-XXXX-XXXX-XXXXXXXXXXXX"
+
         Start monitoring as background service with file logging:
             $ python3 main.py --target-mac -v -f --start
+
+        Check background service status:
             $ python3 main.py --status
+
+        Stop background service:
             $ python3 main.py --stop
 
-        Monitor specific device by MAC address:
-            $ python3 main.py --target-mac "XX:XX:XX:XX:XX:XX" -m -v
+        Restart background service:
+            $ python3 main.py --restart
+
+        COMMAND-LINE OPTIONS:
+        Service Control:
+          --start               Start 🥐 B.R.I.O.S. as background daemon
+          --stop                Stop background daemon
+          --restart             Restart background daemon
+          --status              Show daemon status and statistics
+
+        Operating Modes:
+          --scanner, -s [SEC]   Discover devices (default: 15s, range: 5-60s)
+          --target-mac, -tm     Monitor by MAC address (recommended)
+          --target-uuid, -tu    Monitor by UUID (macOS privacy mode)
+
+        Options:
+          --macos-use-bdaddr, -m    Use real MAC addresses on macOS (recommended)
+          --verbose, -v             Show detailed RSSI and distance output
+          --file-logging, -f        Enable logging to .ble_monitor.log
+
+        CONFIGURATION:
+        Edit the .env file to customize:
+        • TARGET_DEVICE_MAC_ADDRESS    MAC address of your device
+        • TARGET_DEVICE_UUID_ADDRESS   UUID address (for macOS)
+        • TARGET_DEVICE_NAME           Friendly name for your device
+        • TARGET_DEVICE_TYPE           Device type (e.g., "phone", "watch")
+        • DISTANCE_THRESHOLD_M         Alert distance in meters (default: 2.0)
+        • TX_POWER_AT_1M               RSSI at 1 meter (default: -59 dBm)
+        • PATH_LOSS_EXPONENT           Environment factor (default: 2.8)
+        • SAMPLE_WINDOW                Signal smoothing samples (default: 12)
 
         NOTES:
         • On macOS, use -m flag to see real MAC addresses instead of UUIDs
         • Use -f flag to enable logging to .ble_monitor.log in project directory
-        • Use -v flag for verbose RSSI/distance output
-        • Default distance threshold is 2.0 meters
-        • Requires Bluetooth to be enabled
+        • Use -v flag for verbose RSSI/distance output in terminal
+        • Background service (--start) automatically enables file logging
+        • Bluetooth must be enabled on your Mac
+        • Requires macOS 10.15 (Catalina) or later
+        • Python 3.8+ required
+
+        FILES:
+        .env                  Configuration file with device settings
+        .ble_monitor.pid      Process ID file for background service
+        .ble_monitor.log      Log file (when file logging is enabled)
 
         For more information, visit: https://github.com/Piero24/Bleissant
         """
         parser = argparse.ArgumentParser(
             description=(
-                "🥐 B.R.I.O.S. - Bluetooth Reactive Intelligent Operator for "
-                "Croissant Safety\n Device proximity monitor with "
-                "distance-based alerting"
+                f"{__app_name__} - {__app_full_name__}\n"
+                "Device proximity monitor with distance-based alerting"
             ),
             formatter_class=argparse.RawTextHelpFormatter,
             epilog=help_epilog,
+        )
+
+        # --- Version ---
+        parser.add_argument(
+            "--version",
+            action="version",
+            version=f"{__app_name__} v{__version__}",
+            help="show program's version number and exit",
         )
 
         # --- Service Control Group ---

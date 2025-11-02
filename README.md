@@ -7,6 +7,9 @@
 <p align="center">
   <strong>🥐 Bluetooth Reactive Intelligent Operator for Croissant Safety</strong>
   <br/>
+  <sub>Version 1.0.0</sub>
+  <br/>
+  <br/>
   Enterprise-grade proximity monitoring for macOS security automation
   <br/>
   Automatically lock your Mac when your iPhone, Apple Watch, or device moves out of range
