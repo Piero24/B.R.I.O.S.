@@ -1,0 +1,56 @@
+name: CI — Python 3.12 Tests
+
+# This workflow runs the project's test suite on Python 3.12.6.
+# Rationale and goals:
+# - Use a single, explicit Python interpreter version (3.12.6) so
+#   formatting/behavior are consistent with your local environment.
+# - Install project dependencies from `requirements.txt` so `python-dotenv`
+#   and other pinned packages are available during test runs.
+# - Run pytest and surface failures in a clear way.
+# - Keep the workflow small and easy to understand.
+
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
+
+jobs:
+  test:
+    name: Run tests (Python 3.12.6)
+    runs-on: ubuntu-latest
+
+    steps:
+      # 1) Checkout the repository so the runner has the source files.
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      # 2) Use a specific Python version: 3.12.6.
+      #    This guarantees the runner's interpreter matches your requested
+      #    local environment (and the pyink/black compiled output you saw).
+      - name: Set up Python 3.12.6
+        uses: actions/setup-python@v5
+        with:
+          # python-version: ["3.8", "3.9", "3.10"]
+          python-version: '3.12.6'
+
+      # 3) Cache pip packages between builds to speed up the job.
+      - name: Cache pip
+        uses: actions/cache@v4
+        with:
+          path: ~/.cache/pip
+          key: ${{ runner.os }}-pip-${{ hashFiles('**/requirements.txt') }}
+          restore-keys: |
+            ${{ runner.os }}-pip-
+
+      # 4) Install dependencies from requirements.txt so pinned versions
+      #    (including python-dotenv) are honored.
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          if [ -f requirements.txt ]; then pip install -r requirements.txt; fi
+
+      # 5) Run the test suite with pytest. We pass -q for compact output in CI.
+      - name: Run tests with pytest
+        run: |
+          pytest -q
