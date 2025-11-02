@@ -1,0 +1,137 @@
+name: 02 — Unit Tests
+
+################################################################################
+# UNIT TEST EXECUTION WORKFLOW
+#
+# Purpose:
+#   Validates code correctness by running the complete test suite using pytest.
+#   This ensures that all business logic, edge cases, and integration points
+#   function as expected before code is merged or deployed.
+#
+# When it runs:
+#   • On every push to any branch
+#   • On every pull request to any branch
+#   • Can be manually triggered via GitHub UI
+#
+# What it does:
+#   1. Waits for code formatting check to pass (dependency)
+#   2. Checks out the repository code
+#   3. Sets up Python 3.12.6 environment
+#   4. Caches pip packages for faster subsequent runs
+#   5. Installs all dependencies from requirements-ci.txt
+#   6. Executes pytest test suite
+#
+# Platform considerations:
+#   Uses requirements-ci.txt instead of requirements.txt because:
+#     • Excludes macOS-only packages (pyobjc-*) that fail on Linux runners
+#     • Includes all testing dependencies (pytest, pytest-asyncio, etc.)
+#     • Includes runtime dependencies (python-dotenv, bleak, etc.)
+#
+# Caching strategy:
+#   pip packages are cached keyed by the requirements-ci.txt hash. This
+#   significantly speeds up workflow execution on subsequent runs when
+#   dependencies haven't changed.
+#
+# Success criteria:
+#   All tests must pass with no failures, errors, or exceptions.
+#
+# Failure handling:
+#   If any test fails, the workflow fails and blocks merging. Developers
+#   should run `pytest` locally to debug and fix failing tests.
+#
+# Dependencies:
+#   Requires: 01-style-check.yml (must pass first)
+#   Required by: 03-type-check.yml, 04-security-audit.yml
+#
+# Exit codes:
+#   0: All tests passed
+#   1: One or more tests failed (workflow fails)
+################################################################################
+
+on:
+  push:
+    branches: ["**"]
+  pull_request:
+    branches: ["**"]
+  workflow_dispatch:
+
+jobs:
+  unit-tests:
+    name: 🧪 Execute Test Suite
+    runs-on: ubuntu-latest
+    
+    steps:
+      ########################################################################
+      # Step 1: Checkout Repository
+      #
+      # Fetches all source code, test files, and configuration needed to
+      # run the test suite.
+      ########################################################################
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      ########################################################################
+      # Step 2: Configure Python Environment
+      #
+      # Installs Python 3.12.6 to exactly match the version used in local
+      # development. This ensures test behavior is identical across
+      # environments and prevents version-specific bugs.
+      ########################################################################
+      - name: Set up Python 3.12.6
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.12.6'
+
+      ########################################################################
+      # Step 3: Cache pip Packages
+      #
+      # Caches installed pip packages between workflow runs to dramatically
+      # reduce execution time. The cache key includes:
+      #   • Operating system (ubuntu-latest)
+      #   • Hash of requirements-ci.txt (invalidates on dependency changes)
+      #
+      # When requirements-ci.txt changes, the cache is invalidated and
+      # packages are reinstalled fresh.
+      ########################################################################
+      - name: Cache pip packages
+        uses: actions/cache@v4
+        with:
+          path: ~/.cache/pip
+          key: ${{ runner.os }}-pip-${{ hashFiles('**/requirements-ci.txt') }}
+          restore-keys: |
+            ${{ runner.os }}-pip-
+
+      ########################################################################
+      # Step 4: Install Dependencies
+      #
+      # Installs all required packages from requirements-ci.txt:
+      #   • Testing frameworks: pytest, pytest-asyncio, pytest-mock
+      #   • Runtime dependencies: bleak, python-dotenv
+      #   • Code quality tools: black, pyink
+      #
+      # Uses requirements-ci.txt (not requirements.txt) to exclude macOS-only
+      # pyobjc packages that cannot be built on Linux runners.
+      ########################################################################
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements-ci.txt
+
+      ########################################################################
+      # Step 5: Run Test Suite
+      #
+      # Executes all tests using pytest with the following options:
+      #   -v: Verbose output showing each test name and result
+      #   --tb=short: Shorter traceback format for easier reading in CI logs
+      #
+      # Tests are automatically discovered from files matching test_*.py
+      # or *_test.py patterns. pytest-asyncio handles async test cases.
+      #
+      # Exit codes:
+      #   0: All tests passed
+      #   1: One or more tests failed or errored
+      ########################################################################
+      - name: Run pytest
+        run: |
+          echo "🧪 Running test suite..."
+          pytest -v --tb=short

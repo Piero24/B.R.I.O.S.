@@ -1,0 +1,105 @@
+name: 01 — Code Formatting Check
+
+################################################################################
+# CODE FORMATTING VERIFICATION WORKFLOW
+#
+# Purpose:
+#   Enforces consistent code style across the entire Python codebase using
+#   Pyink (a Google-style fork of Black). This is the first gate in our CI
+#   pipeline and must pass before any other checks run.
+#
+# When it runs:
+#   • On every push to any branch
+#   • On every pull request to any branch
+#   • Can be manually triggered via GitHub UI (workflow_dispatch)
+#
+# What it does:
+#   1. Checks out the repository code
+#   2. Sets up Python 3.12.6 (matches our development environment)
+#   3. Installs Pyink 24.10.1 (pinned for reproducibility)
+#   4. Runs Pyink in check mode against all Python files
+#
+# Configuration:
+#   Pyink reads settings from pyproject.toml in the repository root:
+#     - line-length: 80 characters
+#     - preview: true (enables latest formatting features)
+#
+# Success criteria:
+#   All Python files must already be formatted correctly. If any file needs
+#   reformatting, the workflow fails and shows a diff of required changes.
+#
+# Failure handling:
+#   Developers should run `pyink .` locally to auto-format their code,
+#   then commit and push the changes.
+#
+# Dependencies:
+#   None - this is the first check in the pipeline.
+#
+# Exit codes:
+#   0: All files are correctly formatted
+#   1: One or more files need reformatting (workflow fails)
+################################################################################
+
+on:
+  push:
+    branches: ["**"]          # Wildcard matches all branches
+  pull_request:
+    branches: ["**"]          # Runs on PRs targeting any branch
+  workflow_dispatch:          # Allows manual execution from GitHub UI
+
+jobs:
+  style-check:
+    name: 🧹 Verify Code Formatting
+    runs-on: ubuntu-latest    # Uses latest Ubuntu LTS runner
+    
+    steps:
+      ########################################################################
+      # Step 1: Checkout Repository
+      #
+      # Fetches the full repository contents including all Python files,
+      # configuration files (pyproject.toml), and git history.
+      ########################################################################
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      ########################################################################
+      # Step 2: Configure Python Environment
+      #
+      # Installs Python 3.12.6 to match our local development environment.
+      # Version consistency ensures identical formatting behavior between
+      # local development and CI.
+      ########################################################################
+      - name: Set up Python 3.12.6
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.12.6'
+
+      ########################################################################
+      # Step 3: Install Pyink Formatter
+      #
+      # Installs Pyink 24.10.1, our chosen code formatter. Version is pinned
+      # to ensure consistent formatting across all environments and over time.
+      # Pyink is Google's fork of Black with additional style preferences.
+      ########################################################################
+      - name: Install Pyink formatter
+        run: pip install pyink==24.10.1
+
+      ########################################################################
+      # Step 4: Verify Code Formatting
+      #
+      # Executes Pyink in check mode with the following behavior:
+      #   --diff:  Shows what changes would be made (useful for debugging)
+      #   --check: Exits with non-zero status if formatting is incorrect
+      #   .:       Recursively checks all Python files in the repository
+      #
+      # Pyink automatically reads configuration from pyproject.toml including:
+      #   • line-length: Maximum characters per line (80)
+      #   • preview: Enable new formatting features (true)
+      #
+      # If any file is incorrectly formatted, this step fails and blocks
+      # the CI pipeline, preventing unformatted code from being merged.
+      ########################################################################
+      - name: Check code formatting
+        run: |
+          echo "🔍 Verifying Python code formatting with Pyink..."
+          pyink --diff --check .

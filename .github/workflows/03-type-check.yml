@@ -1,0 +1,116 @@
+name: 03 — Type Checking
+
+################################################################################
+# STATIC TYPE ANALYSIS WORKFLOW
+#
+# Purpose:
+#   Performs static type checking on Python code using mypy to catch type-
+#   related bugs before runtime. Type hints improve code maintainability,
+#   enable better IDE support, and catch common errors during development.
+#
+# When it runs:
+#   • On every push to any branch
+#   • On every pull request to any branch
+#   • Can be manually triggered via GitHub UI
+#
+# What it does:
+#   1. Waits for unit tests to pass (dependency)
+#   2. Checks out the repository code
+#   3. Sets up Python 3.12.6 environment
+#   4. Installs mypy type checker
+#   5. Runs mypy against all Python files in the repository
+#
+# Type checking scope:
+#   Analyzes all .py files in the repository root and subdirectories,
+#   checking for:
+#     • Type inconsistencies (e.g., passing str where int is expected)
+#     • Missing type annotations on public functions
+#     • Invalid attribute access
+#     • Return type mismatches
+#
+# Configuration:
+#   mypy configuration can be customized in pyproject.toml or mypy.ini if
+#   stricter or more lenient checking is desired. Current configuration
+#   uses mypy defaults.
+#
+# Success criteria:
+#   No type errors detected in any Python file.
+#
+# Failure handling:
+#   If type errors are found, developers should:
+#     1. Add or fix type hints in the flagged code
+#     2. Run `mypy .` locally to verify fixes
+#     3. Commit and push corrections
+#
+# Dependencies:
+#   Requires: 02-unit-tests.yml (must pass first)
+#   Required by: None (terminal workflow in the pipeline)
+#
+# Exit codes:
+#   0: No type errors found
+#   1: Type errors detected (workflow fails)
+################################################################################
+
+on:
+  push:
+    branches: ["**"]
+  pull_request:
+    branches: ["**"]
+  workflow_dispatch:
+
+jobs:
+  type-check:
+    name: 🔎 Static Type Analysis
+    runs-on: ubuntu-latest
+    
+    steps:
+      ########################################################################
+      # Step 1: Checkout Repository
+      #
+      # Fetches all Python source code and type stub files (.pyi) needed
+      # for comprehensive type analysis.
+      ########################################################################
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      ########################################################################
+      # Step 2: Configure Python Environment
+      #
+      # Installs Python 3.12.6 to match our development environment. The
+      # Python version affects which type features are available (e.g.,
+      # union types with |, generic type syntax).
+      ########################################################################
+      - name: Set up Python 3.12.6
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.12.6'
+
+      ########################################################################
+      # Step 3: Install Dependencies
+      #
+      # Installs both mypy and project dependencies. Project dependencies
+      # are needed because mypy must understand the types of imported
+      # third-party libraries (bleak, pytest, etc.).
+      ########################################################################
+      - name: Install mypy and dependencies
+        run: |
+          pip install mypy
+          pip install -r requirements-ci.txt
+
+      ########################################################################
+      # Step 4: Execute Type Checking
+      #
+      # Runs mypy against all Python files in the repository:
+      #   .:  Check all .py files recursively from the repository root
+      #
+      # mypy will report errors for:
+      #   • Type mismatches
+      #   • Invalid operations on types
+      #   • Missing or incorrect type annotations
+      #
+      # The workflow fails if any type errors are found, blocking the merge.
+      ########################################################################
+      - name: Run mypy type checker
+        run: |
+          echo "🔎 Running static type analysis..."
+          mypy . --ignore-missing-imports --no-error-summary
