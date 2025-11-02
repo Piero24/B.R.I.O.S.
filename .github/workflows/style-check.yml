@@ -58,7 +58,7 @@ jobs:
       - name: Install linting tools
         run: |
           pip install pyink pylint
-
+      
       ##################################################################
       # 4️⃣ Run Pyink in check mode
       #
@@ -78,5 +78,23 @@ jobs:
       #   run: |
       #     echo "🔍 Checking Pyink formatting..."
       #     pyink --line-length 80 --preview --diff .
+
+      ##################################################################
+      # 4️⃣ Run Pyink in check mode
+      #
+      # This checks if code is properly formatted without changing it.
+      #
+      # ▶ Command explanation:
+      #   pyink --diff --check .
+      #
+      #   --diff             → shows what would be changed (in diff form)
+      #   --check            → exits with error if reformatting is needed
+      #   .                  → target current directory recursively
+      #
+      # Pyink will read configuration from pyproject.toml automatically,
+      # including line-length=80 and preview=true.
+      #
+      # If files are not correctly formatted, this step fails.
+      ##################################################################
       - name: Check code formatting with Pyink
         run: pyink --diff --check .
