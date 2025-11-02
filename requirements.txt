@@ -1,7 +1,15 @@
 bleak==1.1.1
+iniconfig==2.3.0
+packaging==25.0
+pluggy==1.6.0
+Pygments==2.19.2
 pyobjc-core==12.0
 pyobjc-framework-Cocoa==12.0
 pyobjc-framework-CoreBluetooth==12.0
 pyobjc-framework-libdispatch==12.0
+pytest==8.4.2
+pytest-asyncio==1.2.0
+pytest-mock==3.15.1
 python-dotenv==1.2.1
 structlog==25.4.0
+typing_extensions==4.15.0
