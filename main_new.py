@@ -1,6 +1,5 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
-
 """A professional BLE monitoring tool for device tracking and proximity alerts.
 
 This script provides a command-line interface to scan for Bluetooth Low Energy
@@ -108,7 +107,7 @@ def _estimate_distance(rssi: float) -> float:
             as this is typically an invalid reading.
     """
     if rssi == 0: return -1.0
-    return 10 ** ((TX_POWER_AT_1M - rssi) / (10 * PATH_LOSS_EXPONENT))
+    return 10**((TX_POWER_AT_1M - rssi) / (10 * PATH_LOSS_EXPONENT))
 
 
 def _smooth_rssi(buffer: Deque[int]) -> float | None:
@@ -140,6 +139,7 @@ class ServiceManager:
     Attributes:
         args: The command-line arguments parsed into a Namespace object.
     """
+
     def __init__(self, args: argparse.Namespace) -> None:
         """Initializes the ServiceManager.
 
@@ -147,7 +147,6 @@ class ServiceManager:
             args (argparse.Namespace): The parsed command-line arguments.
         """
         self.args = args
-
 
     def _get_pid_status(self) -> tuple[int | None, bool]:
         """Checks for the PID file and determines if the process is running.
@@ -169,7 +168,7 @@ class ServiceManager:
         except (IOError, ValueError):
             # The PID file is corrupt or unreadable.
             return None, False
-        
+
         try:
             # A signal of 0 tests for the existence of the process without
             # affecting it.
@@ -178,7 +177,6 @@ class ServiceManager:
         except OSError:
             # The process does not exist.
             return pid, False
-
 
     def _reconstruct_command(self) -> list[str]:
         """Reconstructs the original command to relaunch the script as a daemon.
@@ -203,7 +201,7 @@ class ServiceManager:
                 command.extend(["--target-uuid", self.args.target_uuid])
         elif self.args.scanner is not None:
             command.extend(["--scanner", str(self.args.scanner)])
-        
+
         if self.args.macos_use_bdaddr:
             command.append("-m")
 
@@ -212,53 +210,47 @@ class ServiceManager:
 
         if self.args.file_logging:
             command.append("-f")
-        
+
         # The '--daemon' flag is an internal signal for the new process to
         # run in daemon mode.
         command.append('--daemon')
         return command
 
-
     def start(self) -> None:
         """Starts the monitor in the background."""
         pid, is_running = self._get_pid_status()
         if is_running:
-            print(
-                f"{Colors.YELLOW}!{Colors.RESET} Monitor is already "
-                f"running (PID {pid})"
-            )
+            print(f"{Colors.YELLOW}!{Colors.RESET} Monitor is already "
+                  f"running (PID {pid})")
             return
 
         command = self._reconstruct_command()
         target_address = Application.determine_target_address(self.args)
-        
+
         print(f"\n{Colors.BOLD}Starting Background Monitor{Colors.RESET}")
         print("─" * 50)
 
         if self.args.verbose:
             print(f"{Colors.BLUE}Command:{Colors.RESET} {' '.join(command)}")
             print("─" * 50)
-        
+
         if self.args.file_logging:
             with open(LOG_FILE, 'wb') as log:
-                subprocess.Popen(
-                    command, 
-                    stdout=log, 
-                    stderr=subprocess.STDOUT, 
-                    start_new_session=True, 
-                    env={**os.environ, 'PYTHONUNBUFFERED': '1'}
-                )
+                subprocess.Popen(command,
+                                 stdout=log,
+                                 stderr=subprocess.STDOUT,
+                                 start_new_session=True,
+                                 env={
+                                     **os.environ, 'PYTHONUNBUFFERED': '1'
+                                 })
         else:
-            subprocess.Popen(
-                command, 
-                stdout=subprocess.DEVNULL, 
-                stderr=subprocess.DEVNULL, 
-                start_new_session=True
-            )
-        
+            subprocess.Popen(command,
+                             stdout=subprocess.DEVNULL,
+                             stderr=subprocess.DEVNULL,
+                             start_new_session=True)
+
         time.sleep(0.5)
         self._print_start_status(target_address)
-
 
     def stop(self) -> None:
         """Stops the monitor if it is running."""
@@ -266,17 +258,16 @@ class ServiceManager:
 
         if not is_running:
             print(f"{Colors.YELLOW}●{Colors.RESET} Monitor is not running")
-            if os.path.exists(PID_FILE): 
+            if os.path.exists(PID_FILE):
                 os.remove(PID_FILE)
             return
-        
+
         print(f"Stopping monitor process (PID {pid})...")
 
         try:
             os.kill(pid, signal.SIGTERM)
             print(
-                f"{Colors.GREEN}✓{Colors.RESET} Monitor stopped successfully"
-            )
+                f"{Colors.GREEN}✓{Colors.RESET} Monitor stopped successfully")
         except OSError:
             print(
                 f"{Colors.YELLOW}!{Colors.RESET} Process {pid} already stopped"
@@ -286,14 +277,12 @@ class ServiceManager:
                 os.remove(PID_FILE)
             # if os.path.exists(LOG_FILE): os.remove(LOG_FILE)
 
-
     def restart(self) -> None:
         """Restarts the background monitor."""
         print(f"\n{Colors.BOLD}Restarting monitor...{Colors.RESET}")
         self.stop()
         time.sleep(1)
         self.start()
-
 
     def display_status(self) -> None:
         """Displays the current status of the background monitor."""
@@ -308,9 +297,9 @@ class ServiceManager:
 
             try:
                 result = subprocess.run(
-                    ['ps', '-p', str(pid), '-o', 'etime='], 
-                    capture_output=True, text=True
-                )
+                    ['ps', '-p', str(pid), '-o', 'etime='],
+                    capture_output=True,
+                    text=True)
 
                 if uptime := result.stdout.strip():
                     print(f"Uptime:     {uptime}")
@@ -340,7 +329,6 @@ class ServiceManager:
 
         print("─" * 50 + "\n")
 
-
     def _print_start_status(self, target_address: str | None) -> None:
         """Prints a detailed summary after a start attempt.
 
@@ -354,8 +342,8 @@ class ServiceManager:
             print(f"{Colors.RED}✗{Colors.RESET} Failed to start monitor")
             print(f"Log file:   {LOG_FILE}")
             print("─" * 50 + "\n")
-            return 
-        
+            return
+
         print(f"{Colors.GREEN}✓{Colors.RESET} Monitor started successfully")
         print(f"PID:        {pid}")
         print("─" * 50)
@@ -363,7 +351,7 @@ class ServiceManager:
 
         if target_address:
             print(f"Address:    {target_address}")
-        
+
         print(f"Threshold:  {DISTANCE_THRESHOLD_M}m")
         print(f"TX Power:   {TX_POWER_AT_1M} dBm @ 1m")
         print(f"Path Loss:  {PATH_LOSS_EXPONENT}")
@@ -383,10 +371,8 @@ class ServiceManager:
             print(f"Logging:    Disabled (use -f to enable)")
 
         print(f"\n{Colors.GREEN}●{Colors.RESET} Monitor running in background")
-        print(
-            f"\nUse `{sys.argv[0]} --status` to check status or "
-            f"`--stop` to terminate."
-        )
+        print(f"\nUse `{sys.argv[0]} --status` to check status or "
+              f"`--stop` to terminate.")
 
 
 # ==============================================================================
@@ -396,6 +382,7 @@ class DeviceScanner:
     """
     #TODO:
     """
+
     def __init__(self, duration: int, use_bdaddr: bool, verbose: bool) -> None:
         """Initializes the DeviceScanner.
 
@@ -408,36 +395,28 @@ class DeviceScanner:
         self.use_bdaddr = use_bdaddr
         self.verbose = verbose
 
-
     async def run(self) -> None:
         """Executes the device scan and prints formatted results."""
         self._print_summary()
         scanner_kwargs = {"cb": {"use_bdaddr": self.use_bdaddr}}
 
-        devices_and_adv = await BleakScanner.discover(
-            timeout=self.duration, 
-            return_adv=True, 
-            **scanner_kwargs
-        )
-        
+        devices_and_adv = await BleakScanner.discover(timeout=self.duration,
+                                                      return_adv=True,
+                                                      **scanner_kwargs)
+
         # TODO: Check if does the same and replace in case it does
         # devices = sorted(
         #     devices_and_adv.values(),
         #     key=lambda x: x[0].address
         # )
         device_items = devices_and_adv.items()
-        devices = [
-            (device, adv_data) for address, (device, adv_data) in device_items
-        ]
-        
-        devices.sort(
-            key=lambda x: x[0].address 
-            if hasattr(x[0], 'address') 
-            else str(x[0])
-        )
-        
-        self._print_results(devices)
+        devices = [(device, adv_data)
+                   for address, (device, adv_data) in device_items]
 
+        devices.sort(key=lambda x: x[0].address
+                     if hasattr(x[0], 'address') else str(x[0]))
+
+        self._print_results(devices)
 
     def _print_summary(self) -> None:
         """Prints a summary of the scanner configuration."""
@@ -445,26 +424,20 @@ class DeviceScanner:
         print("─" * 70)
         print(f"Duration:   {self.duration} seconds")
 
-        mode = (
-            "BD_ADDR (MAC addresses)" 
-            if self.use_bdaddr 
-            else "UUIDs (macOS privacy)"
-        )
+        mode = ("BD_ADDR (MAC addresses)"
+                if self.use_bdaddr else "UUIDs (macOS privacy)")
 
         print(f"Mode:       {mode}")
         print(f"Verbose:    Enabled (showing RSSI and distance estimates)")
         print(
             f"TX Power:   {TX_POWER_AT_1M} dBm @ 1m (for distance calculation)"
-            )
+        )
         print(f"Path Loss:  {PATH_LOSS_EXPONENT} (environmental factor)")
         print("─" * 70)
         print(f"\n{Colors.GREEN}●{Colors.RESET} Scanning...\n")
 
-        
     def _print_results(
-            self, 
-            devices: list[tuple[BLEDevice, AdvertisementData]]
-        ) -> None:
+            self, devices: list[tuple[BLEDevice, AdvertisementData]]) -> None:
         """Formats and prints the list of discovered devices.
 
         Args:
@@ -472,46 +445,35 @@ class DeviceScanner:
                 tuples containing BLEDevice instances and their corresponding
                 AdvertisementData.
         """
-        print(
-            f"\n{Colors.BOLD}Scan Results{Colors.RESET} ({len(devices)} "
-            f"device{'s' if len(devices) != 1 else ''} found)"
-        )
+        print(f"\n{Colors.BOLD}Scan Results{Colors.RESET} ({len(devices)} "
+              f"device{'s' if len(devices) != 1 else ''} found)")
         print("─" * 70)
-        
+
         if not devices:
             print(f"{Colors.YELLOW}No devices found{Colors.RESET}")
             return
 
         for i, (device, adv_data) in enumerate(devices, 1):
-            address = (
-                device.address 
-                if hasattr(device, 'address')
-                else str(device)
-            )
+            address = (device.address
+                       if hasattr(device, 'address') else str(device))
             device_name = device.name if hasattr(device, 'name') else None
-            name_display = (
-                device_name if device_name 
-                else f"{Colors.YELLOW}(Unknown){Colors.RESET}"
-            )
-            
+            name_display = (device_name if device_name else
+                            f"{Colors.YELLOW}(Unknown){Colors.RESET}")
+
             # Ensure proper alignment
             visible_length = len(device_name) if device_name else 9
             padding = 30 - visible_length
-            
+
             # Get RSSI and calculate distance
             rssi = adv_data.rssi if hasattr(adv_data, 'rssi') else -100
             distance = _estimate_distance(rssi)
-            signal_color = (
-                Colors.GREEN 
-                if rssi > -50 else Colors.YELLOW 
-                if rssi > -70 else Colors.RED
-            )
-            
+            signal_color = (Colors.GREEN if rssi > -50 else
+                            Colors.YELLOW if rssi > -70 else Colors.RED)
+
             print(
                 f"{i:2d}. {name_display}{' ' * padding} │ {address} │ "
                 f"{signal_color}{rssi:4d} dBm{Colors.RESET} │ ~{distance:5.2f}m"
             )
-
 
 
 # ==============================================================================
@@ -533,12 +495,9 @@ class DeviceMonitor:
         log_file (TextIO | None): The file object for logging output, if any.
         scanner (BleakScanner): The Bleak scanner instance for BLE scanning.
     """
-    def __init__(
-        self, 
-        target_address: str, 
-        use_bdaddr: bool, 
-        flags: Flags
-    ) -> None:
+
+    def __init__(self, target_address: str, use_bdaddr: bool,
+                 flags: Flags) -> None:
         """Initializes the DeviceMonitor.
         Args:
             target_address (str): The MAC or UUID address of the target device.
@@ -560,17 +519,15 @@ class DeviceMonitor:
         self.log_file: TextIO | None = None
 
         self.scanner = BleakScanner(
-            detection_callback=self._detection_callback, 
-            cb={"use_bdaddr": self.use_bdaddr}
-        )
-    
+            detection_callback=self._detection_callback,
+            cb={"use_bdaddr": self.use_bdaddr})
 
     def _print_start_status(self) -> None:
         """
         """
         if self.flags.daemon_mode:
             return
-        
+
         print(f"\n{Colors.BOLD}Starting BLE Monitor{Colors.RESET}")
         print("─" * 50)
         print(f"Target:     {TARGET_DEVICE_NAME} ({TARGET_DEVICE_TYPE})")
@@ -579,10 +536,10 @@ class DeviceMonitor:
         print(f"TX Power:   {TX_POWER_AT_1M} dBm @ 1m")
         print(f"Path Loss:  {PATH_LOSS_EXPONENT}")
         print(f"Samples:    {SAMPLE_WINDOW} readings")
-        if self.use_bdaddr: 
+        if self.use_bdaddr:
             print(f"Mode:       {Colors.BLUE}BD_ADDR (MAC){Colors.RESET}")
         print("─" * 50)
-        
+
         if self.flags.verbose and self.flags.file_logging:
             print(f"Output:     {Colors.GREEN}Terminal + File{Colors.RESET}")
             print(f"Log file:   {LOG_FILE}")
@@ -591,18 +548,12 @@ class DeviceMonitor:
         elif self.flags.file_logging:
             print(f"Output:     {Colors.GREEN}File only{Colors.RESET}")
             print(f"Log file:   {LOG_FILE}")
-        
-        print(
-            f"\n{Colors.GREEN}●{Colors.RESET} Monitoring active - "
-            f"Press Ctrl+C to stop\n"
-        )
 
+        print(f"\n{Colors.GREEN}●{Colors.RESET} Monitoring active - "
+              f"Press Ctrl+C to stop\n")
 
-    def _detection_callback(
-        self, 
-        device: BLEDevice, 
-        adv_data: AdvertisementData
-    ) -> None:
+    def _detection_callback(self, device: BLEDevice,
+                            adv_data: AdvertisementData) -> None:
         """Processes incoming BLE advertisements.
 
         This is the core callback function for the BleakScanner. It filters for
@@ -637,11 +588,8 @@ class DeviceMonitor:
         elif distance_m <= DISTANCE_THRESHOLD_M and self.alert_triggered:
             self._trigger_in_range_alert(distance_m)
 
-
     def _process_signal(
-        self, 
-        current_rssi: int
-    ) -> tuple[float | None, float | None]:
+            self, current_rssi: int) -> tuple[float | None, float | None]:
         """Updates the RSSI buffer and calculates the smoothed distance.
 
         Args:
@@ -655,21 +603,16 @@ class DeviceMonitor:
         self.rssi_buffer.append(current_rssi)
         if len(self.rssi_buffer) < SAMPLE_WINDOW:
             return None, None
-        
+
         smoothed_rssi = _smooth_rssi(self.rssi_buffer)
         if smoothed_rssi is None:
             return None, None
-        
+
         distance_m = _estimate_distance(smoothed_rssi)
         return smoothed_rssi, distance_m
 
-
-    def _log_status(
-        self, 
-        current_rssi: int, 
-        smoothed_rssi: float, 
-        distance_m: float
-    ) -> None:
+    def _log_status(self, current_rssi: int, smoothed_rssi: float,
+                    distance_m: float) -> None:
         """Logs the current status to console and/or file.
 
         Args:
@@ -678,44 +621,36 @@ class DeviceMonitor:
             distance_m (float): The estimated distance in meters.
         """
         timestamp = datetime.now().strftime("%H:%M:%S")
-        
+
         if not self.flags.verbose and not self.flags.file_logging:
             return
-        
-        log_message = (
-            f"[{timestamp}] RSSI: {current_rssi:4d} dBm → "
-            f"Smoothed: {smoothed_rssi:5.1f} dBm │ "
-            f"Distance: {distance_m:5.2f}m"
-        )
-        
+
+        log_message = (f"[{timestamp}] RSSI: {current_rssi:4d} dBm → "
+                       f"Smoothed: {smoothed_rssi:5.1f} dBm │ "
+                       f"Distance: {distance_m:5.2f}m")
+
         if self.flags.daemon_mode:
             if self.flags.file_logging:
                 print(log_message)
                 sys.stdout.flush()
         else:
             if self.flags.verbose:
-                signal_strength = (
-                    "Strong" if smoothed_rssi > -50 else "Medium" 
-                    if smoothed_rssi > -70 else "Weak"
-                )
+                signal_strength = ("Strong" if smoothed_rssi > -50 else
+                                   "Medium" if smoothed_rssi > -70 else "Weak")
                 signal_color = (
-                    Colors.GREEN 
-                    if smoothed_rssi > -50 else Colors.YELLOW 
-                    if smoothed_rssi > -70 else Colors.RED
-                )
+                    Colors.GREEN if smoothed_rssi > -50 else
+                    Colors.YELLOW if smoothed_rssi > -70 else Colors.RED)
                 print(
                     f"{Colors.BLUE}[{timestamp}]{Colors.RESET} "
                     f"RSSI: {current_rssi:4d} dBm → "
                     f"Smoothed: {smoothed_rssi:5.1f} dBm │ "
                     f"Distance: {Colors.BOLD}{distance_m:5.2f}m{Colors.RESET} │ "
-                    f"Signal: {signal_color}{signal_strength}{Colors.RESET}"
-                )
-            
+                    f"Signal: {signal_color}{signal_strength}{Colors.RESET}")
+
             if self.flags.file_logging and self.log_file:
                 self.log_file.write(log_message + "\n")
                 self.log_file.flush()
 
-    
     def _lock_macbook(self) -> str:
         """Executes system commands to immediately lock the macOS screen.
 
@@ -725,25 +660,27 @@ class DeviceMonitor:
         try:
             # First, ensure password is required immediately after sleep
             subprocess.run([
-                'defaults', 'write', 'com.apple.screensaver', 
-                'askForPassword', '-int', '1'
-            ], check=True, capture_output=True)
+                'defaults', 'write', 'com.apple.screensaver', 'askForPassword',
+                '-int', '1'
+            ],
+                           check=True,
+                           capture_output=True)
 
             subprocess.run([
-                'defaults', 'write', 'com.apple.screensaver', 
+                'defaults', 'write', 'com.apple.screensaver',
                 'askForPasswordDelay', '-int', '0'
-            ], check=True, capture_output=True)
-            
+            ],
+                           check=True,
+                           capture_output=True)
+
             # Now lock the screen by putting display to sleep
-            subprocess.run(
-                ['pmset', 'displaysleepnow'], 
-                check=True, capture_output=True
-            )
+            subprocess.run(['pmset', 'displaysleepnow'],
+                           check=True,
+                           capture_output=True)
             return "🔒 MacBook locked (password required)"
-        
+
         except Exception as e:
             return f"⚠️  Failed to lock MacBook: {e}"
-    
 
     def _trigger_out_of_range_alert(self, distance_m: float) -> None:
         """Handles the out-of-range alert logic.
@@ -754,33 +691,28 @@ class DeviceMonitor:
         timestamp = datetime.now().strftime("%H:%M:%S")
 
         lock_status = self._lock_macbook()
-        alert_msg = (
-            f"⚠️  ALERT: Device '{TARGET_DEVICE_NAME}' is far away! "
-            f"(~{distance_m:.2f} m) - {lock_status}"
-        )
-        
+        alert_msg = (f"⚠️  ALERT: Device '{TARGET_DEVICE_NAME}' is far away! "
+                     f"(~{distance_m:.2f} m) - {lock_status}")
+
         if self.flags.daemon_mode:
             print(alert_msg)
             sys.stdout.flush()
 
         else:
-            print(
-                f"\n{Colors.RED}{'─' * 50}{Colors.RESET}\n"
-                f"{Colors.RED}⚠{Colors.RESET}  {Colors.BOLD}"
-                f"ALERT: Device moved out of range{Colors.RESET}\n"
-                f"   Device:    {TARGET_DEVICE_NAME}\n"
-                f"   Distance:  ~{distance_m:.2f}m "
-                f"(threshold: {DISTANCE_THRESHOLD_M}m)\n"
-                f"   Time:      {timestamp}\n"
-                f"   Action:    {lock_status}\n"
-                f"{Colors.RED}{'─' * 50}{Colors.RESET}\n"
-            )
+            print(f"\n{Colors.RED}{'─' * 50}{Colors.RESET}\n"
+                  f"{Colors.RED}⚠{Colors.RESET}  {Colors.BOLD}"
+                  f"ALERT: Device moved out of range{Colors.RESET}\n"
+                  f"   Device:    {TARGET_DEVICE_NAME}\n"
+                  f"   Distance:  ~{distance_m:.2f}m "
+                  f"(threshold: {DISTANCE_THRESHOLD_M}m)\n"
+                  f"   Time:      {timestamp}\n"
+                  f"   Action:    {lock_status}\n"
+                  f"{Colors.RED}{'─' * 50}{Colors.RESET}\n")
             # Write to log file if enabled
             if self.flags.file_logging and self.log_file:
                 self.log_file.write(f"[{timestamp}] {alert_msg}\n")
                 self.log_file.flush()
         self.alert_triggered = True
-
 
     def _trigger_in_range_alert(self, distance_m: float) -> None:
         """Handles the back-in-range alert logic.
@@ -792,32 +724,28 @@ class DeviceMonitor:
 
         back_msg_plain = (
             f"STATUS: Device '{TARGET_DEVICE_NAME}' is back in range. "
-            f"(~{distance_m:.2f} m)"
-        )
+            f"(~{distance_m:.2f} m)")
 
         if self.flags.daemon_mode:
             print(f"[{timestamp}] {back_msg_plain}")
             sys.stdout.flush()
 
         else:
-            back_msg_rich = (
-                f"\n{Colors.GREEN}{'─' * 60}{Colors.RESET}\n"
-                f"{Colors.GREEN}✓{Colors.RESET}  {Colors.BOLD}"
-                f"Device Back in Range{Colors.RESET}\n"
-                f"   Device:    {TARGET_DEVICE_NAME}\n"
-                f"   Distance:  ~{distance_m:.2f}m "
-                f"(Threshold: {DISTANCE_THRESHOLD_M}m)\n"
-                f"   Time:      {timestamp}\n"
-                f"   Status:    🔓 Ready to unlock MacBook\n"
-                f"{Colors.GREEN}{'─' * 60}{Colors.RESET}\n"
-            )
+            back_msg_rich = (f"\n{Colors.GREEN}{'─' * 60}{Colors.RESET}\n"
+                             f"{Colors.GREEN}✓{Colors.RESET}  {Colors.BOLD}"
+                             f"Device Back in Range{Colors.RESET}\n"
+                             f"   Device:    {TARGET_DEVICE_NAME}\n"
+                             f"   Distance:  ~{distance_m:.2f}m "
+                             f"(Threshold: {DISTANCE_THRESHOLD_M}m)\n"
+                             f"   Time:      {timestamp}\n"
+                             f"   Status:    🔓 Ready to unlock MacBook\n"
+                             f"{Colors.GREEN}{'─' * 60}{Colors.RESET}\n")
             print(back_msg_rich)
 
             if self.flags.file_logging and self.log_file:
                 self.log_file.write(f"[{timestamp}] {back_msg_plain}\n")
                 self.log_file.flush()
         self.alert_triggered = False
-
 
     def _handle_bleak_error(self) -> None:
         """Handles the specific AttributeError for malformed packets.
@@ -828,22 +756,17 @@ class DeviceMonitor:
             f"DEBUG: Malformed Packet Ignored{Colors.RESET}\n{Colors.GREY}   "
             f"└─> Cause: This is expected when the host Mac is locked or "
             f"sleeping.{Colors.RESET}\n{Colors.YELLOW}{'─' * 60}"
-            f"{Colors.RESET}\n"
-        )
-
+            f"{Colors.RESET}\n")
 
     def _handle_generic_error(self, e: Exception) -> None:
         """Handles unexpected exceptions in the callback. 
             Catch any other unexpected errors to keep the scanner alive.
         """
-        print(
-            f"\n{Colors.RED}{'─' * 60}{Colors.RESET}\n{Colors.RED}CRITICAL: "
-            f"Unexpected Callback Error{Colors.RESET}\n{Colors.GREY}   "
-            f"An error was caught, but the scanner will continue to run."
-            f"{Colors.RESET}\n   └─> {Colors.BOLD}Error Details:"
-            f"{Colors.RESET} {e}\n{Colors.RED}{'─' * 60}{Colors.RESET}\n"
-        )
-    
+        print(f"\n{Colors.RED}{'─' * 60}{Colors.RESET}\n{Colors.RED}CRITICAL: "
+              f"Unexpected Callback Error{Colors.RESET}\n{Colors.GREY}   "
+              f"An error was caught, but the scanner will continue to run."
+              f"{Colors.RESET}\n   └─> {Colors.BOLD}Error Details:"
+              f"{Colors.RESET} {e}\n{Colors.RED}{'─' * 60}{Colors.RESET}\n")
 
     def _setup_logging(self) -> None:
         """Sets up file logging if enabled in the flags."""
@@ -851,18 +774,15 @@ class DeviceMonitor:
             try:
                 self.log_file = open(LOG_FILE, "a")
             except IOError as e:
-                print(
-                    f"{Colors.YELLOW}Warning:{Colors.RESET} "
-                    f"Could not open log file: {e}"
-                )
+                print(f"{Colors.YELLOW}Warning:{Colors.RESET} "
+                      f"Could not open log file: {e}")
                 self.flags.file_logging = False
-
 
     async def run(self) -> None:
         """Starts the monitoring session."""
         self._setup_logging()
         self._print_start_status()
-        
+
         try:
             await self.scanner.start()
             while True:
@@ -873,22 +793,20 @@ class DeviceMonitor:
                 # In a real daemon, you'd write to the log file here
                 sys.exit(f"DAEMON ERROR: Failed to start scanner: {e}")
             else:
-                print(
-                    f"\n{Colors.RED}✗{Colors.RESET} {Colors.BOLD}"
-                    f"Error:{Colors.RESET} Failed to start the scanner.\n"
-                    f"  Please ensure your Bluetooth adapter is enabled.\n"
-                    f"  Details: {e}\n"
-                )
+                print(f"\n{Colors.RED}✗{Colors.RESET} {Colors.BOLD}"
+                      f"Error:{Colors.RESET} Failed to start the scanner.\n"
+                      f"  Please ensure your Bluetooth adapter is enabled.\n"
+                      f"  Details: {e}\n")
         finally:
             # Graceful shutdown
-            if self.flags.verbose and not self.flags.daemon_mode: 
+            if self.flags.verbose and not self.flags.daemon_mode:
                 print(f"\n{Colors.YELLOW}Stopping scanner...{Colors.RESET}")
-            
+
             await self.scanner.stop()
-            
+
             if self.log_file:
                 self.log_file.close()
-            
+
             if not self.flags.daemon_mode:
                 print(f"{Colors.GREEN}✓{Colors.RESET} Monitoring stopped.\n")
 
@@ -908,6 +826,7 @@ class Application:
         service_manager: An instance of ServiceManager for handling 
             daemon tasks.
     """
+
     def __init__(self, args: argparse.Namespace) -> None:
         """Initializes the Application.
 
@@ -916,7 +835,6 @@ class Application:
         """
         self.args = args
         self.service_manager = ServiceManager(args)
-
 
     async def run(self) -> None:
         """Parses arguments and delegates tasks to the appropriate component."""
@@ -929,15 +847,12 @@ class Application:
         elif self.args.start:
             self.service_manager.start()
         elif self.args.scanner is not None:
-            scanner = DeviceScanner(
-                self.args.scanner, 
-                self.args.macos_use_bdaddr, 
-                self.args.verbose
-            )
+            scanner = DeviceScanner(self.args.scanner,
+                                    self.args.macos_use_bdaddr,
+                                    self.args.verbose)
             await scanner.run()
         else:
             await self._run_monitor_foreground()
-
 
     async def _run_monitor_foreground(self) -> None:
         """Configures and runs the device monitor in the foreground."""
@@ -947,20 +862,17 @@ class Application:
             print(f"Run '{sys.argv[0]} --help' for usage information")
             return
 
-        flags = Flags(
-            daemon_mode=self.args.daemon,
-            file_logging=self.args.file_logging,
-            verbose=self.args.verbose
-        )
+        flags = Flags(daemon_mode=self.args.daemon,
+                      file_logging=self.args.file_logging,
+                      verbose=self.args.verbose)
         use_bdaddr = self.args.macos_use_bdaddr or bool(self.args.target_mac)
-        
+
         monitor = DeviceMonitor(target_address, use_bdaddr, flags)
         try:
             await monitor.run()
         finally:
             if flags.daemon_mode and os.path.exists(PID_FILE):
                 os.remove(PID_FILE)
-
 
     @staticmethod
     def determine_target_address(args: argparse.Namespace) -> str | None:
@@ -973,17 +885,12 @@ class Application:
             str | None: The target address or None if not specified.
         """
         if args.target_mac:
-            return (
-                TARGET_DEVICE_MAC_ADDRESS 
-                if args.target_mac == "USE_DEFAULT" else args.target_mac
-            )
+            return (TARGET_DEVICE_MAC_ADDRESS
+                    if args.target_mac == "USE_DEFAULT" else args.target_mac)
         if args.target_uuid:
-            return (
-                TARGET_DEVICE_UUID_ADDRESS 
-                if args.target_uuid == "USE_DEFAULT" else args.target_uuid
-            )
+            return (TARGET_DEVICE_UUID_ADDRESS
+                    if args.target_uuid == "USE_DEFAULT" else args.target_uuid)
         return None
-
 
     @staticmethod
     def setup_parser() -> argparse.ArgumentParser:
@@ -1028,83 +935,75 @@ class Application:
         """
         parser = argparse.ArgumentParser(
             description=(
-                "BLE device proximity monitor with distance-based alerting"
-            ),
+                "BLE device proximity monitor with distance-based alerting"),
             formatter_class=argparse.RawTextHelpFormatter,
-            epilog=help_epilog
-        )
-
+            epilog=help_epilog)
 
         # --- Service Control Group ---
         service_group = parser.add_argument_group("Service Control")
         service_exclusive = service_group.add_mutually_exclusive_group()
         service_exclusive.add_argument(
-            "--start", 
-            action="store_true", 
-            help="start monitor as background daemon"
-        )
+            "--start",
+            action="store_true",
+            help="start monitor as background daemon")
+        service_exclusive.add_argument("--stop",
+                                       action="store_true",
+                                       help="stop background daemon")
+        service_exclusive.add_argument("--restart",
+                                       action="store_true",
+                                       help="restart background daemon")
         service_exclusive.add_argument(
-            "--stop", 
-            action="store_true", 
-            help="stop background daemon"
-        )
-        service_exclusive.add_argument(
-            "--restart", 
-            action="store_true", 
-            help="restart background daemon"
-        )
-        service_exclusive.add_argument(
-            "--status", 
-            action="store_true", 
-            help="show daemon status and statistics"
-        )
-        
+            "--status",
+            action="store_true",
+            help="show daemon status and statistics")
+
         # --- Operating Modes ---
         mode_group = parser.add_argument_group("Operating Modes")
-        mode_exclusive = mode_group.add_mutually_exclusive_group(required=False)
+        mode_exclusive = mode_group.add_mutually_exclusive_group(
+            required=False)
 
         mode_exclusive.add_argument(
-            "--scanner", "-s",
+            "--scanner",
+            "-s",
             nargs="?",
             const=15,
             type=int,
             metavar="SECONDS",
-            help="discover nearby BLE devices (default: 15s, range: 5-60s)"
-        )
+            help="discover nearby BLE devices (default: 15s, range: 5-60s)")
         mode_exclusive.add_argument(
-            "--target-mac", "-tm",
+            "--target-mac",
+            "-tm",
             nargs="?",
             const="USE_DEFAULT",
             type=str,
             metavar="ADDRESS",
-            help="monitor device by MAC address (recommended)"
-        )
+            help="monitor device by MAC address (recommended)")
         mode_exclusive.add_argument(
-            "--target-uuid", "-tu",
+            "--target-uuid",
+            "-tu",
             nargs="?",
             const="USE_DEFAULT",
             type=str,
             metavar="UUID",
-            help="monitor device by UUID (macOS privacy mode)"
-        )
+            help="monitor device by UUID (macOS privacy mode)")
 
         # --- Options ---
         options_group = parser.add_argument_group("Options")
         options_group.add_argument(
-            "--macos-use-bdaddr", "-m",
+            "--macos-use-bdaddr",
+            "-m",
             action="store_true",
-            help="use real MAC addresses on macOS (recommended)"
-        )
+            help="use real MAC addresses on macOS (recommended)")
         options_group.add_argument(
-            "--verbose", "-v",
+            "--verbose",
+            "-v",
             action="store_true",
-            help="enable verbose output with RSSI and distance details"
-        )
+            help="enable verbose output with RSSI and distance details")
         options_group.add_argument(
-            "--file-logging", "-f",
+            "--file-logging",
+            "-f",
             action="store_true",
-            help="enable logging to file (only with --start or --daemon)"
-        )
+            help="enable logging to file (only with --start or --daemon)")
         options_group.add_argument(
             "--daemon",
             action="store_true",
@@ -1122,32 +1021,27 @@ if __name__ == "__main__":
 
     if args.scanner is not None and not (5 <= args.scanner <= 60):
         parser.error("Scanner duration must be between 5 and 60 seconds.")
-    
+
     is_service_command = args.start or args.stop or args.restart or args.status
-    is_mode_command = (
-        args.scanner is not None or args.target_mac or args.target_uuid
-    )
+    is_mode_command = (args.scanner is not None or args.target_mac
+                       or args.target_uuid)
 
     if not is_service_command and not is_mode_command:
-        parser.error(
-            "error: one of the following arguments is required: "
-            "--scanner/-s, --target-mac/-tm, --target-uuid/-tu, "
-            "--start, --stop, --restart, --status"
-        )
+        parser.error("error: one of the following arguments is required: "
+                     "--scanner/-s, --target-mac/-tm, --target-uuid/-tu, "
+                     "--start, --stop, --restart, --status")
 
     try:
         app = Application(args)
         asyncio.run(app.run())
     except KeyboardInterrupt:
         if not (args.start or args.restart):
-            print(
-                f"\n{Colors.YELLOW}{'─' * 50}{Colors.RESET}\n"
-                f"{Colors.YELLOW}⚠{Colors.RESET}  {Colors.BOLD}"
-                f"Monitoring Interrupted{Colors.RESET}\n   Reason:    "
-                f"User requested stop (Ctrl+C)\n   Status:    "
-                f"{Colors.GREEN}✓{Colors.RESET} Gracefully terminated\n"
-                f"{Colors.YELLOW}{'─' * 50}{Colors.RESET}\n"
-            )
+            print(f"\n{Colors.YELLOW}{'─' * 50}{Colors.RESET}\n"
+                  f"{Colors.YELLOW}⚠{Colors.RESET}  {Colors.BOLD}"
+                  f"Monitoring Interrupted{Colors.RESET}\n   Reason:    "
+                  f"User requested stop (Ctrl+C)\n   Status:    "
+                  f"{Colors.GREEN}✓{Colors.RESET} Gracefully terminated\n"
+                  f"{Colors.YELLOW}{'─' * 50}{Colors.RESET}\n")
         sys.exit(130)
     except Exception as e:
         print(f"{Colors.RED}✗ FATAL ERROR:{Colors.RESET} {e}")
