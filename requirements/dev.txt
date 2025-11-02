@@ -1,0 +1,28 @@
+# Development requirements - includes base + development tools
+-r base.txt
+
+# Code formatting and linting
+black==24.10.0
+pyink==24.10.1
+
+# Testing frameworks
+pytest==8.4.2
+pytest-asyncio==1.2.0
+pytest-mock==3.15.1
+
+# macOS-specific packages (for local development on macOS)
+pyobjc-core==12.0
+pyobjc-framework-Cocoa==12.0
+pyobjc-framework-CoreBluetooth==12.0
+pyobjc-framework-libdispatch==12.0
+
+# Dependencies
+click==8.3.0
+iniconfig==2.3.0
+mypy_extensions==1.1.0
+packaging==25.0
+pathspec==0.12.1
+platformdirs==4.5.0
+pluggy==1.6.0
+Pygments==2.19.2
+typing_extensions==4.15.0
