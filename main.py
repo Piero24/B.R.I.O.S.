@@ -421,12 +421,12 @@ class DeviceScanner:
     async def run(self) -> None:
         """Executes the device scan and prints formatted results."""
         self._print_summary()
-        scanner_kwargs: dict[str, dict[str, bool]] = {
-            "cb": {"use_bdaddr": self.use_bdaddr}
-        }
 
+        # Pass cb parameter directly to satisfy mypy type checking
         devices_and_adv = await BleakScanner.discover(
-            timeout=float(self.duration), return_adv=True, **scanner_kwargs
+            timeout=float(self.duration),
+            return_adv=True,
+            cb={"use_bdaddr": self.use_bdaddr},
         )
 
         devices = sorted(
