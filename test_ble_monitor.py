@@ -17,7 +17,7 @@ sys.modules['bleak.backends.scanner'] = MagicMock()
 # Now, import the script to be tested.
 # The name 'main_new' is based on your traceback.
 # If you rename your file, change this import accordingly.
-import main_new
+import main
 
 
 # --- Mock Data Classes ---
@@ -71,8 +71,8 @@ def reloaded_main_new(monkeypatch):
     monkeypatch.setenv('DISTANCE_THRESHOLD_M', '2.0')
 
     # Reload the module to apply the new env vars
-    importlib.reload(main_new)
-    return main_new
+    importlib.reload(main)
+    return main
 
 
 # --- Unit Tests ---
