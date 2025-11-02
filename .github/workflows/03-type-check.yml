@@ -95,7 +95,7 @@ jobs:
       - name: Install mypy and dependencies
         run: |
           pip install mypy
-          pip install -r requirements-ci.txt
+          pip install -r requirements/ci.txt
 
       ########################################################################
       # Step 4: Execute Type Checking

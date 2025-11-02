@@ -18,17 +18,17 @@ name: 02 — Unit Tests
 #   2. Checks out the repository code
 #   3. Sets up Python 3.12.6 environment
 #   4. Caches pip packages for faster subsequent runs
-#   5. Installs all dependencies from requirements-ci.txt
+#   5. Installs all dependencies from requirements/ci.txt
 #   6. Executes pytest test suite
 #
 # Platform considerations:
-#   Uses requirements-ci.txt instead of requirements.txt because:
+#   Uses requirements/ci.txt instead of requirements/dev.txt because:
 #     • Excludes macOS-only packages (pyobjc-*) that fail on Linux runners
 #     • Includes all testing dependencies (pytest, pytest-asyncio, etc.)
 #     • Includes runtime dependencies (python-dotenv, bleak, etc.)
 #
 # Caching strategy:
-#   pip packages are cached keyed by the requirements-ci.txt hash. This
+#   pip packages are cached keyed by the requirements/ci.txt hash. This
 #   significantly speeds up workflow execution on subsequent runs when
 #   dependencies haven't changed.
 #
@@ -88,34 +88,34 @@ jobs:
       # Caches installed pip packages between workflow runs to dramatically
       # reduce execution time. The cache key includes:
       #   • Operating system (ubuntu-latest)
-      #   • Hash of requirements-ci.txt (invalidates on dependency changes)
+      #   • Hash of requirements/ci.txt (invalidates on dependency changes)
       #
-      # When requirements-ci.txt changes, the cache is invalidated and
+      # When requirements/ci.txt changes, the cache is invalidated and
       # packages are reinstalled fresh.
       ########################################################################
       - name: Cache pip packages
         uses: actions/cache@v4
         with:
           path: ~/.cache/pip
-          key: ${{ runner.os }}-pip-${{ hashFiles('**/requirements-ci.txt') }}
+          key: ${{ runner.os }}-pip-${{ hashFiles('**/requirements/ci.txt') }}
           restore-keys: |
             ${{ runner.os }}-pip-
 
       ########################################################################
       # Step 4: Install Dependencies
       #
-      # Installs all required packages from requirements-ci.txt:
+      # Installs all required packages from requirements/ci.txt:
       #   • Testing frameworks: pytest, pytest-asyncio, pytest-mock
       #   • Runtime dependencies: bleak, python-dotenv
       #   • Code quality tools: black, pyink
       #
-      # Uses requirements-ci.txt (not requirements.txt) to exclude macOS-only
+      # Uses requirements/ci.txt (not requirements/dev.txt) to exclude macOS-only
       # pyobjc packages that cannot be built on Linux runners.
       ########################################################################
       - name: Install dependencies
         run: |
           python -m pip install --upgrade pip
-          pip install -r requirements-ci.txt
+          pip install -r requirements/ci.txt
 
       ########################################################################
       # Step 5: Run Test Suite
