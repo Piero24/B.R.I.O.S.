@@ -79,6 +79,7 @@ class Colors:
     RED = "\033[91m"
     YELLOW = "\033[93m"
     BLUE = "\033[94m"
+    GREY = "\033[90m"
     BOLD = "\033[1m"
     RESET = "\033[0m"
 
@@ -273,6 +274,10 @@ class ServiceManager:
         print(f"Stopping monitor process (PID {pid})...")
 
         try:
+            # Type guard: pid is guaranteed to be int here since is_running is True
+            assert (
+                pid is not None
+            ), "PID should not be None when is_running is True"
             os.kill(pid, signal.SIGTERM)
             print(f"{Colors.GREEN}✓{Colors.RESET} Monitor stopped successfully")
         except OSError:
@@ -416,10 +421,12 @@ class DeviceScanner:
     async def run(self) -> None:
         """Executes the device scan and prints formatted results."""
         self._print_summary()
-        scanner_kwargs = {"cb": {"use_bdaddr": self.use_bdaddr}}
+        scanner_kwargs: dict[str, dict[str, bool]] = {
+            "cb": {"use_bdaddr": self.use_bdaddr}
+        }
 
         devices_and_adv = await BleakScanner.discover(
-            timeout=self.duration, return_adv=True, **scanner_kwargs
+            timeout=float(self.duration), return_adv=True, **scanner_kwargs
         )
 
         devices = sorted(
