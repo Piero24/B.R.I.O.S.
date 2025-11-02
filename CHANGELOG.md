@@ -93,7 +93,7 @@ Bleissant is now production-ready with enterprise-grade features:
 
 ---
 
-## Migration Guides
+<!-- ## Migration Guides
 
 ### From Pre-1.0 to 1.0
 
@@ -112,7 +112,7 @@ If you were using pre-release versions:
    - No manual `sys.path` manipulation needed in test files
 
 3. **Environment Variables**: No changes needed
-   - `.env` file format remains compatible
+   - `.env` file format remains compatible -->
 
 ---
 

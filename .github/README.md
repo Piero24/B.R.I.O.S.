@@ -42,7 +42,7 @@
     •
     <a href="#documentation"><strong>Documentation</strong></a>
     •
-    <a href="docs/API.md"><strong>API Reference</strong></a>
+    <a href="docs/FAQ.md"><strong>FAQ</strong></a>
     •
     <a href="#prerequisites"><strong>Requirements</strong></a>
     •
@@ -334,14 +334,13 @@ Bleissant provides comprehensive documentation for all skill levels:
 
 ### 🔧 **Developer Documentation**
 
-- **[API Reference](docs/API.md)** - Complete class and method documentation
-- **[Architecture Overview](docs/ARCHITECTURE.md)** - System design and code organization
 - **[Contributing Guide](docs/CONTRIBUTING.md)** - How to contribute to the project
 - **[Testing Guide](docs/TESTING.md)** - Running and writing tests
+- **[FAQ](docs/FAQ.md)** - Frequently asked questions
+- **[Code of Conduct](docs/CODE_OF_CONDUCT.md)** - Community guidelines
 
 ### 📋 **Additional Resources**
 
-- **[Makefile Commands](docs/MAKEFILE.md)** - Development workflow automation
 - **[CI/CD Pipeline](docs/CICD.md)** - GitHub Actions workflow documentation
 - **[Changelog](CHANGELOG.md)** - Version history and release notes
 - **[FAQ](docs/FAQ.md)** - Frequently asked questions
@@ -360,10 +359,25 @@ Bleissant provides comprehensive documentation for all skill levels:
     The only prerequisites for running this project are Python 3.8 or higher and the required Python packages. All dependencies are organized in the `requirements/` folder and can be installed with pip.
 </p>
 
+> [!IMPORTANT]
+> **Testing & Compatibility Notice**
+> 
+> This project has been tested **only** on:
+> - **Hardware**: MacBook Pro M3 Pro with iPhone
+> - **Python Version**: 3.12.6 (should work on Python 3.8+)
+> - **OS**: macOS (Bluetooth stack specific to macOS)
+> 
+> **Critical Device Requirements:**
+> - ⚠️ **Different Apple ID Pairing**: If your Mac and iPhone/device use **different Apple IDs**, you **must pair them first** in **System Settings → Bluetooth**. Otherwise, Apple hides the MAC address and the device won't be discoverable.
+> - ⚠️ **Android devices** should work without pairing requirements.
+> - ⚠️ **Apple Watch**: Currently **not discoverable from Mac** due to Apple's BLE restrictions.
+> 
+> If you encounter issues on other configurations, please [report them](https://github.com/Piero24/Bleissant/issues).
+
 **System Requirements:**
 
 - macOS 10.15 (Catalina) or later
-- Python 3.8+
+- Python 3.8+ (tested on 3.12.6)
 - Bluetooth Low Energy adapter (built-in on all modern Macs)
 
 **Python Dependencies:**
@@ -844,8 +858,6 @@ Bleissant follows a clean, modular architecture for maintainability and extensib
 - **`DeviceMonitor`**: Continuous proximity monitoring with callbacks
 - **`Flags`**: Configuration data class (daemon_mode, file_logging, verbose)
 - **`Colors`**: Terminal output formatting utilities
-
-For detailed architecture documentation, see [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md).
 
 <p align="right"><a href="#top">⇧</a></p>
 

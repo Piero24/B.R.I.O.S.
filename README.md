@@ -16,8 +16,6 @@
   <br/>
   <a href=".github/README.md#quick-start">Quick Start</a>
   •
-  <a href="docs/API.md">API Reference</a>
-  •
   <a href="docs/FAQ.md">FAQ</a>
   •
   <a href="https://github.com/Piero24/Bleissant/issues">Report Bug</a>
@@ -57,14 +55,29 @@ python3 main.py --target-mac -v
 ## 📚 Documentation
 
 - **[Complete Documentation](.github/README.md)** - Full project documentation
-- **[API Reference](docs/API.md)** - Class and method documentation
-- **[Architecture Guide](docs/ARCHITECTURE.md)** - System design and structure
 - **[Testing Guide](docs/TESTING.md)** - Running and writing tests
 - **[Contributing Guide](docs/CONTRIBUTING.md)** - How to contribute
 - **[FAQ](docs/FAQ.md)** - Frequently asked questions
 - **[Changelog](CHANGELOG.md)** - Version history
 
 ## 🛠️ Requirements
+
+> [!IMPORTANT]
+> **Testing & Compatibility Notice**
+> 
+> This project has been tested **only** on:
+> - **Hardware**: MacBook Pro M3 Pro with iPhone
+> - **Python Version**: 3.12.6 (should work on Python 3.8+)
+> - **OS**: macOS (Bluetooth stack specific to macOS)
+> 
+> **Critical Device Requirements:**
+> - ⚠️ **Different Apple ID Pairing**: If your Mac and iPhone/device use **different Apple IDs**, you **must pair them first** in **System Settings → Bluetooth**. Otherwise, Apple hides the MAC address and the device won't be discoverable.
+> - ⚠️ **Android devices** should work without pairing requirements.
+> - ⚠️ **Apple Watch**: Currently **not discoverable from Mac** due to Apple's BLE restrictions.
+> 
+> If you encounter issues on other configurations, please [report them](https://github.com/Piero24/Bleissant/issues).
+
+**System Requirements:**
 
 - macOS 10.15 (Catalina) or later
 - Python 3.8+

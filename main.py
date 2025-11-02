@@ -26,7 +26,7 @@ import argparse
 import subprocess
 from datetime import datetime
 from collections import deque
-from typing import Deque, TextIO
+from typing import Deque, TextIO, Optional, Union, Tuple, List
 from dataclasses import dataclass
 
 import statistics
@@ -114,7 +114,7 @@ def _estimate_distance(rssi: float) -> float:
     return 10 ** ((TX_POWER_AT_1M - rssi) / (10 * PATH_LOSS_EXPONENT))
 
 
-def _smooth_rssi(buffer: Deque[int]) -> float | None:
+def _smooth_rssi(buffer: Deque[int]) -> Optional[float]:
     """Calculates the statistical mean of RSSI values in a buffer.
 
     This function helps to stabilize the fluctuating RSSI readings by averaging
@@ -124,7 +124,7 @@ def _smooth_rssi(buffer: Deque[int]) -> float | None:
         buffer (Deque[int]): A deque containing recent RSSI samples.
 
     Returns:
-        float | None: The mean RSSI value, or None if the buffer is empty.
+        Optional[float]: The mean RSSI value, or None if the buffer is empty.
     """
     if not buffer:
         return None
@@ -153,7 +153,7 @@ class ServiceManager:
         """
         self.args = args
 
-    def _get_pid_status(self) -> tuple[int | None, bool]:
+    def _get_pid_status(self) -> Tuple[Optional[int], bool]:
         """Checks for the PID file and determines if the process is running.
 
         Reads the PID from the PID file and checks if a process with that PID
@@ -183,7 +183,7 @@ class ServiceManager:
             # The process does not exist.
             return pid, False
 
-    def _reconstruct_command(self) -> list[str]:
+    def _reconstruct_command(self) -> List[str]:
         """Reconstructs the original command to relaunch the script as a daemon.
 
         This ensures that the background process is started with the same
@@ -342,12 +342,12 @@ class ServiceManager:
 
         print("─" * 50 + "\n")
 
-    def _print_start_status(self, target_address: str | None) -> None:
+    def _print_start_status(self, target_address: Optional[str]) -> None:
         """Prints a detailed summary after a start attempt.
 
         Args:
-            target_address (str | None): The MAC or UUID address of the device
-                being monitored.
+            target_address (Optional[str]): The MAC or UUID address of the
+                device being monitored.
         """
         pid, is_running = self._get_pid_status()
 
@@ -462,12 +462,12 @@ class DeviceScanner:
 
     def _print_results(
         self,
-        devices: list[tuple[BLEDevice, AdvertisementData]],
+        devices: List[tuple[BLEDevice, AdvertisementData]],
     ) -> None:
         """Formats and prints the list of discovered devices.
 
         Args:
-            devices (list[tuple[BLEDevice, AdvertisementData]]): A list of
+            devices (List[tuple[BLEDevice, AdvertisementData]]): A list of
                 tuples containing BLEDevice instances and their corresponding
                 AdvertisementData.
         """
@@ -557,7 +557,7 @@ class DeviceMonitor:
 
         self.rssi_buffer: Deque[int] = deque(maxlen=SAMPLE_WINDOW)
         self.alert_triggered: bool = False
-        self.log_file: TextIO | None = None
+        self.log_file: Optional[TextIO] = None
 
         self.scanner = BleakScanner(
             detection_callback=self._detection_callback,
@@ -646,7 +646,7 @@ class DeviceMonitor:
     def _process_signal(
         self,
         current_rssi: int,
-    ) -> tuple[float | None, float | None]:
+    ) -> Tuple[Optional[float], Optional[float]]:
         """Updates the RSSI buffer and calculates the smoothed distance.
 
         Args:
@@ -977,14 +977,14 @@ class Application:
                 os.remove(PID_FILE)
 
     @staticmethod
-    def determine_target_address(args: argparse.Namespace) -> str | None:
+    def determine_target_address(args: argparse.Namespace) -> Optional[str]:
         """Determines the target address based on command-line arguments.
 
         Args:
             args (argparse.Namespace): Parsed command-line arguments.
 
         Returns:
-            str | None: The target address or None if not specified.
+            Optional[str]: The target address or None if not specified.
         """
         if args.target_mac:
             return (

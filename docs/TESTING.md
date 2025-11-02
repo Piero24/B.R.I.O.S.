@@ -2,6 +2,16 @@
 
 Complete guide to testing Bleissant, running tests, and writing new tests.
 
+> [!IMPORTANT]
+> **Testing Environment Notice**
+> 
+> All tests have been validated on:
+> - **Hardware**: MacBook Pro M3 Pro
+> - **Python**: 3.12.6 (should work on Python 3.8+)
+> - **OS**: macOS
+> 
+> If you encounter test failures on other configurations, please [report them](https://github.com/Piero24/Bleissant/issues).
+
 ## Overview
 
 Bleissant maintains **100% test coverage** with a comprehensive pytest-based test suite that includes:
