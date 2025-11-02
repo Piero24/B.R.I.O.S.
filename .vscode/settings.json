@@ -1,0 +1,40 @@
+{
+    ////////////////////////////////////////////////////////////////
+    // 🐍 PYTHON FORMATTING CONFIGURATION
+    // This section makes VS Code use Pyink (a fork of Black) to
+    // auto-format your Python files on save and while typing.
+    ////////////////////////////////////////////////////////////////
+    "[python]": {
+        // Tell VS Code to use the Black formatter extension
+        "editor.defaultFormatter": "ms-python.black-formatter",
+
+        // Automatically format files each time you save
+        "editor.formatOnSave": true,
+
+        // Optional: format partial code as you type (e.g. after `:`)
+        "editor.formatOnType": true
+    },
+
+    ////////////////////////////////////////////////////////////////
+    // 🧭 FORMATTER EXECUTABLE PATH
+    // Path to your Pyink binary inside the virtual environment.
+    // Use a relative path so it works for everyone cloning the repo.
+    ////////////////////////////////////////////////////////////////
+    "black-formatter.path": [
+        "env/bin/pyink"
+    ],
+
+    ////////////////////////////////////////////////////////////////
+    // ⚙️ ADDITIONAL PYINK/BLACK ARGUMENTS
+    // Here you can customize behavior like line length, preview
+    // mode, and string normalization.
+    //
+    // Tip: You can check all available options with:
+    //       pyink --help
+    ////////////////////////////////////////////////////////////////
+    "black-formatter.args": [
+        "--line-length", "80",           // Max characters per line
+        "--preview",                     // Enables new formatting features
+        //"--skip-string-normalization"    // (Optional) keep original quotes
+    ]
+}
