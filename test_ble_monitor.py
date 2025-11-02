@@ -233,10 +233,10 @@ def test_service_manager_start_stop(mocker, tmp_path, reloaded_main_new):
 @pytest.mark.asyncio
 async def test_application_cli_dispatch(mocker, mock_args, reloaded_main_new):
     """Test that the Application class calls the right components based on CLI args."""
-    # Patch the classes in the reloaded module
-    mock_sm = mocker.patch("main_new.ServiceManager")
-    mock_ds = mocker.patch("main_new.DeviceScanner")
-    mock_dm = mocker.patch("main_new.DeviceMonitor")
+    # Patch the classes in the reloaded module using the module object
+    mock_sm = mocker.patch.object(reloaded_main_new, "ServiceManager")
+    mock_ds = mocker.patch.object(reloaded_main_new, "DeviceScanner")
+    mock_dm = mocker.patch.object(reloaded_main_new, "DeviceMonitor")
 
     # Make the run methods async
     async def async_run_mock():
