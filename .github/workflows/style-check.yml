@@ -54,10 +54,12 @@ jobs:
       #
       # - Pyink: formatter (Black-compatible)
       # - Pylint: static analysis (code quality/style)
+      # 
+      # Install from requirements.txt to ensure version consistency
       ##################################################################
       - name: Install linting tools
         run: |
-          pip install pyink pylint
+          pip install pyink==24.10.1 pylint
       
       ##################################################################
       # 4️⃣ Run Pyink in check mode
