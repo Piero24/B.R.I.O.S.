@@ -1,0 +1,5 @@
+[tool.pyink]
+# Match your VS Code and Makefile configuration
+line-length = 80
+preview = true
+# skip-string-normalization = true
