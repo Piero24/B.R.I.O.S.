@@ -276,7 +276,9 @@ class ServiceManager:
             os.kill(pid, signal.SIGTERM)
             print(f"{Colors.GREEN}✓{Colors.RESET} Monitor stopped successfully")
         except OSError:
-            print(f"{Colors.YELLOW}!{Colors.RESET} Process {pid} already stopped")
+            print(
+                f"{Colors.YELLOW}!{Colors.RESET} Process {pid} already stopped"
+            )
         finally:
             if os.path.exists(PID_FILE):
                 os.remove(PID_FILE)
@@ -370,7 +372,9 @@ class ServiceManager:
         print("─" * 50)
 
         if self.args.file_logging:
-            print(f"Log file:   {LOG_FILE} {Colors.GREEN}(enabled){Colors.RESET}")
+            print(
+                f"Log file:   {LOG_FILE} {Colors.GREEN}(enabled){Colors.RESET}"
+            )
         else:
             print(f"Logging:    Disabled (use -f to enable)")
 
@@ -419,7 +423,10 @@ class DeviceScanner:
         )
 
         devices = sorted(
-            [(device, adv_data) for _, (device, adv_data) in devices_and_adv.items()],
+            [
+                (device, adv_data)
+                for _, (device, adv_data) in devices_and_adv.items()
+            ],
             key=lambda x: getattr(x[0], "address", str(x[0])),
         )
 
@@ -431,17 +438,24 @@ class DeviceScanner:
         print("─" * 70)
         print(f"Duration:   {self.duration} seconds")
 
-        mode = "BD_ADDR (MAC addresses)" if self.use_bdaddr else "UUIDs (macOS privacy)"
+        mode = (
+            "BD_ADDR (MAC addresses)"
+            if self.use_bdaddr
+            else "UUIDs (macOS privacy)"
+        )
 
         print(f"Mode:       {mode}")
         print(f"Verbose:    Enabled (showing RSSI and distance estimates)")
-        print(f"TX Power:   {TX_POWER_AT_1M} dBm @ 1m (for distance calculation)")
+        print(
+            f"TX Power:   {TX_POWER_AT_1M} dBm @ 1m (for distance calculation)"
+        )
         print(f"Path Loss:  {PATH_LOSS_EXPONENT} (environmental factor)")
         print("─" * 70)
         print(f"\n{Colors.GREEN}●{Colors.RESET} Scanning...\n")
 
     def _print_results(
-        self, devices: list[tuple[BLEDevice, AdvertisementData]]
+        self,
+        devices: list[tuple[BLEDevice, AdvertisementData]],
     ) -> None:
         """Formats and prints the list of discovered devices.
 
@@ -461,7 +475,9 @@ class DeviceScanner:
             return
 
         for i, (device, adv_data) in enumerate(devices, 1):
-            address = device.address if hasattr(device, "address") else str(device)
+            address = (
+                device.address if hasattr(device, "address") else str(device)
+            )
             device_name = device.name if hasattr(device, "name") else None
             name_display = (
                 device_name
@@ -510,7 +526,12 @@ class DeviceMonitor:
         scanner (BleakScanner): The Bleak scanner instance for BLE scanning.
     """
 
-    def __init__(self, target_address: str, use_bdaddr: bool, flags: Flags) -> None:
+    def __init__(
+        self,
+        target_address: str,
+        use_bdaddr: bool,
+        flags: Flags,
+    ) -> None:
         """Initializes the DeviceMonitor.
         Args:
             target_address (str): The MAC or UUID address of the target device.
@@ -577,7 +598,9 @@ class DeviceMonitor:
         )
 
     def _detection_callback(
-        self, device: BLEDevice, adv_data: AdvertisementData
+        self,
+        device: BLEDevice,
+        adv_data: AdvertisementData,
     ) -> None:
         """Processes incoming BLE advertisements.
 
@@ -613,7 +636,10 @@ class DeviceMonitor:
         elif distance_m <= DISTANCE_THRESHOLD_M and self.alert_triggered:
             self._trigger_in_range_alert(distance_m)
 
-    def _process_signal(self, current_rssi: int) -> tuple[float | None, float | None]:
+    def _process_signal(
+        self,
+        current_rssi: int,
+    ) -> tuple[float | None, float | None]:
         """Updates the RSSI buffer and calculates the smoothed distance.
 
         Args:
@@ -636,7 +662,10 @@ class DeviceMonitor:
         return smoothed_rssi, distance_m
 
     def _log_status(
-        self, current_rssi: int, smoothed_rssi: float, distance_m: float
+        self,
+        current_rssi: int,
+        smoothed_rssi: float,
+        distance_m: float,
     ) -> None:
         """Logs the current status to console and/or file.
 
@@ -1006,7 +1035,9 @@ class Application:
         For more information, visit: https://github.com/Piero24/Bleissant
         """
         parser = argparse.ArgumentParser(
-            description=("BLE device proximity monitor with distance-based alerting"),
+            description=(
+                "BLE device proximity monitor with distance-based alerting"
+            ),
             formatter_class=argparse.RawTextHelpFormatter,
             epilog=help_epilog,
         )
@@ -1015,7 +1046,9 @@ class Application:
         service_group = parser.add_argument_group("Service Control")
         service_exclusive = service_group.add_mutually_exclusive_group()
         service_exclusive.add_argument(
-            "--start", action="store_true", help="start monitor as background daemon"
+            "--start",
+            action="store_true",
+            help="start monitor as background daemon",
         )
         service_exclusive.add_argument(
             "--stop", action="store_true", help="stop background daemon"
@@ -1024,7 +1057,9 @@ class Application:
             "--restart", action="store_true", help="restart background daemon"
         )
         service_exclusive.add_argument(
-            "--status", action="store_true", help="show daemon status and statistics"
+            "--status",
+            action="store_true",
+            help="show daemon status and statistics",
         )
 
         # --- Operating Modes ---
@@ -1096,7 +1131,9 @@ if __name__ == "__main__":
         parser.error("Scanner duration must be between 5 and 60 seconds.")
 
     is_service_command = args.start or args.stop or args.restart or args.status
-    is_mode_command = args.scanner is not None or args.target_mac or args.target_uuid
+    is_mode_command = (
+        args.scanner is not None or args.target_mac or args.target_uuid
+    )
 
     if not is_service_command and not is_mode_command:
         parser.error(
