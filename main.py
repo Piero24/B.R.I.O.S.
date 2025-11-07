@@ -36,13 +36,7 @@ import subprocess
 from datetime import datetime
 from collections import deque
 from dataclasses import dataclass
-from typing import (
-    Optional, 
-    TextIO, 
-    Deque, 
-    Tuple, 
-    List
-)
+from typing import Optional, TextIO, Deque, Tuple, List
 
 import Quartz
 import statistics
