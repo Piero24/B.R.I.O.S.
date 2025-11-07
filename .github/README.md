@@ -192,8 +192,6 @@
 
 <br/>
 <h2 id="how-it-works">🔬  How It Works</h2>
-<br/>
-<h2 id="how-it-works">🔬  How It Works</h2>
 
 <p>
     B.R.I.O.S. implements a sophisticated four-stage pipeline for accurate proximity detection and automated security enforcement:
