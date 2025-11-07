@@ -38,12 +38,21 @@ from collections import deque
 from dataclasses import dataclass
 from typing import Optional, TextIO, Deque, Tuple, List
 
-import Quartz
 import statistics
 from dotenv import load_dotenv
 from bleak import BleakScanner
 from bleak.backends.device import BLEDevice
 from bleak.backends.scanner import AdvertisementData
+
+# Platform-specific imports
+IS_MACOS = sys.platform == "darwin"
+
+try:
+    import Quartz
+
+    HAS_QUARTZ = True
+except ImportError:
+    HAS_QUARTZ = False
 
 # --- Configuration Loader ---
 # Load user-defined settings from a .env file for easier configuration.
@@ -806,6 +815,10 @@ class DeviceMonitor:
         Returns:
             bool: True if the screen is locked, False otherwise.
         """
+        if not HAS_QUARTZ:
+            # Quartz not available (non-macOS platform)
+            return False
+
         try:
             # Use Quartz (PyObjC) to check if screen is locked
             session_dict = Quartz.CGSessionCopyCurrentDictionary()

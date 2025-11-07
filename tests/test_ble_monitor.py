@@ -6,6 +6,11 @@ import asyncio
 import importlib
 from unittest.mock import MagicMock, patch, call, ANY
 
+# Mock platform-specific modules before they are imported
+# Mock Quartz (macOS-only) for cross-platform testing
+mock_quartz = MagicMock()
+sys.modules["Quartz"] = mock_quartz
+
 # Mock bleak before it is imported by the main script
 # This is crucial for tests to run without a real Bluetooth adapter
 mock_bleak = MagicMock()
