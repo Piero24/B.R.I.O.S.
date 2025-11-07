@@ -35,9 +35,16 @@ import argparse
 import subprocess
 from datetime import datetime
 from collections import deque
-from typing import Deque, TextIO, Optional, Union, Tuple, List
 from dataclasses import dataclass
+from typing import (
+    Optional, 
+    TextIO, 
+    Deque, 
+    Tuple, 
+    List
+)
 
+import Quartz
 import statistics
 from dotenv import load_dotenv
 from bleak import BleakScanner
@@ -702,7 +709,7 @@ class DeviceMonitor:
 
             loop_count = 0
             is_waiting = False
-            while self.is_screen_locked():
+            while self._is_screen_locked():
                 loop_count += 1
 
                 if not is_waiting:
@@ -799,9 +806,12 @@ class DeviceMonitor:
                 )
                 self.log_file.flush()
 
-    def is_screen_locked(self) -> bool:
-        import Quartz
+    def _is_screen_locked(self) -> bool:
+        """Checks if the macOS screen is currently locked.
 
+        Returns:
+            bool: True if the screen is locked, False otherwise.
+        """
         try:
             # Use Quartz (PyObjC) to check if screen is locked
             session_dict = Quartz.CGSessionCopyCurrentDictionary()
@@ -1276,7 +1286,7 @@ class Application:
         .ble_monitor.pid      Process ID file for background service
         .ble_monitor.log      Log file (when file logging is enabled)
 
-        For more information, visit: https://github.com/Piero24/Bleissant
+        For more information, visit: https://github.com/Piero24/B.R.I.O.S.
         """
         parser = argparse.ArgumentParser(
             description=(
