@@ -26,7 +26,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 - Initial release of 🥐 B.R.I.O.S.
-- Initial release of Bleissant
+- Initial release of B.R.I.O.S.
 - BLE device discovery scanner
 - Real-time proximity monitoring
 - Automatic macOS locking on proximity loss
@@ -133,5 +133,5 @@ If you were using pre-release versions:
 
 ---
 
-[Unreleased]: https://github.com/Piero24/Bleissant/compare/v1.0.0...HEAD
-[1.0.0]: https://github.com/Piero24/Bleissant/releases/tag/v1.0.0
+[Unreleased]: https://github.com/Piero24/B.R.I.O.S./compare/v1.0.0...HEAD
+[1.0.0]: https://github.com/Piero24/B.R.I.O.S./releases/tag/v1.0.0

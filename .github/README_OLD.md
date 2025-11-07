@@ -6,7 +6,7 @@
   <img src="https://cdn-icons-png.flaticon.com/512/3145/3145073.png" width="105" height="100">
 </p>
 <h1 align="center">
-    <a href="https://github.com/Piero24/Bleissant">Bleissant</a>
+    <a href="https://github.com/Piero24/B.R.I.O.S.">B.R.I.O.S.</a>
 </h1>
 <p align="center">
     <!-- BADGE -->
@@ -16,20 +16,20 @@
         *** or here
         *** [CircleCI](https://circleci.com/)
     -->
-    <a href="https://github.com/Piero24/Bleissant/commits/main">
-    <img src="https://img.shields.io/github/last-commit/piero24/Bleissant">
+    <a href="https://github.com/Piero24/B.R.I.O.S./commits/main">
+    <img src="https://img.shields.io/github/last-commit/piero24/B.R.I.O.S.">
     </a>
-    <a href="https://github.com/Piero24/Bleissant">
+    <a href="https://github.com/Piero24/B.R.I.O.S.">
     <img src="https://img.shields.io/badge/Maintained-yes-green.svg">
     </a>
-    <!--<a href="https://github.com/Piero24/Bleissant">
+    <!--<a href="https://github.com/Piero24/B.R.I.O.S.">
     <img src="https://img.shields.io/badge/Maintained%3F-no-red.svg">
     </a> -->
-    <a href="https://github.com/Piero24/Bleissant/issues">
-    <img src="https://img.shields.io/github/issues/piero24/Bleissant">
+    <a href="https://github.com/Piero24/B.R.I.O.S./issues">
+    <img src="https://img.shields.io/github/issues/piero24/B.R.I.O.S.">
     </a>
-    <a href="https://github.com/Piero24/Bleissant/blob/main/LICENSE">
-    <img src="https://img.shields.io/github/license/piero24/Bleissant">
+    <a href="https://github.com/Piero24/B.R.I.O.S./blob/main/LICENSE">
+    <img src="https://img.shields.io/github/license/piero24/B.R.I.O.S.">
     </a>
 </p>
 <p align="center">
@@ -38,9 +38,9 @@
     <br/>
     <a href="#prerequisites">Requirements</a>
     •
-    <a href="https://github.com/Piero24/Bleissant/issues">Report Bug</a>
+    <a href="https://github.com/Piero24/B.R.I.O.S./issues">Report Bug</a>
     •
-    <a href="https://github.com/Piero24/Bleissant/issues">Request Feature</a>
+    <a href="https://github.com/Piero24/B.R.I.O.S./issues">Request Feature</a>
 </p>
 
 
@@ -78,11 +78,11 @@
 
 <h2 id="introduction">📔 Introduction</h2>
 
-**Bleissant** is a professional-grade Bluetooth Low Energy (BLE) proximity monitoring tool designed specifically for macOS. It continuously tracks the distance to a designated BLE device (such as your iPhone, Apple Watch, or any BLE beacon) and automatically **locks your Mac** when the device moves beyond a configurable distance threshold.
+**B.R.I.O.S.** is a professional-grade Bluetooth Low Energy (BLE) proximity monitoring tool designed specifically for macOS. It continuously tracks the distance to a designated BLE device (such as your iPhone, Apple Watch, or any BLE beacon) and automatically **locks your Mac** when the device moves beyond a configurable distance threshold.
 
 <br/>
 
-### Why Bleissant?
+### Why B.R.I.O.S.?
 
 - **Security Enhancement**: Automatically lock your Mac when you walk away with your phone
 - **Seamless Experience**: Works silently in the background without interrupting your workflow
@@ -105,7 +105,7 @@
 
 <h2 id="how-it-works">⚙️ How It Works</h2>
 
-Bleissant employs a sophisticated distance estimation algorithm based on the **Log-Distance Path Loss Model**, which calculates the distance between your Mac and the target BLE device using signal strength (RSSI).
+B.R.I.O.S. employs a sophisticated distance estimation algorithm based on the **Log-Distance Path Loss Model**, which calculates the distance between your Mac and the target BLE device using signal strength (RSSI).
 
 <br/>
 
@@ -211,8 +211,8 @@ Get up and running in 5 minutes!
 ### 1. Clone the Repository
 
 ```bash
-git clone https://github.com/Piero24/Bleissant.git
-cd Bleissant
+git clone https://github.com/Piero24/B.R.I.O.S..git
+cd B.R.I.O.S.
 ```
 
 <br/>
@@ -300,7 +300,7 @@ python3 main.py --status
 
 <h2 id="usage">📚 Usage</h2>
 
-Bleissant supports three primary operating modes:
+B.R.I.O.S. supports three primary operating modes:
 
 <br/>
 
@@ -374,7 +374,7 @@ Samples:    12 readings
 Mode:       BD_ADDR (MAC)
 ──────────────────────────────────────────────────────────────────────
 Output:     Terminal + File
-Log file:   /Users/pietrobon/Desktop/Bleissant/.ble_monitor.log
+Log file:   /Users/pietrobon/Desktop/B.R.I.O.S./.ble_monitor.log
 
 ● Monitoring active - Press Ctrl+C to stop
 
@@ -397,7 +397,7 @@ Log file:   /Users/pietrobon/Desktop/Bleissant/.ble_monitor.log
 
 <h3 id="background-service">🔄 Background Service (Daemon Mode)</h3>
 
-Run Bleissant as a persistent background service:
+Run B.R.I.O.S. as a persistent background service:
 
 <br/>
 
@@ -425,7 +425,7 @@ Target:     Pietro's iPhone
 Address:    A1:B2:C3:D4:E5:F6
 Threshold:  2.0m
 
-Log file:   /Users/pietrobon/Desktop/Bleissant/.ble_monitor.log
+Log file:   /Users/pietrobon/Desktop/B.R.I.O.S./.ble_monitor.log
 
 Recent activity:
   [16:47:32] RSSI:  -61 dBm → Smoothed:  -60.2 dBm │ Distance:  1.23m
@@ -594,7 +594,7 @@ For best accuracy, calibrate `TX_POWER_AT_1M` for your specific device:
 
 ### Distance Estimation Algorithm
 
-Bleissant uses the **Log-Distance Path Loss Model**, which is one of the most widely used models for indoor distance estimation:
+B.R.I.O.S. uses the **Log-Distance Path Loss Model**, which is one of the most widely used models for indoor distance estimation:
 
 $$d = 10^{\frac{TX_{power} - RSSI_{smoothed}}{10 \cdot n}}$$
 
@@ -608,7 +608,7 @@ Where:
 
 ### Signal Smoothing
 
-To minimize false positives from temporary signal fluctuations, Bleissant implements a **rolling average filter**:
+To minimize false positives from temporary signal fluctuations, B.R.I.O.S. implements a **rolling average filter**:
 
 1. Maintains a circular buffer (deque) of the last $N$ RSSI samples
 2. Calculates the statistical mean of these samples
@@ -668,7 +668,7 @@ main.py
 
 <h2 id="testing">🧪 Testing</h2>
 
-Bleissant includes a comprehensive test suite using `pytest`:
+B.R.I.O.S. includes a comprehensive test suite using `pytest`:
 
 <br/>
 
@@ -839,7 +839,7 @@ Contributions are welcome and greatly appreciated! Here's how you can help:
 
 ### Ways to Contribute
 
-- 🐛 **Report bugs** via [GitHub Issues](https://github.com/Piero24/Bleissant/issues)
+- 🐛 **Report bugs** via [GitHub Issues](https://github.com/Piero24/B.R.I.O.S./issues)
 - 💡 **Suggest features** or improvements
 - 📖 **Improve documentation**
 - 🧪 **Add tests** for uncovered scenarios
@@ -851,8 +851,8 @@ Contributions are welcome and greatly appreciated! Here's how you can help:
 
 ```bash
 # Clone and set up development environment
-git clone https://github.com/Piero24/Bleissant.git
-cd Bleissant
+git clone https://github.com/Piero24/B.R.I.O.S..git
+cd B.R.I.O.S.
 python3 -m venv env
 source env/bin/activate
 pip install -r requirements-dev.txt
@@ -900,7 +900,7 @@ SOFTWARE.
 
 <br/>
 
-<a href="https://github.com/Piero24/Bleissant/blob/main/LICENSE">
+<a href="https://github.com/Piero24/B.R.I.O.S./blob/main/LICENSE">
     <strong>Full License Text »</strong>
 </a>
 

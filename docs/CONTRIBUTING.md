@@ -41,7 +41,7 @@ We pledge to make participation in our project a harassment-free experience for 
 ### Reporting Bugs
 
 **Before submitting a bug report:**
-1. Check the [existing issues](https://github.com/Piero24/Bleissant/issues)
+1. Check the [existing issues](https://github.com/Piero24/B.R.I.O.S./issues)
 2. Verify the bug exists in the latest version
 3. Collect information about your environment
 
@@ -84,8 +84,8 @@ We welcome code contributions! Areas where you can help:
 
 ```bash
 # Fork the repository on GitHub, then:
-git clone https://github.com/YOUR_USERNAME/Bleissant.git
-cd Bleissant
+git clone https://github.com/YOUR_USERNAME/B.R.I.O.S..git
+cd B.R.I.O.S.
 ```
 
 ### 2. Create Virtual Environment
@@ -369,8 +369,8 @@ make ble:run ARGS="--target-mac -v"
 
 If you have questions about contributing:
 
-1. Check existing [issues](https://github.com/Piero24/Bleissant/issues)
-2. Check [discussions](https://github.com/Piero24/Bleissant/discussions)
+1. Check existing [issues](https://github.com/Piero24/B.R.I.O.S./issues)
+2. Check [discussions](https://github.com/Piero24/B.R.I.O.S./discussions)
 3. Open a new issue with the `question` label
 
 ---

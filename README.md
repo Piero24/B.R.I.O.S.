@@ -16,16 +16,16 @@
 </p>
 
 <p align="center">
-  <a href="https://github.com/Piero24/Bleissant/blob/main/.github/README.md"><strong>📖 Full Documentation »</strong></a>
+  <a href="https://github.com/Piero24/B.R.I.O.S./blob/main/.github/README.md"><strong>📖 Full Documentation »</strong></a>
   <br/>
   <br/>
   <a href=".github/README.md#quick-start">Quick Start</a>
   •
   <a href="docs/FAQ.md">FAQ</a>
   •
-  <a href="https://github.com/Piero24/Bleissant/issues">Report Bug</a>
+  <a href="https://github.com/Piero24/B.R.I.O.S./issues">Report Bug</a>
   •
-  <a href="https://github.com/Piero24/Bleissant/issues">Request Feature</a>
+  <a href="https://github.com/Piero24/B.R.I.O.S./issues">Request Feature</a>
 </p>
 
 ---
@@ -34,7 +34,7 @@
 
 ```bash
 # Clone and setup
-git clone https://github.com/Piero24/Bleissant.git && cd Bleissant
+git clone https://github.com/Piero24/B.R.I.O.S..git && cd B.R.I.O.S.
 python3 -m venv env && source env/bin/activate
 pip install -r requirements/dev.txt
 
@@ -80,7 +80,7 @@ python3 main.py --target-mac -v
 > - ⚠️ **Android devices** should work without pairing requirements.
 > - ⚠️ **Apple Watch**: Currently **not discoverable from Mac** due to Apple's BLE restrictions.
 > 
-> If you encounter issues on other configurations, please [report them](https://github.com/Piero24/Bleissant/issues).
+> If you encounter issues on other configurations, please [report them](https://github.com/Piero24/B.R.I.O.S./issues).
 
 **System Requirements:**
 
@@ -92,8 +92,8 @@ python3 main.py --target-mac -v
 
 ```bash
 # 1. Clone repository
-git clone https://github.com/Piero24/Bleissant.git
-cd Bleissant
+git clone https://github.com/Piero24/B.R.I.O.S..git
+cd B.R.I.O.S.
 
 # 2. Create virtual environment
 python3 -m venv env
@@ -174,7 +174,7 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 
 **Pietrobon Andrea** - [@Piero24](https://github.com/Piero24)
 
-Project Link: [https://github.com/Piero24/Bleissant](https://github.com/Piero24/Bleissant)
+Project Link: [https://github.com/Piero24/B.R.I.O.S.](https://github.com/Piero24/B.R.I.O.S.)
 
 ---
 

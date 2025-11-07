@@ -3,27 +3,30 @@
 <br/>
 
 <p align="center">
-  <img src="https://cdn-icons-png.flaticon.com/512/3145/3145073.png" width="105" height="100">
+  <img src="https://em-content.zobj.net/source/apple/237/croissant_1f950.png" width="105" height="100">
 </p>
 <h1 align="center">
-    <a href="https://github.com/Piero24/Bleissant">🥐 B.R.I.O.S.</a>
+    <!-- 
+    <a href="https://github.com/Piero24/B.R.I.O.S.">🥐 B.R.I.O.S.</a>
+     -->
+    <a href="https://github.com/Piero24/B.R.I.O.S.">B.R.I.O.S.</a>
 </h1>
 <p align="center">
     <!-- BADGE -->
-    <a href="https://github.com/Piero24/Bleissant/commits/main">
-    <img src="https://img.shields.io/github/last-commit/piero24/Bleissant">
+    <a href="https://github.com/Piero24/B.R.I.O.S./commits/main">
+    <img src="https://img.shields.io/github/last-commit/piero24/B.R.I.O.S.">
     </a>
-    <a href="https://github.com/Piero24/Bleissant">
+    <a href="https://github.com/Piero24/B.R.I.O.S.">
     <img src="https://img.shields.io/badge/Maintained-yes-green.svg">
     </a>
-    <a href="https://github.com/Piero24/Bleissant/issues">
-    <img src="https://img.shields.io/github/issues/piero24/Bleissant">
+    <a href="https://github.com/Piero24/B.R.I.O.S./issues">
+    <img src="https://img.shields.io/github/issues/piero24/B.R.I.O.S.">
     </a>
-    <a href="https://github.com/Piero24/Bleissant/blob/main/LICENSE">
-    <img src="https://img.shields.io/github/license/piero24/Bleissant">
+    <a href="https://github.com/Piero24/B.R.I.O.S./blob/main/LICENSE">
+    <img src="https://img.shields.io/github/license/piero24/B.R.I.O.S.">
     </a>
-    <a href="https://github.com/Piero24/Bleissant/actions">
-    <img src="https://img.shields.io/github/actions/workflow/status/piero24/Bleissant/02-unit-tests.yml?branch=main&label=tests">
+    <a href="https://github.com/Piero24/B.R.I.O.S./actions">
+    <img src="https://img.shields.io/github/actions/workflow/status/piero24/B.R.I.O.S./02-unit-tests.yml?branch=main&label=tests">
     </a>
     <a href="https://www.python.org/">
     <img src="https://img.shields.io/badge/Python-3.8+-blue.svg">
@@ -31,12 +34,13 @@
     <a href="https://www.apple.com/macos/">
     <img src="https://img.shields.io/badge/Platform-macOS-lightgrey.svg">
     </a>
-    <a href="https://github.com/Piero24/Bleissant/releases">
+    <a href="https://github.com/Piero24/B.R.I.O.S./releases">
     <img src="https://img.shields.io/badge/Version-1.0.0-blue.svg">
     </a>
 </p>
 <p align="center">
-    <strong>🥐 Bluetooth Reactive Intelligent Operator for Croissant Safety</strong>
+    <strong>🥐 Bluetooth Reactive Intelligent Operator for Croissant Safety 🥐</strong>
+    <br/>
     <br/>
     <em>Enterprise-grade proximity monitoring for macOS security automation</em>
     <br/>
@@ -51,9 +55,9 @@
     •
     <a href="#prerequisites"><strong>Requirements</strong></a>
     •
-    <a href="https://github.com/Piero24/Bleissant/issues"><strong>Report Bug</strong></a>
+    <a href="https://github.com/Piero24/B.R.I.O.S./issues"><strong>Report Bug</strong></a>
     •
-    <a href="https://github.com/Piero24/Bleissant/issues"><strong>Request Feature</strong></a>
+    <a href="https://github.com/Piero24/B.R.I.O.S./issues"><strong>Request Feature</strong></a>
 </p>
 
 
@@ -77,6 +81,7 @@
 - [Testing](#testing)
 - [CI/CD Pipeline](#cicd-pipeline)
 - [Contributing](#contributing)
+- [Roadmap & Future Improvements](#roadmap)
 - [Responsible Disclosure](#responsible-disclosure)
 - [Bug Reports & Features](#report-a-bug)
 - [License](#license)
@@ -96,6 +101,12 @@
     Built with production-ready code architecture, comprehensive test coverage, and CI/CD integration, B.R.I.O.S. employs sophisticated signal processing algorithms to deliver accurate distance estimation and reliable proximity detection. The system uses the <strong>Log-Distance Path Loss Model</strong> combined with statistical RSSI smoothing to filter environmental noise and provide stable, actionable proximity alerts.
 
 <br/>
+
+> [!NOTE]
+> **Why B.R.I.O.S.?**: At my company, we must lock our computers when leaving our desks. If a colleague finds your computer unlocked, they can post a croissant emoji (🥐) in the company Slack channel. This alerts everyone that you forgot to lock your computer, and the next day you have to bring croissants for your colleagues to enjoy together. I think it's a fun way to remind people about security! However, especially at the end of the day, it's easy to forget to lock your PC when grabbing water or rushing to a meeting. For this reason, I developed this extra layer of security that has your back in case you forget to lock your computer. It instantly locks your Mac and prevents your colleagues from getting those delicious croissants. Sorry, guys! 🥐
+
+> [!WARNING]
+> **Distance Accuracy**: Since Apple has not released a MacBook with an Ultra-Wideband (UWB) chip at the time of development, it's quite difficult to achieve very precise distance measurements between your smartphone and computer. This system relies on RSSI (Received Signal Strength Indicator), which is inherently noisy and subject to environmental interference (walls, furniture, people moving around, etc.). The current implementation using the Log-Distance Path Loss Model can provide distance estimates with an accuracy of approximately ±20-30cm in controlled environments. However, real-world accuracy may vary significantly based on factors such as device orientation, obstacles, and environmental conditions. For critical security applications, we recommend calibrating the TX_POWER_AT_1M parameter for your specific device and environment to improve accuracy. Remember that RSSI is not a precise distance measurement method, and results should be interpreted with caution. Unfortunately, I can't install a UWB chip in my MacBook or use multiple devices for triangulation, so this is the best solution available at the moment.
 
 ### 🎯 Key Use Cases
 
@@ -251,7 +262,7 @@ Get B.R.I.O.S. running in less than 2 minutes:
 
 ```bash
 # 1. Clone and navigate
-git clone https://github.com/Piero24/Bleissant.git && cd Bleissant
+git clone https://github.com/Piero24/B.R.I.O.S..git && cd B.R.I.O.S.
 
 # 2. Set up Python environment
 python3 -m venv env && source env/bin/activate
@@ -353,7 +364,9 @@ B.R.I.O.S. provides comprehensive documentation for all skill levels:
 > **First Time Using BLE?** Start with the [Quick Start](#quick-start) guide above, then explore the scanner mode to understand BLE device discovery: `python3 main.py --scanner 15 -m`
 
 > [!WARNING]  
-> **macOS Privacy Settings**: Ensure Bluetooth permissions are granted for your terminal application in *System Settings → Privacy & Security → Bluetooth*. Without these permissions, B.R.I.O.S. cannot scan for devices.
+> **macOS Lock Screen Settings**: Ensure The password is required immediately after sleep or screen saver begins in *System Settings → Lock Screen*. Without this setting, B.R.I.O.S. cannot enforce security upon proximity loss. (See image below)
+
+<img src="./images/macos-lock-screen-settings.png" alt="macOS Lock Screen Settings" style="width: 100%;" width="600">
 
 <p align="right"><a href="#top">⇧</a></p>
 
@@ -376,7 +389,7 @@ B.R.I.O.S. provides comprehensive documentation for all skill levels:
 > - ⚠️ **Android devices** should work without pairing requirements.
 > - ⚠️ **Apple Watch**: Currently **not discoverable from Mac** due to Apple's BLE restrictions.
 > 
-> If you encounter issues on other configurations, please [report them](https://github.com/Piero24/Bleissant/issues).
+> If you encounter issues on other configurations, please [report them](https://github.com/Piero24/B.R.I.O.S./issues).
 
 **System Requirements:**
 
@@ -411,8 +424,8 @@ pip install -r requirements/dev.txt
 1. Clone the repo
   
 ```sh
-git clone https://github.com/Piero24/Bleissant.git
-cd Bleissant
+git clone https://github.com/Piero24/B.R.I.O.S..git
+cd B.R.I.O.S.
 ```
 
 2. Create and activate a virtual environment
@@ -867,6 +880,47 @@ B.R.I.O.S. follows a clean, modular architecture for maintainability and extensi
 
 ---
 
+
+<p align="right"><a href="#top">⇧</a></p>
+
+---
+
+<br/>
+<h2 id="roadmap">🗺️  Roadmap & Future Improvements</h2>
+
+### 🎯 Next Steps
+
+**High Priority:**
+- ⚡ **Performance Optimization** - Reduce latency, optimize RSSI processing, minimize CPU usage
+- 🎯 **Kalman Filter** - Improve accuracy to ±10-15cm (vs current ±20-30cm) with better noise filtering
+
+**Planned Features:**
+- 📱 Multi-device monitoring with priority and fallback logic
+- 🎨 Custom actions (scripts, webhooks, Shortcuts.app)
+- 🔧 Visual calibration tool and environment presets
+- 🧠 ML-based adaptive calibration and anomaly detection
+- 🔌 Plugin system for extensibility
+- 💻 Cross-platform support (Windows, Linux, Docker)
+
+**Technical Improvements:**
+- Code refactoring, enhanced error handling
+- Expanded test coverage and performance benchmarks
+- Mock BLE hardware for CI/CD testing
+
+### 🤝 Contributing
+
+We welcome contributions for any of these features! See our [Contributing Guide](docs/CONTRIBUTING.md) to get started.
+
+**Priority areas for community contributions:**
+1. Kalman filter implementation (Python expertise needed)
+2. Cross-platform support (Windows/Linux developers)
+4. Documentation improvements
+5. Performance testing and optimization
+
+<p align="right"><a href="#top">⇧</a></p>
+
+---
+
 <br/>
 <h2 id="testing">🧪  Testing</h2>
 
@@ -940,7 +994,7 @@ Automated quality assurance via GitHub Actions.
 
 Check workflow status:
 - **Badge**: See README header for status
-- **Actions Tab**: https://github.com/Piero24/Bleissant/actions
+- **Actions Tab**: https://github.com/Piero24/B.R.I.O.S./actions
 - **Pull Requests**: Automatic checks on PRs
 
 All workflows must pass before merging to `main`.
@@ -962,7 +1016,7 @@ Contributions are welcome! We value:
 ### Quick Contribution Guide
 
 1. **Fork** the repository
-2. **Clone** your fork: `git clone https://github.com/YOUR_USERNAME/Bleissant.git`
+2. **Clone** your fork: `git clone https://github.com/YOUR_USERNAME/B.R.I.O.S..git`
 3. **Branch**: `git checkout -b feature/your-feature-name`
 4. **Develop**: Make your changes with tests
 5. **Test**: `pytest` and `pyink .`
@@ -977,79 +1031,53 @@ For detailed guidelines, see [docs/CONTRIBUTING.md](docs/CONTRIBUTING.md).
 ---
 
 <br/>
+<h2 id="responsible-disclosure">⚠️  Responsible Disclosure</h2>
 
-**Example Output (Monitor Mode):**
+We assume no responsibility for an improper use of this code and everything related to it. We do not assume any responsibility for damage caused to people and/or objects in the use of the code.
 
-```
-Starting 🥐 B.R.I.O.S.
-──────────────────────────────────────────────────
-Target:     Pietro's iPhone (iPhone 15 Pro)
-<p>
-    We assume no responsibility for an improper use of this code and everything related to it. We do not assume any responsibility for damage caused to people and / or objects in the use of the code.
-</p>
-<strong>
-    By using this code even in a small part, the developers are declined from any responsibility.
-</strong>
-<br/>
-<br/>
-<p>
-    It is possible to have more information by viewing the following links: 
-    <a href="#code-of-conduct"><strong>Code of conduct</strong></a>
-     • 
-    <a href="#license"><strong>License</strong></a>
-</p>
+**By using this code even in a small part, the developers are declined from any responsibility.**
+
+It is possible to have more information by viewing the following links: [Code of Conduct](docs/CODE_OF_CONDUCT.md) • [License](#license)
 
 <p align="right"><a href="#top">⇧</a></p>
 
+---
 
-<h3 id="report-a-bug"><br/>🐛  Bug and Feature</h3>
-<p>
-    To <strong>report a bug</strong> or to request the implementation of <strong>new features</strong>, it is strongly recommended to use the <a href="https://github.com/Piero24/Bleissant/issues"><strong>ISSUES tool from Github »</strong></a>
-</p>
 <br/>
-<p>
-    Here you may already find the answer to the problem you have encountered, in case it has already happened to other people. Otherwise you can report the bugs found.
-</p>
-<br/>
-<strong>
-    ATTENTION: To speed up the resolution of problems, it is recommended to answer all the questions present in the request phase in an exhaustive manner.
-</strong>
-<br/>
-<br/>
-<p>
-    (Even in the phase of requests for the implementation of new functions, we ask you to better specify the reasons for the request and what final result you want to obtain).
-</p>
-<br/>
+<h2 id="report-a-bug">🐛  Bug Reports & Features</h2>
+
+To **report a bug** or to request the implementation of **new features**, it is strongly recommended to use the [**ISSUES tool from Github »**](https://github.com/Piero24/B.R.I.O.S./issues)
+
+Here you may already find the answer to the problem you have encountered, in case it has already happened to other people. Otherwise you can report the bugs found.
+
+**ATTENTION:** To speed up the resolution of problems, it is recommended to answer all the questions present in the request phase in an exhaustive manner.
+
+(Even in the phase of requests for the implementation of new functions, we ask you to better specify the reasons for the request and what final result you want to obtain).
 
 <p align="right"><a href="#top">⇧</a></p>
   
- --- 
+---
 
-<h2 id="license"><br/>🔍  License</h2>
-<strong>MIT LICENSE</strong>
 <br/>
-<br/>
-<i>Permission is hereby granted, free of charge, to any person obtaining a copy
-of this software and associated documentation files (the "Software"), to deal
-in the Software without restriction, including...</i>
-<br/>
-<br/>
-<a href="https://github.com/Piero24/Bleissant/blob/main/LICENSE">
-    <strong>License Documentation »</strong>
-</a>
-<br/>
+<h2 id="license">🔍  License</h2>
+
+**MIT LICENSE**
+
+*Permission is hereby granted, free of charge, to any person obtaining a copy of this software and associated documentation files (the "Software"), to deal in the Software without restriction, including...*
+
+[**License Documentation »**](https://github.com/Piero24/B.R.I.O.S./blob/main/LICENSE)
+
 <p align="right"><a href="#top">⇧</a></p>
 
+---
 
-<h3 id="third-party-licenses"><br/>📌  Third Party Licenses</h3>
+<br/>
+<h2 id="third-party-licenses">📌  Third Party Licenses</h2>
 
-In the event that the software uses third-party components for its operation, 
-<br/>
-the individual licenses are indicated in the following section.
-<br/>
-<br/>
-<strong>Software list:</strong>
-<br/>
+In the event that the software uses third-party components for its operation, the individual licenses are indicated in the following section.
+
+**Software list:**
+
 <table>
   <tr  align="center">
     <th>Software</th>
@@ -1079,9 +1107,6 @@ the individual licenses are indicated in the following section.
 
 <p align="right"><a href="#top">⇧</a></p>
 
-
-<p align="right"><a href="#top">⇧</a></p>
-
 ---
 
 <br/>
@@ -1096,19 +1121,6 @@ the individual licenses are indicated in the following section.
 - ✅ Active maintenance
 - ✅ Type-safe codebase
 - ✅ Security audited
-
-### Roadmap
-
-Planned features for future releases:
-
-- [ ] **Multi-device monitoring**: Track multiple BLE devices simultaneously
-- [ ] **Custom actions**: Configurable actions beyond Mac locking
-- [ ] **Web dashboard**: Browser-based monitoring and configuration
-- [ ] **Historical analytics**: SQLite database for trend analysis
-- [ ] **Machine learning**: Adaptive path loss calibration
-- [ ] **REST API**: Remote monitoring and control
-- [ ] **Plugin system**: Extensible action triggers
-- [ ] **Windows/Linux support**: Cross-platform locking mechanisms
 
 ### Versioning
 
@@ -1129,14 +1141,14 @@ Current version: **1.0.0** - [Changelog](CHANGELOG.md)
 
 - 📖 **Documentation**: [docs/](docs/) folder
 - ❓ **FAQ**: [docs/FAQ.md](docs/FAQ.md)
-- 💬 **Discussions**: [GitHub Discussions](https://github.com/Piero24/Bleissant/discussions)
-- 🐛 **Bug Reports**: [GitHub Issues](https://github.com/Piero24/Bleissant/issues)
+- 💬 **Discussions**: [GitHub Discussions](https://github.com/Piero24/B.R.I.O.S./discussions)
+- 🐛 **Bug Reports**: [GitHub Issues](https://github.com/Piero24/B.R.I.O.S./issues)
 
 ### Stay Updated
 
 - ⭐ **Star** this repository to show support
 - 👀 **Watch** for new releases and updates
-- 🔔 **Subscribe** to [release notifications](https://github.com/Piero24/Bleissant/releases)
+- 🔔 **Subscribe** to [release notifications](https://github.com/Piero24/B.R.I.O.S./releases)
 
 ### Connect
 
@@ -1163,4 +1175,4 @@ Special thanks to:
 **Copyright © 2024 Pietrobon Andrea**
 
 ---
-> *<p align="center"> Copyright (C) by Pietrobon Andrea <br/> Released date: 02-11-2024*
+> *<p align="center"> Copyright (C) by Pietrobon Andrea <br/> Released date: 07-11-2025*

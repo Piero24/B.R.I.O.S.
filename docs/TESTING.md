@@ -10,7 +10,7 @@ Complete guide to testing 🥐 B.R.I.O.S. (Bluetooth Reactive Intelligent Operat
 > - **Python**: 3.12.6 (should work on Python 3.8+)
 > - **OS**: macOS
 > 
-> If you encounter test failures on other configurations, please [report them](https://github.com/Piero24/Bleissant/issues).
+> If you encounter test failures on other configurations, please [report them](https://github.com/Piero24/B.R.I.O.S./issues).
 
 ## Overview
 
@@ -286,7 +286,7 @@ Tests run automatically on GitHub Actions:
     pytest -v --tb=short
 ```
 
-View results at: `https://github.com/Piero24/Bleissant/actions`
+View results at: `https://github.com/Piero24/B.R.I.O.S./actions`
 
 ---
 

@@ -345,9 +345,9 @@ Only operational data:
 
 ## Still Have Questions?
 
-1. **Search**: Check [existing issues](https://github.com/Piero24/Bleissant/issues)
-2. **Ask**: Open a [new issue](https://github.com/Piero24/Bleissant/issues/new) with the `question` label
-3. **Discuss**: Start a [discussion](https://github.com/Piero24/Bleissant/discussions)
+1. **Search**: Check [existing issues](https://github.com/Piero24/B.R.I.O.S./issues)
+2. **Ask**: Open a [new issue](https://github.com/Piero24/B.R.I.O.S./issues/new) with the `question` label
+3. **Discuss**: Start a [discussion](https://github.com/Piero24/B.R.I.O.S./discussions)
 
 ---
 
