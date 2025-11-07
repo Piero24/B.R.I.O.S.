@@ -243,7 +243,7 @@ When the calculated distance exceeds your configured threshold (default: 2.0m), 
 
 <br/>
 <div align="center">
-    <img src="https://images.unsplash.com/photo-1593640408182-31c70c8268f5?w=800&auto=format&fit=crop" style="width: 100%;" width="100%">
+    <img src="./images/paring.png" style="width: 100%;" width="100%">
     <p><em>Bluetooth proximity monitoring for enhanced security</em></p>
 </div>
 <br/>
