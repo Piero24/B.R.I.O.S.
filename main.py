@@ -637,6 +637,8 @@ class DeviceMonitor:
             device: The BLEDevice object discovered by the scanner.
             adv_data: The advertisement data associated with the device.
         """
+        is_locked = False
+
         try:
             if device.address != self.target_address:
                 return
@@ -658,9 +660,166 @@ class DeviceMonitor:
         self._log_status(current_rssi, smoothed_rssi, distance_m)
 
         if distance_m > DISTANCE_THRESHOLD_M and not self.alert_triggered:
-            self._trigger_out_of_range_alert(distance_m)
+            is_locked = self._trigger_out_of_range_alert(distance_m)
         elif distance_m <= DISTANCE_THRESHOLD_M and self.alert_triggered:
             self._trigger_in_range_alert(distance_m)
+
+        if is_locked:
+            asyncio.create_task(self._handle_screen_lock())
+
+    async def _handle_screen_lock(self) -> None:
+        """Handles the screen lock state by monitoring and re-establishing
+            scanner connection.
+
+        This method runs in the background while the screen is locked,
+        periodically checking the lock status. When the screen is unlocked, it
+        restarts the scanner and clears the RSSI buffer to ensure
+        fresh readings.
+        """
+        try:
+            await self.scanner.stop()
+
+            timestamp = datetime.now().strftime("%H:%M:%S")
+
+            if self.flags.daemon_mode:
+                msg = f"[{timestamp}] Screen locked - Scanner paused"
+                print(msg)
+                sys.stdout.flush()
+            elif self.flags.verbose:
+                print(
+                    f"{Colors.YELLOW}[{timestamp}]{Colors.RESET} Screen locked "
+                    f"→ Scanner {Colors.BOLD}{Colors.YELLOW}Paused{Colors.RESET}"
+                    f" │ Monitoring: Waiting for unlock"
+                )
+
+            if self.flags.file_logging and self.log_file:
+                self.log_file.write(
+                    f"[{timestamp}] Screen locked - Scanner paused\n"
+                )
+                self.log_file.flush()
+
+            await asyncio.sleep(2)
+
+            loop_count = 0
+            is_waiting = False
+            while self.is_screen_locked():
+                loop_count += 1
+
+                if not is_waiting:
+                    timestamp = datetime.now().strftime("%H:%M:%S")
+                    is_waiting = True
+
+                    if self.flags.daemon_mode:
+                        print(
+                            f"[{timestamp}] "
+                            f"Screen still locked - Waiting for unlock"
+                        )
+                        sys.stdout.flush()
+                    elif self.flags.verbose:
+                        print(
+                            f"{Colors.GREY}[{timestamp}]{Colors.RESET} "
+                            f"Screen locked → Waiting..."
+                        )
+
+                    if self.flags.file_logging and self.log_file:
+                        self.log_file.write(
+                            f"[{timestamp}] "
+                            f"Screen still locked - Waiting for unlock\n"
+                        )
+                        self.log_file.flush()
+
+                await asyncio.sleep(2)
+
+            timestamp = datetime.now().strftime("%H:%M:%S")
+            total_time = loop_count * 2
+
+            self.rssi_buffer.clear()
+
+            if self.flags.daemon_mode:
+                print(
+                    f"[{timestamp}] Screen unlocked - "
+                    f"Reconnecting scanner (locked for {total_time}s)"
+                )
+                sys.stdout.flush()
+            elif self.flags.verbose:
+                print(
+                    f"{Colors.GREEN}[{timestamp}]{Colors.RESET} Screen unlocked "
+                    f"→ Reconnecting │ Locked: {total_time}s │ "
+                    f"RSSI buffer: Cleared"
+                )
+
+            if self.flags.file_logging and self.log_file:
+                self.log_file.write(
+                    f"[{timestamp}] Screen unlocked - Reconnecting scanner "
+                    f"(locked for {total_time}s)\n"
+                )
+                self.log_file.flush()
+
+            await self.scanner.start()
+
+            timestamp = datetime.now().strftime("%H:%M:%S")
+            if self.flags.daemon_mode:
+                msg = f"[{timestamp}] Scanner reconnected - Monitoring resumed"
+                print(msg)
+                sys.stdout.flush()
+            elif self.flags.verbose:
+                print(
+                    f"{Colors.GREEN}[{timestamp}]{Colors.RESET} Scanner ready "
+                    f"→ Monitoring: {Colors.GREEN}{Colors.BOLD}Active{Colors.RESET}"
+                )
+
+            if self.flags.file_logging and self.log_file:
+                self.log_file.write(
+                    f"[{timestamp}] Scanner reconnected - Monitoring resumed\n"
+                )
+                self.log_file.flush()
+
+            # Wait a bit to avoid immediate re-locking
+            await asyncio.sleep(30)
+
+        except Exception as e:
+            import traceback
+
+            error_detail = traceback.format_exc()
+            timestamp = datetime.now().strftime("%H:%M:%S")
+
+            if self.flags.daemon_mode:
+                print(f"[{timestamp}] ERROR: Failed to reconnect scanner - {e}")
+                sys.stdout.flush()
+            else:
+                print(
+                    f"{Colors.RED}[{timestamp}]{Colors.RESET} Error → "
+                    f"Scanner reconnection failed │ {e}"
+                )
+
+            if self.flags.file_logging and self.log_file:
+                self.log_file.write(
+                    f"[{timestamp}] ERROR: Scanner reconnection failed\n"
+                    f"{error_detail}\n"
+                )
+                self.log_file.flush()
+
+    def is_screen_locked(self) -> bool:
+        import Quartz
+
+        try:
+            # Use Quartz (PyObjC) to check if screen is locked
+            session_dict = Quartz.CGSessionCopyCurrentDictionary()
+
+            if session_dict is None:
+                return False
+
+            is_locked = session_dict.get("CGSSessionScreenIsLocked", False)
+
+            return bool(is_locked)
+        except Exception as e:
+            if self.flags.file_logging and self.log_file:
+                self.log_file.write(
+                    f"[{datetime.now().strftime('%H:%M:%S')}] "
+                    f"ERROR: Screen lock check failed - {e}\n"
+                )
+                self.log_file.flush()
+            return False
 
     def _process_signal(
         self,
@@ -786,15 +945,20 @@ class DeviceMonitor:
         except Exception as e:
             return f"⚠️  Failed to lock MacBook: {e}"
 
-    def _trigger_out_of_range_alert(self, distance_m: float) -> None:
+    def _trigger_out_of_range_alert(self, distance_m: float) -> bool:
         """Handles the out-of-range alert logic.
 
         Args:
             distance_m (float): The estimated distance in meters.
+
+        Returns:
+            bool: True if the MacBook was locked, False otherwise.
         """
         timestamp = datetime.now().strftime("%H:%M:%S")
 
         lock_status = self._lock_macbook()
+        is_locked = "Failed" not in lock_status
+
         alert_msg = (
             f"⚠️  ALERT: Device '{TARGET_DEVICE_NAME}' is far away! "
             f"(~{distance_m:.2f} m) - {lock_status}"
@@ -820,7 +984,9 @@ class DeviceMonitor:
             if self.flags.file_logging and self.log_file:
                 self.log_file.write(f"[{timestamp}] {alert_msg}\n")
                 self.log_file.flush()
+
         self.alert_triggered = True
+        return is_locked
 
     def _trigger_in_range_alert(self, distance_m: float) -> None:
         """Handles the back-in-range alert logic.
