@@ -2,7 +2,9 @@
 # This file excludes macOS-specific packages (pyobjc-*) that fail on Linux runners.
 # For local development on macOS, use dev.txt instead.
 
--r base.txt
+# Core dependencies (cross-platform)
+bleak==1.1.1
+python-dotenv==1.2.1
 
 # Code formatting and linting
 black==24.10.0
@@ -13,7 +15,7 @@ pytest==8.4.2
 pytest-asyncio==1.2.0
 pytest-mock==3.15.1
 
-# Dependencies
+# Additional dependencies
 click==8.3.0
 iniconfig==2.3.0
 mypy_extensions==1.1.0
@@ -25,6 +27,7 @@ Pygments==2.19.2
 typing_extensions==4.15.0
 
 # macOS-specific packages are excluded:
+# pyobjc-framework-Quartz==12.0            # macOS only - skipped on Linux
 # pyobjc-core==12.0                        # macOS only - skipped on Linux
 # pyobjc-framework-Cocoa==12.0             # macOS only - skipped on Linux
 # pyobjc-framework-CoreBluetooth==12.0     # macOS only - skipped on Linux
