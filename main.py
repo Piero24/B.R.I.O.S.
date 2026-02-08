@@ -54,6 +54,104 @@ try:
 except ImportError:
     HAS_QUARTZ = False
 
+# --- Monkeypatch for Bleak 1.1.1 Crash ---
+# Fixes AttributeError: 'NoneType' object has no attribute 'hex'
+def _apply_robust_bleak_patch() -> None:
+    """
+    Monkeypatches BleakScannerCoreBluetooth.start to fix a crash when
+    retrieveAddressForPeripheral_ returns None.
+    """
+    if not IS_MACOS:
+        return
+
+    try:
+        from bleak.backends.corebluetooth.scanner import BleakScannerCoreBluetooth
+        from bleak.backends.corebluetooth.utils import cb_uuid_to_str
+        from bleak.backends.scanner import AdvertisementData
+        import logging
+
+        logger = logging.getLogger("bleak.backends.corebluetooth.scanner")
+
+        async def patched_start(self) -> None:
+            self.seen_devices = {}
+
+            def callback(p, a, r) -> None:
+                # --- PATCH START ---
+                # This inner callback is where the crash happens.
+                # We replicate the logic but add a check for None address.
+                
+                service_uuids = [
+                    cb_uuid_to_str(u) for u in a.get("kCBAdvDataServiceUUIDs", [])
+                ]
+
+                if not self.is_allowed_uuid(service_uuids):
+                    return
+
+                # Process service data
+                service_data_dict_raw = a.get("kCBAdvDataServiceData", {})
+                service_data = {
+                    cb_uuid_to_str(k): bytes(v) for k, v in service_data_dict_raw.items()
+                }
+
+                # Process manufacturer data
+                manufacturer_binary_data = a.get("kCBAdvDataManufacturerData")
+                manufacturer_data = {}
+                if manufacturer_binary_data:
+                    manufacturer_id = int.from_bytes(
+                        manufacturer_binary_data[0:2], byteorder="little"
+                    )
+                    manufacturer_value = bytes(manufacturer_binary_data[2:])
+                    manufacturer_data[manufacturer_id] = manufacturer_value
+
+                # set tx_power data if available
+                tx_power = a.get("kCBAdvDataTxPowerLevel")
+
+                advertisement_data = AdvertisementData(
+                    local_name=a.get("kCBAdvDataLocalName"),
+                    manufacturer_data=manufacturer_data,
+                    service_data=service_data,
+                    service_uuids=service_uuids,
+                    tx_power=tx_power,
+                    rssi=r,
+                    platform_data=(p, a, r),
+                )
+
+                if self._use_bdaddr:
+                    # HACK: retrieveAddressForPeripheral_ is undocumented
+                    address_bytes = (
+                        self._manager.central_manager.retrieveAddressForPeripheral_(p)
+                    )
+                    if address_bytes is None:
+                        # PATCH: Handle None address gracefully
+                        # logger.debug("Could not get Bluetooth address...")
+                        return
+                    address = address_bytes.hex(":").upper()
+                else:
+                    address = p.identifier().UUIDString()
+
+                device = self.create_or_update_device(
+                    p.identifier().UUIDString(),
+                    address,
+                    p.name(),
+                    (p, self._manager.central_manager.delegate()),
+                    advertisement_data,
+                )
+
+                self.call_detection_callbacks(device, advertisement_data)
+                # --- PATCH END ---
+
+            self._manager.callbacks[id(self)] = callback
+            await self._manager.start_scan(self._service_uuids)
+
+        BleakScannerCoreBluetooth.start = patched_start
+        # print(f"{Colors.GREEN}✓{Colors.RESET} Applied Bleak 1.1.1 crash fix")
+        
+    except ImportError:
+        pass
+
+# Apply patch immediately
+_apply_robust_bleak_patch()
+
 # --- Configuration Loader ---
 # Load user-defined settings from a .env file for easier configuration.
 load_dotenv(".env")
@@ -82,6 +180,18 @@ SAMPLE_WINDOW = int(os.getenv("SAMPLE_WINDOW", "12"))
 
 # The distance (in meters) beyond which a device is considered "out of range."
 DISTANCE_THRESHOLD_M = float(os.getenv("DISTANCE_THRESHOLD_M", "2.0"))
+
+# --- Reliability & Safety Constants ---
+# Time (in seconds) to ignore "out of range" signals after unlocking/resuming.
+# Prevents immediate re-locking while signal stabilizes.
+GRACE_PERIOD_SECONDS = int(os.getenv("GRACE_PERIOD_SECONDS", "30"))
+
+# Lock Loop Protection:
+# If the Mac locks LOCK_LOOP_THRESHOLD times within LOCK_LOOP_WINDOW seconds,
+# the script will pause for LOCK_LOOP_PENALTY seconds.
+LOCK_LOOP_THRESHOLD = int(os.getenv("LOCK_LOOP_THRESHOLD", "3"))
+LOCK_LOOP_WINDOW = int(os.getenv("LOCK_LOOP_WINDOW", "60"))
+LOCK_LOOP_PENALTY = int(os.getenv("LOCK_LOOP_PENALTY", "120"))
 
 # --- File Paths ---
 # The PID file stores the process ID of the running monitor.
@@ -254,7 +364,7 @@ class ServiceManager:
         target_address = Application.determine_target_address(self.args)
 
         print(
-            f"\n{Colors.BOLD}Starting 🥐 B.R.I.O.S. Background Monitor{Colors.RESET}"
+            f"\n{Colors.BOLD}Starting {__app_name__} Background Monitor{Colors.RESET}"
         )
         print("─" * 50)
 
@@ -288,13 +398,13 @@ class ServiceManager:
 
         if not is_running:
             print(
-                f"{Colors.YELLOW}●{Colors.RESET} 🥐 B.R.I.O.S. is not running"
+                f"{Colors.YELLOW}●{Colors.RESET} {__app_name__} is not running"
             )
             if os.path.exists(PID_FILE):
                 os.remove(PID_FILE)
             return
 
-        print(f"Stopping 🥐 B.R.I.O.S. (PID {pid})...")
+        print(f"Stopping {__app_name__} (PID {pid})...")
 
         try:
             # Type guard: pid is guaranteed to be int here since is_running is True
@@ -303,7 +413,7 @@ class ServiceManager:
             ), "PID should not be None when is_running is True"
             os.kill(pid, signal.SIGTERM)
             print(
-                f"{Colors.GREEN}✓{Colors.RESET} 🥐 B.R.I.O.S. stopped successfully"
+                f"{Colors.GREEN}✓{Colors.RESET} {__app_name__} stopped successfully"
             )
         except OSError:
             print(
@@ -316,7 +426,7 @@ class ServiceManager:
 
     def restart(self) -> None:
         """Restarts the background monitor."""
-        print(f"\n{Colors.BOLD}Restarting 🥐 B.R.I.O.S...{Colors.RESET}")
+        print(f"\n{Colors.BOLD}Restarting {__app_name__}..{Colors.RESET}")
         self.stop()
         time.sleep(1)
         self.start()
@@ -325,7 +435,7 @@ class ServiceManager:
         """Displays the current status of the background monitor."""
         pid, is_running = self._get_pid_status()
 
-        print(f"\n{Colors.BOLD}🥐 B.R.I.O.S. Monitor Status{Colors.RESET}")
+        print(f"\n{Colors.BOLD}{__app_name__} Monitor Status{Colors.RESET}")
         print("─" * 50)
 
         if is_running:
@@ -377,13 +487,13 @@ class ServiceManager:
         pid, is_running = self._get_pid_status()
 
         if not is_running:
-            print(f"{Colors.RED}✗{Colors.RESET} Failed to start 🥐 B.R.I.O.S.")
+            print(f"{Colors.RED}✗{Colors.RESET} Failed to start {__app_name__}")
             print(f"Log file:   {LOG_FILE}")
             print("─" * 50 + "\n")
             return
 
         print(
-            f"{Colors.GREEN}✓{Colors.RESET} 🥐 B.R.I.O.S. started successfully"
+            f"{Colors.GREEN}✓{Colors.RESET} {__app_name__} started successfully"
         )
         print(f"PID:        {pid}")
         print("─" * 50)
@@ -411,7 +521,7 @@ class ServiceManager:
             print(f"Logging:    Disabled (use -f to enable)")
 
         print(
-            f"\n{Colors.GREEN}●{Colors.RESET} 🥐 B.R.I.O.S. running in background"
+            f"\n{Colors.GREEN}●{Colors.RESET} {__app_name__} running in background"
         )
         print(
             f"\nUse `{sys.argv[0]} --status` to check status or "
@@ -470,7 +580,7 @@ class DeviceScanner:
 
     def _print_summary(self) -> None:
         """Prints a summary of the scanner configuration."""
-        print(f"\n{Colors.BOLD}🥐 B.R.I.O.S. Device Scanner{Colors.RESET}")
+        print(f"\n{Colors.BOLD}{__app_name__} Device Scanner{Colors.RESET}")
         print("─" * 70)
         print(f"Duration:   {self.duration} seconds")
 
@@ -587,6 +697,13 @@ class DeviceMonitor:
         self.rssi_buffer: Deque[int] = deque(maxlen=SAMPLE_WINDOW)
         self.alert_triggered: bool = False
         self.log_file: Optional[TextIO] = None
+        self.is_handling_lock: bool = False
+        self.last_packet_time: float = time.monotonic()
+        self.lock_handling_start_time: float = 0
+        
+        # Safety state
+        self.resume_time: float = 0
+        self.lock_history: Deque[float] = deque(maxlen=LOCK_LOOP_THRESHOLD)
 
         self.scanner = BleakScanner(
             detection_callback=self._detection_callback,
@@ -607,7 +724,7 @@ class DeviceMonitor:
         if self.flags.daemon_mode:
             return
 
-        print(f"\n{Colors.BOLD}Starting 🥐 B.R.I.O.S. Monitor{Colors.RESET}")
+        print(f"\n{Colors.BOLD}Starting {__app_name__} Monitor{Colors.RESET}")
         print("─" * 50)
         print(f"Target:     {TARGET_DEVICE_NAME} ({TARGET_DEVICE_TYPE})")
         print(f"Address:    {self.target_address}")
@@ -647,6 +764,7 @@ class DeviceMonitor:
             device: The BLEDevice object discovered by the scanner.
             adv_data: The advertisement data associated with the device.
         """
+        self.last_packet_time = time.monotonic()
         is_locked = False
 
         try:
@@ -670,6 +788,16 @@ class DeviceMonitor:
         self._log_status(current_rssi, smoothed_rssi, distance_m)
 
         if distance_m > DISTANCE_THRESHOLD_M and not self.alert_triggered:
+            # Check for Grace Period
+            time_since_resume = time.monotonic() - self.resume_time
+            if time_since_resume < GRACE_PERIOD_SECONDS:
+                if self.flags.verbose:
+                     print(
+                        f"{Colors.GREY}[Grace Period] Ignoring trigger "
+                        f"({time_since_resume:.1f}/{GRACE_PERIOD_SECONDS}s){Colors.RESET}"
+                    )
+                return
+
             is_locked = self._trigger_out_of_range_alert(distance_m)
         elif distance_m <= DISTANCE_THRESHOLD_M and self.alert_triggered:
             self._trigger_in_range_alert(distance_m)
@@ -686,8 +814,22 @@ class DeviceMonitor:
         restarts the scanner and clears the RSSI buffer to ensure
         fresh readings.
         """
+        if self.is_handling_lock:
+            return
+
+        self.is_handling_lock = True
+        self.lock_handling_start_time = time.monotonic()
+        
         try:
-            await self.scanner.stop()
+            # Try to stop scanner with timeout
+            try:
+                await asyncio.wait_for(self.scanner.stop(), timeout=5.0)
+            except asyncio.TimeoutError:
+                if self.flags.verbose:
+                    print(f"{Colors.YELLOW}Warning: Scanner stop timed out{Colors.RESET}")
+            except Exception as e:
+                if self.flags.verbose:
+                    print(f"{Colors.YELLOW}Warning: Scanner stop failed: {e}{Colors.RESET}")
 
             timestamp = datetime.now().strftime("%H:%M:%S")
 
@@ -765,7 +907,76 @@ class DeviceMonitor:
                 )
                 self.log_file.flush()
 
-            await self.scanner.start()
+            # --- Lock Loop Protection ---
+            now = time.monotonic()
+            self.lock_history.append(now)
+            
+            if len(self.lock_history) == LOCK_LOOP_THRESHOLD:
+                # Check if all events happened within window
+                if now - self.lock_history[0] < LOCK_LOOP_WINDOW:
+                    msg = (
+                        f"⚠️  LOCK LOOP DETECTED! ({LOCK_LOOP_THRESHOLD} locks in "
+                        f"{int(now - self.lock_history[0])}s) -> "
+                        f"PAUSING FOR {LOCK_LOOP_PENALTY}s"
+                    )
+                    timestamp = datetime.now().strftime("%H:%M:%S")
+                    
+                    if self.flags.daemon_mode:
+                        print(f"[{timestamp}] {msg}")
+                        sys.stdout.flush()
+                    else:
+                        print(f"\n{Colors.RED}{Colors.BOLD}{msg}{Colors.RESET}\n")
+                        
+                    if self.flags.file_logging and self.log_file:
+                        self.log_file.write(f"[{timestamp}] {msg}\n")
+                        self.log_file.flush()
+                        
+                    await asyncio.sleep(LOCK_LOOP_PENALTY)
+                    self.lock_history.clear()
+
+            # Retry logic for scanner reconnection
+            # Recreate scanner instance to ensure fresh connection
+            if self.flags.verbose:
+                print(f"{Colors.GREY}[Debug] Recreating BleakScanner instance...{Colors.RESET}")
+            
+            self.scanner = BleakScanner(
+                detection_callback=self._detection_callback,
+                cb={"use_bdaddr": self.use_bdaddr},
+            )
+
+            max_retries = 5
+            retry_delay = 2
+            
+            for attempt in range(max_retries):
+                try:
+                    # Try to start scanner with timeout
+                    await asyncio.wait_for(self.scanner.start(), timeout=5.0)
+                    break  # Success!
+                except Exception as e:
+                    if attempt >= max_retries - 1:
+                        raise e
+
+                    timestamp = datetime.now().strftime("%H:%M:%S")
+                    wait_time = retry_delay * (attempt + 1)
+                    
+                    msg = (
+                        f"[{timestamp}] Scanner start failed (Attempt "
+                        f"{attempt + 1}/{max_retries}) - Retrying in "
+                        f"{wait_time}s... Error: {e}"
+                    )
+                    
+                    if self.flags.daemon_mode:
+                        print(msg)
+                        sys.stdout.flush()
+                    elif self.flags.verbose:
+                        print(f"{Colors.YELLOW}{msg}{Colors.RESET}")
+                        
+                    if self.flags.file_logging and self.log_file:
+                        self.log_file.write(f"{msg}\n")
+                        self.log_file.flush()
+                        
+                    await asyncio.sleep(wait_time)
+                        
 
             timestamp = datetime.now().strftime("%H:%M:%S")
             if self.flags.daemon_mode:
@@ -784,8 +995,8 @@ class DeviceMonitor:
                 )
                 self.log_file.flush()
 
-            # Wait a bit to avoid immediate re-locking
-            await asyncio.sleep(30)
+            # Set resume time for Grace Period logic
+            self.resume_time = time.monotonic()
 
         except Exception as e:
             import traceback
@@ -808,6 +1019,9 @@ class DeviceMonitor:
                     f"{error_detail}\n"
                 )
                 self.log_file.flush()
+        finally:
+            self.is_handling_lock = False
+            self.lock_handling_start_time = 0
 
     def _is_screen_locked(self) -> bool:
         """Checks if the macOS screen is currently locked.
@@ -1084,6 +1298,8 @@ class DeviceMonitor:
 
         try:
             await self.scanner.start()
+            asyncio.create_task(self._watchdog_loop())
+            
             while True:
                 await asyncio.sleep(1.0)
         except Exception as e:
@@ -1109,7 +1325,54 @@ class DeviceMonitor:
                 self.log_file.close()
 
             if not self.flags.daemon_mode:
-                print(f"{Colors.GREEN}✓{Colors.RESET} 🥐 B.R.I.O.S. stopped.\n")
+                print(f"{Colors.GREEN}✓{Colors.RESET} {__app_name__} stopped.\n")
+
+    async def _watchdog_loop(self) -> None:
+        """Background task to monitor for external screen lock events.
+
+        This loop runs concurrently with the scanner and checks if the screen
+        is locked. If it detects a lock event that wasn't triggered by the
+        script itself, it initiates the lock handling logic to pause the
+        scanner and wait for unlock.
+        """
+        last_log_time = time.monotonic()
+        
+        while True:
+            try:
+                current_time = time.monotonic()
+                
+                # Periodic liveness log (every 60s)
+                if self.flags.verbose and current_time - last_log_time > 60:
+                    time_since_packet = int(current_time - self.last_packet_time)
+                    print(f"{Colors.GREY}[Watchdog] Active - Last packet: {time_since_packet}s ago{Colors.RESET}")
+                    last_log_time = current_time
+
+                if self._is_screen_locked() and not self.is_handling_lock:
+                    # Spawn handler as a task so watchdog keeps running
+                    asyncio.create_task(self._handle_screen_lock())
+                
+                # Heartbeat check: Restart scanner if no packets received for 120s
+                if current_time - self.last_packet_time > 120 and not self.is_handling_lock:
+                    if self.flags.verbose:
+                        print(f"{Colors.YELLOW}Watchdog: Scanner frozen (no data for 120s) -> Restarting...{Colors.RESET}")
+                    # Spawn handler as a task
+                    asyncio.create_task(self._handle_screen_lock())
+
+                # Stuck handler check: If handling lock takes > 60s, force reset
+                if self.is_handling_lock and self.lock_handling_start_time > 0:
+                    if current_time - self.lock_handling_start_time > 60:
+                        if self.flags.verbose:
+                            print(f"{Colors.RED}Watchdog: Lock handler stuck for >60s -> Forcing reset{Colors.RESET}")
+                        self.is_handling_lock = False
+                        self.lock_handling_start_time = 0
+                        # We don't call _handle_screen_lock immediately to avoid recursion loop
+                        # The next watchdog tick will trigger it if needed (via heartbeat or lock check)
+
+                await asyncio.sleep(2.0)
+            except Exception as e:
+                if self.flags.verbose:
+                    print(f"{Colors.YELLOW}Watchdog error: {e}{Colors.RESET}")
+                await asyncio.sleep(5.0)
 
 
 # ==============================================================================
@@ -1172,6 +1435,14 @@ class Application:
         use_bdaddr = self.args.macos_use_bdaddr or bool(self.args.target_mac)
         monitor = DeviceMonitor(target_address, use_bdaddr, flags)
 
+        if flags.daemon_mode:
+            try:
+                with open(PID_FILE, "w") as f:
+                    f.write(str(os.getpid()))
+            except IOError:
+                print(f"{Colors.RED}✗{Colors.RESET} Failed to write PID file")
+                sys.exit(1)
+
         try:
             await monitor.run()
         finally:
@@ -1209,9 +1480,9 @@ class Application:
         Returns:
             argparse.ArgumentParser: The configured argument parser.
         """
-        help_epilog = """
+        help_epilog = f"""
         DESCRIPTION:
-        🥐 B.R.I.O.S. (Bluetooth Reactive Intelligent Operator for Croissant Safety)
+        {__app_name__} ({__app_full_name__})
         
         A professional proximity monitoring tool that provides real-time device 
         tracking and automated security based on Bluetooth signal strength (RSSI).
@@ -1253,7 +1524,7 @@ class Application:
 
         COMMAND-LINE OPTIONS:
         Service Control:
-          --start               Start 🥐 B.R.I.O.S. as background daemon
+          --start               Start {__app_name__} as background daemon
           --stop                Stop background daemon
           --restart             Restart background daemon
           --status              Show daemon status and statistics
