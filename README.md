@@ -16,10 +16,7 @@
 </p>
 
 <p align="center">
-  <a href="https://github.com/Piero24/B.R.I.O.S./blob/main/.github/README.md"><strong>📖 Full Documentation »</strong></a>
-  <br/>
-  <br/>
-  <a href=".github/README.md#quick-start">Quick Start</a>
+  <a href="#-quick-start">Quick Start</a>
   •
   <a href="docs/FAQ.md">FAQ</a>
   •
@@ -30,9 +27,16 @@
 
 ---
 
-## ⚡ Quick Start
+## 📦 Installation
+
+### Option 1: Homebrew (Recommended)
+The easiest way to install B.R.I.O.S. on macOS.
 
 ```bash
+# Install from your tap (replace with your tap name)
+brew install pietrobon/homebrew-brios/brios
+```
+
 # Clone and setup
 git clone https://github.com/Piero24/B.R.I.O.S..git && cd B.R.I.O.S.
 python3 -m venv env && source env/bin/activate
@@ -90,6 +94,8 @@ python3 main.py --target-mac -v
 
 ## 📦 Installation
 
+### Option 2: Manual Installation (Development)
+
 ```bash
 # 1. Clone repository
 git clone https://github.com/Piero24/B.R.I.O.S..git
@@ -99,66 +105,99 @@ cd B.R.I.O.S.
 python3 -m venv env
 source env/bin/activate
 
-# 3. Install dependencies
-pip install -r requirements/dev.txt
-
-# 4. Configure
-cp .env.example .env
-# Edit .env with your device information
+# 3. Install in editable mode
+pip install -e .
 ```
+
+---
+
+## 🚀 Quick Start
+
+1.  **Discover your device**:
+    ```bash
+    brios --scanner 15 -m
+    ```
+    *Note the MAC address of your device from the output.*
+
+2.  **Configure**:
+    Create a `.env` file in your project root or home directory:
+    ```bash
+    cp .env.example .env
+    # Edit .env with your device MAC address
+    ```
+
+3.  **Start Monitoring**:
+    ```bash
+    brios --target-mac -v
+    ```
+
+---
+
+## ⚙️ Configuration
+
+B.R.I.O.S. uses environment variables for configuration. You can set these in a `.env` file:
+
+| Parameter | Description | Default |
+| :--- | :--- | :--- |
+| `TARGET_DEVICE_MAC_ADDRESS` | MAC address of the device to track | Required |
+| `DISTANCE_THRESHOLD_M` | Distance in meters to trigger lock | `2.0` |
+| `GRACE_PERIOD_SECONDS` | Delay before re-locking after unlock | `15` |
+| `TX_POWER_AT_1M` | RSSI measured at 1 meter | `-59` |
+| `PATH_LOSS_EXPONENT` | Environment factor (2.0-4.0) | `2.8` |
+
+---
 
 ## 🚀 Usage
 
-### Discovery Mode
+### Command Line Interface
+Once installed, the `brios` command is available globally.
+
+- **Scan for devices**: `brios --scanner`
+- **Monitor with MAC**: `brios --target-mac "AA:BB:CC..."`
+- **Monitor with UUID**: `brios --target-uuid "XXXXXXXX..."`
+- **Verbose output**: Add `-v` to any monitor command.
+
+### Background Daemon (macOS)
+You can run B.R.I.O.S. as a background service:
+
+**Using Homebrew (Loads on startup):**
 ```bash
-python3 main.py --scanner 15 -m
+brew services start brios    # Start and enable at login
+brew services stop brios     # Stop the service
 ```
 
-### Monitor Mode (Foreground)
+**Using Internal Service Manager:**
 ```bash
-python3 main.py --target-mac -v
+brios --start    # Start background process
+brios --status   # Check status and PID
+brios --stop     # Stop background process
 ```
 
-### Background Service
-```bash
-python3 main.py --target-mac -v -f --start
-python3 main.py --status
-python3 main.py --stop
-```
+---
 
-## 🏗️ Architecture
+## 🧪 Development
 
-```
-Application → [ServiceManager | DeviceScanner | DeviceMonitor]
-                                                      ↓
-                                              Signal Processing
-                                                      ↓
-                                              Distance Calculation
-                                                      ↓
-                                              Alert & Mac Lock
-```
-
-## 🧪 Testing
-
+### Running Tests
+We use `pytest` for unit testing.
 ```bash
 # Run all tests
 pytest
 
-# With coverage
-pytest --cov=. --cov-report=term-missing
+# Run with coverage report
+pytest --cov=brios --cov-report=term-missing
 ```
 
-**Current Coverage**: 100%
+### Code Formatting
+We use `pyink` (Google's fork of Black) to maintain code style.
+```bash
+# Check formatting
+pyink --check .
 
-## 🤝 Contributing
+# Apply formatting
+pyink .
+```
 
-Contributions are welcome! Please see [CONTRIBUTING.md](docs/CONTRIBUTING.md) for guidelines.
-
-1. Fork the repository
-2. Create your feature branch (`git checkout -b feature/amazing-feature`)
-3. Commit your changes (`git commit -m 'feat: add amazing feature'`)
-4. Push to the branch (`git push origin feature/amazing-feature`)
-5. Open a Pull Request
+---
 
 ## 📄 License
 

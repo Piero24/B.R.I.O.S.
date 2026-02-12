@@ -17,11 +17,14 @@
 # everyone cloning the project can use them directly.
 ############################################################
 
+# Variable for the virtual environment python
+VENV_PYTHON = ./env/bin/python
+
 # -------------------------------------------------------------------
 # PHONY targets: these don’t correspond to actual files.
 # They are “commands” rather than file outputs.
 # -------------------------------------------------------------------
-.PHONY: format run ble:run
+.PHONY: format run ble-run
 
 # -------------------------------------------------------------------
 # Variable for passing custom CLI args to Python.
@@ -36,7 +39,7 @@ ARGS ?=
 # -------------------------------------------------------------------
 format:
 	@echo "✨ Formatting Python code with Pyink..."
-	pyink .
+	$(VENV_PYTHON) -m pyink .
 
 # -------------------------------------------------------------------
 # Run the main Python application.
@@ -46,19 +49,19 @@ format:
 # -------------------------------------------------------------------
 run:
 	@echo "🚀 Running main.py with args: $(ARGS)"
-	python3 main.py $(ARGS)
+	$(VENV_PYTHON) main.py $(ARGS)
 
 # -------------------------------------------------------------------
 # Full pipeline: format code first, then run the app.
-# This is your custom “ble:run” command.
+# This is your custom “ble-run” command.
 # Example:
-#   make ble:run ARGS="--port 8080"
+#   make ble-run ARGS="--port 8080"
 # -------------------------------------------------------------------
-ble:run:
+ble-run:
 	@echo "✨ Formatting before run..."
-	pyink .
+	$(VENV_PYTHON) -m pyink .
 	@echo "🚀 Running main.py with args: $(ARGS)"
-	python3 main.py $(ARGS)
+	$(VENV_PYTHON) main.py $(ARGS)
 
 # -------------------------------------------------------------------
 # OPTIONAL: Environment file loading (uncomment if needed)

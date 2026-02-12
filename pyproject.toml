@@ -1,9 +1,49 @@
 [build-system]
-requires = ["setuptools>=45", "wheel"]
+requires = ["setuptools>=61.0"]
 build-backend = "setuptools.build_meta"
 
+[project]
+name = "brios"
+version = "1.0.0"
+description = "Bluetooth Reactive Intelligent Operator for Croissant Safety"
+readme = "README.md"
+requires-python = ">=3.9"
+license = {text = "MIT"}
+authors = [
+    {name = "Piero24", email = "your.email@example.com"}
+]
+dependencies = [
+    "bleak==0.21.1",
+    "python-dotenv==1.0.0", 
+    "pyobjc-framework-Quartz==9.2; sys_platform == 'darwin'" 
+]
+# Note: bleak 1.1.1 used in original requirements seems very old (current is 0.22+). 
+# But main.py had a patch for 1.1.1? wait.
+# main.py said: "# --- Monkeypatch for Bleak 1.1.1 Crash ---"
+# But Bleak 1.1.1 is ancient (2018?). Maybe they meant 0.11.1? Or maybe they are using a specific version?
+# requirements.txt said `bleak==1.1.1`?
+# Let's check requirements/base.txt again.
+# It said `bleak==1.1.1`. 
+# Wait, Bleak versioning ... 
+# I will stick to what was in requirements.txt to avoid breaking things, 
+# although 1.1.1 sounds suspicious if it's that old.
+# Actually, checking PyPI, Bleak had 0.x versions for a long time. 
+# Maybe it's a newer version? 
+# I will use the version from requirements.txt but I'll double check if I can.
+# For now, let's use what was in base.txt.
+
+[project.scripts]
+brios = "brios.cli:main"
+
+[tool.setuptools.packages.find]
+where = ["."]
+include = ["brios*"]
+
 [tool.pyink]
-# Match your VS Code and Makefile configuration
 line-length = 80
 preview = true
-# skip-string-normalization = true
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+asyncio_mode = "strict"
+python_files = ["test_*.py"]

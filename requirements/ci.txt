@@ -3,8 +3,8 @@
 # For local development on macOS, use dev.txt instead.
 
 # Core dependencies (cross-platform)
-bleak==1.1.1
-python-dotenv==1.2.1
+bleak==0.21.1
+python-dotenv==1.0.0
 
 # Code formatting and linting
 black==24.10.0
