@@ -137,12 +137,14 @@ class ServiceManager:
                     start_new_session=True,
                     env={**os.environ, "PYTHONUNBUFFERED": "1"},
                 )
-            
+
             # Brief wait to let the process start and write PID
             time.sleep(0.5)
             pid, _ = self._get_pid_status()
         except Exception as e:
-            print(f"{Colors.RED}Error starting background process: {e}{Colors.RESET}")
+            print(
+                f"{Colors.RED}Error starting background process: {e}{Colors.RESET}"
+            )
             return
         self._print_start_status(target_address)
 

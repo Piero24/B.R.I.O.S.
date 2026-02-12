@@ -1,5 +1,6 @@
 import pathlib
 
+
 def _get_version() -> str:
     """Read version from VERSION file in the root directory.
 
