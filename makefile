@@ -24,7 +24,7 @@ VENV_PYTHON = ./env/bin/python
 # PHONY targets: these don’t correspond to actual files.
 # They are “commands” rather than file outputs.
 # -------------------------------------------------------------------
-.PHONY: format run ble-run
+.PHONY: format run ble-run check
 
 # -------------------------------------------------------------------
 # Variable for passing custom CLI args to Python.
@@ -32,6 +32,13 @@ VENV_PYTHON = ./env/bin/python
 #   make run ARGS="--debug"
 # -------------------------------------------------------------------
 ARGS ?=
+
+# -------------------------------------------------------------------
+# Type-check everything.
+# -------------------------------------------------------------------
+check:
+	@echo "🔍 Type-checking with mypy..."
+	$(VENV_PYTHON) -m mypy .
 
 # -------------------------------------------------------------------
 # Format all Python files in the current folder using Pyink.

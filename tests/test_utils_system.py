@@ -6,7 +6,7 @@ import importlib
 
 
 # --- Utils Tests ---
-def test_estimate_distance():
+def test_estimate_distance() -> None:
     from brios.core.utils import estimate_distance
 
     """Test the Log-Distance Path Loss calculation."""
@@ -30,7 +30,7 @@ def test_estimate_distance():
     ) == pytest.approx(10.0)
 
 
-def test_smooth_rssi():
+def test_smooth_rssi() -> None:
     from brios.core.utils import smooth_rssi
 
     """Test RSSI averaging."""
@@ -43,7 +43,7 @@ def test_smooth_rssi():
     assert smooth_rssi(deque()) is None
 
 
-def test_determine_target_address():
+def test_determine_target_address() -> None:
     from brios.core.utils import determine_target_address
 
     """Test logic for picking MAC vs UUID."""
@@ -71,7 +71,7 @@ def test_determine_target_address():
 
 
 # --- System Tests ---
-def test_is_screen_locked_true():
+def test_is_screen_locked_true() -> None:
     """Test screen lock detection when locked."""
     # Mock Quartz before import
     mock_quartz = MagicMock()
@@ -92,7 +92,7 @@ def test_is_screen_locked_true():
     assert is_screen_locked() is True
 
 
-def test_is_screen_locked_false():
+def test_is_screen_locked_false() -> None:
     """Test screen lock detection when unlocked."""
     mock_quartz = MagicMock()
     sys.modules["Quartz"] = mock_quartz
@@ -110,7 +110,7 @@ def test_is_screen_locked_false():
     assert is_screen_locked() is False
 
 
-def test_is_screen_locked_no_quartz():
+def test_is_screen_locked_no_quartz() -> None:
     """Test screen lock detection on non-macOS."""
     import brios.core.system
 
@@ -122,7 +122,7 @@ def test_is_screen_locked_no_quartz():
 
 
 @patch("subprocess.run")
-def test_lock_macbook_success(mock_run):
+def test_lock_macbook_success(mock_run: MagicMock) -> None:
     """Test locking command execution on macOS."""
     # Force generic reload to ensure consistent state
     import brios.core.system
@@ -137,7 +137,7 @@ def test_lock_macbook_success(mock_run):
         assert mock_run.call_count >= 1
 
 
-def test_lock_macbook_non_macos():
+def test_lock_macbook_non_macos() -> None:
     """Test locking on non-macOS."""
     import brios.core.system
 

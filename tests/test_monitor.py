@@ -1,6 +1,7 @@
 import sys
 import asyncio
 import pytest
+from typing import Any
 from unittest.mock import MagicMock, patch, call, ANY
 from collections import deque
 import importlib
@@ -8,12 +9,12 @@ import importlib
 
 # --- Fixtures ---
 @pytest.fixture
-def mock_scanner():
+def mock_scanner() -> MagicMock:
     return MagicMock()
 
 
 @pytest.fixture
-def monitor():
+def monitor() -> Any:
     # Setup mocks before importing monitor
     mock_bleak = MagicMock()
     mock_bleak.BleakScanner = MagicMock()
@@ -47,7 +48,7 @@ def monitor():
 
 
 @pytest.fixture
-def mock_device():
+def mock_device() -> MagicMock:
     device = MagicMock()
     device.address = "AA:BB:CC:DD:EE:FF"
     device.name = "Target Device"
@@ -55,14 +56,14 @@ def mock_device():
 
 
 @pytest.fixture
-def mock_adv():
+def mock_adv() -> MagicMock:
     adv = MagicMock()
     return adv
 
 
 # --- Tests ---
 @pytest.mark.asyncio
-async def test_monitor_initialization(monitor):
+async def test_monitor_initialization(monitor: Any) -> None:
     assert monitor.target_address == "AA:BB:CC:DD:EE:FF"
     assert monitor.use_bdaddr is True
     assert monitor.flags.verbose is True
@@ -70,7 +71,9 @@ async def test_monitor_initialization(monitor):
 
 
 @pytest.mark.asyncio
-async def test_process_signal_out_of_range(monitor, mock_device, mock_adv):
+async def test_process_signal_out_of_range(
+    monitor: Any, mock_device: MagicMock, mock_adv: MagicMock
+) -> None:
     """Test that out-of-range signal triggers lock."""
     monitor.resume_time = 0
     monitor.rssi_buffer.clear()
@@ -98,7 +101,9 @@ async def test_process_signal_out_of_range(monitor, mock_device, mock_adv):
 
 
 @pytest.mark.asyncio
-async def test_process_signal_back_in_range(monitor, mock_device, mock_adv):
+async def test_process_signal_back_in_range(
+    monitor: Any, mock_device: MagicMock, mock_adv: MagicMock
+) -> None:
     """Test that coming back in range clears alert."""
     monitor.alert_triggered = True
     monitor.resume_time = 0
@@ -124,7 +129,9 @@ async def test_process_signal_back_in_range(monitor, mock_device, mock_adv):
 
 
 @pytest.mark.asyncio
-async def test_grace_period_active(monitor, mock_device, mock_adv):
+async def test_grace_period_active(
+    monitor: Any, mock_device: MagicMock, mock_adv: MagicMock
+) -> None:
     """Test that signals are ignored during grace period."""
     import time
 
@@ -144,7 +151,7 @@ async def test_grace_period_active(monitor, mock_device, mock_adv):
 
 
 @pytest.mark.asyncio
-async def test_lock_loop_protection(monitor):
+async def test_lock_loop_protection(monitor: Any) -> None:
     """Test that rapid locking triggers pause."""
     import time
 
