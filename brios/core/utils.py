@@ -174,7 +174,7 @@ def apply_robust_bleak_patch() -> None:
             """
             self.seen_devices = {}
 
-            def callback(p: Any, a: Any, r: float) -> None:
+            def callback(p: Any, a: Any, r: int) -> None:
                 """Robust detection callback for macOS Bluetooth scanning.
 
                 Processes advertisement data and handles cases where the device
@@ -196,9 +196,6 @@ def apply_robust_bleak_patch() -> None:
                     cb_uuid_to_str(u)
                     for u in a.get("kCBAdvDataServiceUUIDs", [])
                 ]
-
-                if not self.is_allowed_uuid(service_uuids):
-                    return
 
                 # Process service data
                 service_data_dict_raw = a.get("kCBAdvDataServiceData", {})
@@ -226,7 +223,7 @@ def apply_robust_bleak_patch() -> None:
                     service_data=service_data,
                     service_uuids=service_uuids,
                     tx_power=tx_power,
-                    rssi=r,
+                    rssi=int(r),
                     platform_data=(p, a, r),
                 )
 
@@ -243,8 +240,7 @@ def apply_robust_bleak_patch() -> None:
                 else:
                     address = p.identifier().UUIDString()
 
-                device = self.create_or_update_device(
-                    p.identifier().UUIDString(),
+                device = self.create_or_update_device(  # type: ignore
                     address,
                     p.name(),
                     (p, self._manager.central_manager.delegate()),
@@ -257,7 +253,7 @@ def apply_robust_bleak_patch() -> None:
             self._manager.callbacks[id(self)] = callback
             await self._manager.start_scan(self._service_uuids)
 
-        BleakScannerCoreBluetooth.start = patched_start
+        BleakScannerCoreBluetooth.start = patched_start  # type: ignore
         # print(f"{Colors.GREEN}✓{Colors.RESET} Applied Bleak 1.1.1 crash fix")
 
     except ImportError:

@@ -83,15 +83,9 @@ class ServiceManager:
             command = [sys.executable, sys.argv[0]]
 
         if self.args.target_mac:
-            if self.args.target_mac == "USE_DEFAULT":
-                command.append("-tm")
-            else:
-                command.extend(["--target-mac", self.args.target_mac])
+            command.extend(["--target-mac", self.args.target_mac])
         elif self.args.target_uuid:
-            if self.args.target_uuid == "USE_DEFAULT":
-                command.append("-tu")
-            else:
-                command.extend(["--target-uuid", self.args.target_uuid])
+            command.extend(["--target-uuid", self.args.target_uuid])
         elif self.args.scanner is not None:
             command.extend(["--scanner", str(self.args.scanner)])
 
@@ -131,24 +125,25 @@ class ServiceManager:
             print(f"{Colors.BLUE}Command:{Colors.RESET} {' '.join(command)}")
             print("─" * 50)
 
-        if self.args.file_logging:
-            with open(LOG_FILE, "wb") as log:
+        try:
+            # Let the background process handle its own logging if enabled.
+            # We redirect the parent's popen stdout/stderr to devnull to
+            # avoid issues when the parent exits.
+            with open(os.devnull, "wb") as devnull:
                 subprocess.Popen(
                     command,
-                    stdout=log,
-                    stderr=subprocess.STDOUT,
+                    stdout=devnull,
+                    stderr=devnull,
                     start_new_session=True,
                     env={**os.environ, "PYTHONUNBUFFERED": "1"},
                 )
-        else:
-            subprocess.Popen(
-                command,
-                stdout=subprocess.DEVNULL,
-                stderr=subprocess.DEVNULL,
-                start_new_session=True,
-            )
-
-        time.sleep(0.5)
+            
+            # Brief wait to let the process start and write PID
+            time.sleep(0.5)
+            pid, _ = self._get_pid_status()
+        except Exception as e:
+            print(f"{Colors.RED}Error starting background process: {e}{Colors.RESET}")
+            return
         self._print_start_status(target_address)
 
     def stop(self) -> None:

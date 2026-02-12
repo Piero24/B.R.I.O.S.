@@ -310,13 +310,16 @@ def main() -> None:
         args.scanner is not None or args.target_mac or args.target_uuid
     )
 
-    # If no flags are provided, we check if we can default to monitoring
-    if not is_service_command and not is_mode_command:
+    # If no mode flags are provided, we check if we can default to monitoring
+    if not is_mode_command:
         from .core.utils import determine_target_address
-        if determine_target_address(args):
-            # Default to target-mac (internal logic will handle it)
-            args.target_mac = "USE_DEFAULT"
-        else:
+
+        resolved_address = determine_target_address(args)
+        if resolved_address:
+            # Explicitly set the resolved address so ServiceManager can reconstruct it
+            args.target_mac = resolved_address
+        elif not is_service_command:
+            # Only error if it's not a service command (like --stop)
             parser.error(
                 "error: one of the following arguments is required: "
                 "--scanner/-s, --target-mac/-tm, --target-uuid/-tu, "

@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "brios"
-version = "1.0.0"
+dynamic = ["version"]
 description = "Bluetooth Reactive Intelligent Operator for Croissant Safety"
 readme = "README.md"
 requires-python = ">=3.9"
@@ -34,6 +34,9 @@ dependencies = [
 
 [project.scripts]
 brios = "brios.cli:main"
+
+[tool.setuptools.dynamic]
+version = {file = ["VERSION"]}
 
 [tool.setuptools.packages.find]
 where = ["."]
