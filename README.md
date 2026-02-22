@@ -33,8 +33,11 @@
 The easiest way to install B.R.I.O.S. on macOS.
 
 ```bash
-# Install from your tap (replace with your tap name)
-brew install pietrobon/homebrew-brios/brios
+# Tap the repository
+brew tap Piero24/brios https://github.com/Piero24/B.R.I.O.S
+
+# Install brios
+brew install brios
 ```
 
 # Clone and setup
