@@ -81,3 +81,27 @@ ble-run:
 # 	export $$(grep -v '^#' $(ENV_FILE) | xargs) && \
 # 	pyink . && \
 # 	python3 -m brios $(ARGS)
+# ---------------------------------------------------
+# Release and Tagging (requires GitHub CLI 'gh')
+# ---------------------------------------------------
+VERSION = $(shell cat VERSION)
+
+.PHONY: release re-release
+
+release:
+	@echo "🏷️ Creating tag v$(VERSION)..."
+	git tag v$(VERSION)
+	git push origin v$(VERSION)
+	@echo "🚀 Creating GitHub release..."
+	gh release create v$(VERSION) --title "v$(VERSION)" --notes-file CHANGELOG.md
+
+re-release:
+	@echo "⚠️ Deleting existing release and tag v$(VERSION)..."
+	-gh release delete v$(VERSION) --yes
+	-git push --delete origin v$(VERSION)
+	-git tag -d v$(VERSION)
+	@echo "🏷️ Re-creating tag v$(VERSION)..."
+	git tag v$(VERSION)
+	git push origin v$(VERSION)
+	@echo "🚀 Re-creating GitHub release..."
+	gh release create v$(VERSION) --title "v$(VERSION)" --notes-file CHANGELOG.md
