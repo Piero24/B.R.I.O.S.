@@ -42,7 +42,7 @@ Yes! Any BLE 4.0+ compatible device:
 
 ```bash
 # Use the built-in scanner
-python3 main.py --scanner 15 -m
+brios --scanner 15 -m
 ```
 
 This will show all nearby BLE devices with their addresses, names, and signal strengths.
@@ -73,7 +73,7 @@ Typical accuracy is ±20-30cm in controlled environments. Factors affecting accu
 ### How do I calibrate for better accuracy?
 
 1. Place your device exactly 1 meter from your Mac
-2. Run monitor in verbose mode: `python3 main.py --target-mac -v`
+2. Run monitor in verbose mode: `brios --target-mac -v`
 3. Note the average RSSI value over 30-60 seconds
 4. Update `TX_POWER_AT_1M` in your `.env` file with this value
 
@@ -100,13 +100,13 @@ Adjust `PATH_LOSS_EXPONENT` in `.env`:
 
 ```bash
 # Start as background service
-python3 main.py --target-mac -v -f --start
+brios --target-mac -v -f --start
 
 # Check status
-python3 main.py --status
+brios --status
 
 # Stop service
-python3 main.py --stop
+brios --stop
 ```
 
 ### Can I monitor multiple devices?
@@ -151,7 +151,7 @@ system_profiler SPBluetoothDataType
 # System Settings → Privacy & Security → Bluetooth
 
 # Try scanning longer
-python3 main.py --scanner 30 -m
+brios --scanner 30 -m
 ```
 
 ### Monitor keeps triggering false alerts
@@ -178,18 +178,18 @@ DISTANCE_THRESHOLD_M=3.0  # Increase buffer distance
 
 **Check if already running:**
 ```bash
-python3 main.py --status
+brios --status
 ```
 
 **If stale PID file exists:**
 ```bash
-rm .ble_monitor.pid
-python3 main.py --start
+rm ~/.brios/.ble_monitor.pid
+brios --start
 ```
 
 **Check for errors:**
 ```bash
-python3 main.py --target-mac -v  # Run in foreground to see errors
+brios --target-mac -v  # Run in foreground to see errors
 ```
 
 ### Mac doesn't lock
@@ -210,14 +210,14 @@ This is unexpected. B.R.I.O.S. should use minimal CPU (<1%).
 **Diagnose:**
 ```bash
 # Check if multiple instances running
-ps aux | grep main.py
+ps aux | grep brios
 
 # Stop all instances
-python3 main.py --stop
-killall python3  # If needed
+brios --stop
+killall brios  # If needed
 
 # Restart single instance
-python3 main.py --target-mac -v -f --start
+brios --target-mac -v -f --start
 ```
 
 ---
@@ -230,10 +230,10 @@ Yes! macOS uses privacy-preserving UUIDs for some devices:
 
 ```bash
 # Discover with UUID
-python3 main.py --scanner 15  # Don't use -m flag
+brios --scanner 15  # Don't use -m flag
 
 # Monitor with UUID
-python3 main.py --target-uuid "XXXXXXXX-XXXX..." -v
+brios --target-uuid "XXXXXXXX-XXXX..." -v
 ```
 
 **Note**: UUIDs may change periodically. MAC addresses (with `-m` flag) are more stable.
@@ -264,7 +264,7 @@ def _lock_macbook(self) -> str:
 
 ### How can I contribute?
 
-See [CONTRIBUTING.md](docs/CONTRIBUTING.md) for guidelines on:
+See [CONTRIBUTING.md](CONTRIBUTING.md) for guidelines on:
 - Reporting bugs
 - Suggesting features
 - Submitting code
@@ -351,4 +351,4 @@ Only operational data:
 
 ---
 
-*Last updated: November 2, 2024*
+*Last updated: February 2026*

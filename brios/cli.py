@@ -133,31 +133,31 @@ class Application:
 
         EXAMPLES:
         Discover nearby devices (recommended for macOS):
-            $ python3 main.py --scanner 10 -m
+            $ brios --scanner 10 -m
 
         Quick scan with default 15 seconds:
-            $ python3 main.py --scanner
+            $ brios --scanner
 
         Monitor device in foreground with verbose output:
-            $ python3 main.py --target-mac -v
+            $ brios --target-mac -v
 
         Monitor specific device by MAC address:
-            $ python3 main.py --target-mac "AA:BB:CC:DD:EE:FF" -m -v
+            $ brios --target-mac "AA:BB:CC:DD:EE:FF" -m -v
 
         Monitor device by UUID (macOS privacy mode):
-            $ python3 main.py --target-uuid "XXXXXXXX-XXXX-XXXX-XXXX-XXXXXXXXXXXX"
+            $ brios --target-uuid "XXXXXXXX-XXXX-XXXX-XXXX-XXXXXXXXXXXX"
 
         Start monitoring as background service with file logging:
-            $ python3 main.py --target-mac -v -f --start
+            $ brios --target-mac -v -f --start
 
         Check background service status:
-            $ python3 main.py --status
+            $ brios --status
 
         Stop background service:
-            $ python3 main.py --stop
+            $ brios --stop
 
         Restart background service:
-            $ python3 main.py --restart
+            $ brios --restart
 
         COMMAND-LINE OPTIONS:
         Service Control:
@@ -177,7 +177,7 @@ class Application:
           --file-logging, -f        Enable logging to .ble_monitor.log
 
         CONFIGURATION:
-        Edit the .env file to customize:
+        Edit the .env file (or ~/.brios.env or ~/.config/brios/config):
         • TARGET_DEVICE_MAC_ADDRESS    MAC address of your device
         • TARGET_DEVICE_UUID_ADDRESS   UUID address (for macOS)
         • TARGET_DEVICE_NAME           Friendly name for your device
@@ -186,6 +186,10 @@ class Application:
         • TX_POWER_AT_1M               RSSI at 1 meter (default: -59 dBm)
         • PATH_LOSS_EXPONENT           Environment factor (default: 2.8)
         • SAMPLE_WINDOW                Signal smoothing samples (default: 12)
+        • GRACE_PERIOD_SECONDS         Post-unlock grace period (default: 30)
+        • LOCK_LOOP_THRESHOLD          Lock events before pause (default: 3)
+        • LOCK_LOOP_WINDOW             Lock loop time window (default: 60s)
+        • LOCK_LOOP_PENALTY            Pause on lock loop (default: 120s)
 
         NOTES:
         • On macOS, use -m flag to see real MAC addresses instead of UUIDs
@@ -197,9 +201,9 @@ class Application:
         • Python 3.9+ required
 
         FILES:
-        .env                  Configuration file with device settings
-        .ble_monitor.pid      Process ID file for background service
-        .ble_monitor.log      Log file (when file logging is enabled)
+        .env                        Configuration file with device settings
+        ~/.brios/.ble_monitor.pid   Process ID file for background service
+        ~/.brios/.ble_monitor.log   Log file (when file logging is enabled)
 
         For more information, visit: https://github.com/Piero24/B.R.I.O.S.
         """

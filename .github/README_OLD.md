@@ -239,7 +239,7 @@ pip install -r requirements.txt
 First, discover your device's BLE address:
 
 ```bash
-python3 main.py --scanner 15 -m
+brios --scanner 15 -m
 ```
 
 This will scan for 15 seconds and display all nearby BLE devices with their MAC addresses.
@@ -271,7 +271,7 @@ DISTANCE_THRESHOLD_M=2.0                      # Lock distance in meters
 Run in foreground mode to test:
 
 ```bash
-python3 main.py --target-mac -v
+brios --target-mac -v
 ```
 
 You should see real-time RSSI and distance updates!
@@ -283,13 +283,13 @@ You should see real-time RSSI and distance updates!
 Once everything works, start the monitor as a background service:
 
 ```bash
-python3 main.py --target-mac -v -f --start
+brios --target-mac -v -f --start
 ```
 
 Check the status:
 
 ```bash
-python3 main.py --status
+brios --status
 ```
 
 <p align="right"><a href="#top">⇧</a></p>
@@ -310,13 +310,13 @@ Scan for nearby BLE devices to find your target device's address:
 
 ```bash
 # Scan for 15 seconds (default) using MAC addresses
-python3 main.py --scanner 15 -m
+brios --scanner 15 -m
 
 # Scan for 30 seconds in UUID mode (macOS privacy)
-python3 main.py --scanner 30
+brios --scanner 30
 
 # Scan with verbose output
-python3 main.py --scanner 10 -m -v
+brios --scanner 10 -m -v
 ```
 
 **Example Output:**
@@ -348,16 +348,16 @@ Run the monitor in the foreground with real-time output:
 
 ```bash
 # Monitor using default MAC address from .env
-python3 main.py --target-mac -v
+brios --target-mac -v
 
 # Monitor specific device by MAC address
-python3 main.py --target-mac "A1:B2:C3:D4:E5:F6" -m -v
+brios --target-mac "A1:B2:C3:D4:E5:F6" -m -v
 
 # Monitor using UUID (macOS privacy mode)
-python3 main.py --target-uuid -v
+brios --target-uuid -v
 
 # Monitor with file logging enabled
-python3 main.py --target-mac -v -f
+brios --target-mac -v -f
 ```
 
 **Example Output:**
@@ -404,13 +404,13 @@ Run B.R.I.O.S. as a persistent background service:
 **Start the service:**
 
 ```bash
-python3 main.py --target-mac -v -f --start
+brios --target-mac -v -f --start
 ```
 
 **Check service status:**
 
 ```bash
-python3 main.py --status
+brios --status
 ```
 
 **Example Status Output:**
@@ -439,13 +439,13 @@ Recent activity:
 **Stop the service:**
 
 ```bash
-python3 main.py --stop
+brios --stop
 ```
 
 **Restart the service:**
 
 ```bash
-python3 main.py --restart
+brios --restart
 ```
 
 <br/>
@@ -535,7 +535,7 @@ DISTANCE_THRESHOLD_M=2.0
 For best accuracy, calibrate `TX_POWER_AT_1M` for your specific device:
 
 1. Place your device **exactly 1 meter** from your Mac
-2. Run the monitor with verbose mode: `python3 main.py --target-mac -v`
+2. Run the monitor with verbose mode: `brios --target-mac -v`
 3. Note the average RSSI value after readings stabilize
 4. Set `TX_POWER_AT_1M` to this average value in your `.env` file
 
@@ -637,7 +637,7 @@ macOS offers two BLE addressing modes:
 ### Architecture Overview
 
 ```
-main.py
+brios/
 ├── Application (Main orchestrator)
 │   ├── ServiceManager (Daemon lifecycle)
 │   │   ├── start()
@@ -682,7 +682,7 @@ source env/bin/activate
 pip install -r requirements-dev.txt
 
 # Run all tests
-pytest test_ble_monitor.py -v
+pytest test_monitor.py -v
 ```
 
 <br/>
@@ -691,13 +691,13 @@ pytest test_ble_monitor.py -v
 
 ```bash
 # Test distance estimation
-pytest test_ble_monitor.py::test_estimate_distance -v
+pytest test_monitor.py::test_estimate_distance -v
 
 # Test signal smoothing
-pytest test_ble_monitor.py::test_smooth_rssi -v
+pytest test_monitor.py::test_smooth_rssi -v
 
 # Test alert triggering
-pytest test_ble_monitor.py::test_device_monitor_alerts -v
+pytest test_monitor.py::test_device_monitor_alerts -v
 ```
 
 <br/>
@@ -794,13 +794,13 @@ make ble:run ARGS="--scanner 15 -m"
 **Solutions**:
 ```bash
 # Check if service is already running
-python3 main.py --status
+brios --status
 
 # View log file for errors
 cat .ble_monitor.log
 
 # Try running in foreground first to debug
-python3 main.py --target-mac -v
+brios --target-mac -v
 
 # Ensure .env file exists and is configured
 ls -la .env

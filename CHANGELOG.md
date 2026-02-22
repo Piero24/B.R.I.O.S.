@@ -10,10 +10,19 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Added
 - Project rebranded to 🥐 B.R.I.O.S. (Bluetooth Reactive Intelligent Operator for Croissant Safety)
 - `--version` argument to display version information
-- Version constants in main.py (`__version__`, `__app_name__`, `__app_full_name__`)
+- Version constants in `brios/__init__.py` (`__version__`) and `brios/core/utils.py` (`__app_name__`, `__app_full_name__`)
 - Comprehensive help documentation with all parameters and examples
 - Configuration section in help showing all .env variables
 - Files section in help explaining project files
+- Refactored codebase into `brios/` installable package with modular architecture
+- Installable CLI entry point (`brios` command via `pyproject.toml`)
+- Multi-location config loading (`.env`, `~/.brios.env`, `~/.config/brios/config`)
+- Watchdog loop for scanner health monitoring and automatic recovery
+- Lock loop protection to prevent excessive locking cycles
+- Grace period to suppress false triggers after unlock/resume
+- Scanner reconnection with retry and exponential backoff
+- Bleak monkeypatch for macOS CoreBluetooth `None` address handling
+- Homebrew formula for easy installation
 
 ### Changed
 - All terminal output messages now display "🥐 B.R.I.O.S." branding
@@ -21,12 +30,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Updated all documentation files to use B.R.I.O.S. naming
 - Reorganized requirements files into `requirements/` folder structure
 - Improved test imports with `conftest.py` for better maintainability
+- Tests split into `test_monitor.py` and `test_utils_system.py`
 
 ## [1.0.0] - 2024-11-02
 
 ### Added
 - Initial release of 🥐 B.R.I.O.S.
-- Initial release of B.R.I.O.S.
 - BLE device discovery scanner
 - Real-time proximity monitoring
 - Automatic macOS locking on proximity loss
@@ -55,7 +64,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **Logging**: Optional file logging for audit and debugging
 
 ### Technical
-- Python 3.8+ support
+- Python 3.9+ support
 - Async/await with asyncio
 - Type hints with MyPy validation
 - Cross-platform BLE via Bleak library

@@ -168,7 +168,7 @@ def calculate_distance(rssi: float, tx_power: int, path_loss: float) -> float:
 Run MyPy to verify types:
 
 ```bash
-mypy main.py
+mypy brios/
 ```
 
 ---
@@ -182,10 +182,10 @@ mypy main.py
 pytest
 
 # Run with coverage
-pytest --cov=. --cov-report=term-missing
+pytest --cov=brios --cov-report=term-missing
 
 # Run specific test
-pytest tests/test_ble_monitor.py::test_estimate_distance -v
+pytest tests/test_utils_system.py::test_estimate_distance -v
 ```
 
 ### Test Coverage Requirement
@@ -220,7 +220,7 @@ def test_new_feature(reloaded_main_new, mocker):
 1. ✅ Update your branch with latest `main`
 2. ✅ Run all tests (`pytest`)
 3. ✅ Format code (`pyink .`)
-4. ✅ Run type checking (`mypy main.py`)
+4. ✅ Run type checking (`mypy brios/`)
 5. ✅ Update documentation if needed
 6. ✅ Add tests for new features
 
@@ -330,7 +330,7 @@ git checkout -b feature/awesome-feature
 # 3. Test changes
 pytest
 pyink .
-mypy main.py
+mypy brios/
 
 # 4. Commit
 git add .
@@ -360,7 +360,7 @@ make format
 make run ARGS="--scanner 15 -m"
 
 # Format and run
-make ble:run ARGS="--target-mac -v"
+make ble-run ARGS="--target-mac -v"
 ```
 
 ---

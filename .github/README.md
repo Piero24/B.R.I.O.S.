@@ -269,21 +269,21 @@ python3 -m venv env && source env/bin/activate
 pip install -r requirements/dev.txt
 
 # 4. Discover your device
-python3 main.py --scanner 15 -m
+brios --scanner 15 -m
 
 # 5. Configure (edit .env with your device MAC)
 cp .env.example .env && nano .env
 
 # 6. Start monitoring
-python3 main.py --target-mac -v
+brios --target-mac -v
 ```
 
 **That's it!** Your Mac will now lock automatically when your device moves out of range.
 
 For production deployment with background service:
 ```bash
-python3 main.py --target-mac -v -f --start
-python3 main.py --status  # Check service status
+brios --target-mac -v -f --start
+brios --status  # Check service status
 ```
 
 <p align="right"><a href="#top">⇧</a></p>
@@ -359,7 +359,7 @@ B.R.I.O.S. provides comprehensive documentation for all skill levels:
 - **[FAQ](docs/FAQ.md)** - Frequently asked questions
 
 > [!TIP]
-> **First Time Using BLE?** Start with the [Quick Start](#quick-start) guide above, then explore the scanner mode to understand BLE device discovery: `python3 main.py --scanner 15 -m`
+> **First Time Using BLE?** Start with the [Quick Start](#quick-start) guide above, then explore the scanner mode to understand BLE device discovery: `brios --scanner 15 -m`
 
 > [!WARNING]  
 > **macOS Lock Screen Settings**: Ensure The password is required immediately after sleep or screen saver begins in *System Settings → Lock Screen*. Without this setting, B.R.I.O.S. cannot enforce security upon proximity loss. (See image below)
@@ -444,7 +444,7 @@ pip install -r requirements/dev.txt
     4.1 First, discover nearby BLE devices to find your target device's address:
   
     ```sh
-    python3 main.py --scanner 15 -m
+    brios --scanner 15 -m
     ```
     
     This will scan for 15 seconds and display all discovered devices with their MAC addresses, names, RSSI values, and estimated distances.
@@ -471,39 +471,39 @@ pip install -r requirements/dev.txt
   
     ```sh
     # Scan for 15 seconds using MAC addresses (recommended for macOS)
-    python3 main.py --scanner 15 -m
+    brios --scanner 15 -m
     
     # Scan for 30 seconds using UUIDs
-    python3 main.py --scanner 30
+    brios --scanner 30
     ```
 
     5.2 **Monitor Mode (Foreground)** - Real-time monitoring with terminal output:
   
     ```sh
     # Monitor using default MAC from .env with verbose output
-    python3 main.py --target-mac -v
+    brios --target-mac -v
     
     # Monitor specific device with file logging
-    python3 main.py --target-mac "A1:B2:C3:D4:E5:F6" -m -v -f
+    brios --target-mac "A1:B2:C3:D4:E5:F6" -m -v -f
     
     # Monitor using UUID (macOS privacy mode)
-    python3 main.py --target-uuid -v
+    brios --target-uuid -v
     ```
 
     5.3 **Background Service Mode** - Run as a daemon:
   
     ```sh
     # Start the background monitor
-    python3 main.py --target-mac -v -f --start
+    brios --target-mac -v -f --start
     
     # Check service status
-    python3 main.py --status
+    brios --status
     
     # Stop the service
-    python3 main.py --stop
+    brios --stop
     
     # Restart the service
-    python3 main.py --restart
+    brios --restart
     ```
 
 > [!NOTE] 
@@ -669,16 +669,16 @@ Find nearby BLE devices and their information:
 
 ```bash
 # Basic scan (15 seconds, UUIDs on macOS)
-python3 main.py --scanner 15
+brios --scanner 15
 
 # Recommended: Scan with real MAC addresses (macOS)
-python3 main.py --scanner 15 -m
+brios --scanner 15 -m
 
 # Long scan (60 seconds max)
-python3 main.py --scanner 60 -m
+brios --scanner 60 -m
 
 # Quick scan (5 seconds min)
-python3 main.py --scanner 5 -m
+brios --scanner 5 -m
 ```
 
 **Example Output:**
@@ -705,22 +705,22 @@ Run monitoring with real-time terminal output:
 
 ```bash
 # Basic monitoring (default device from .env)
-python3 main.py --target-mac
+brios --target-mac
 
 # With verbose RSSI and distance output
-python3 main.py --target-mac -v
+brios --target-mac -v
 
 # Monitor specific MAC address
-python3 main.py --target-mac "A1:B2:C3:D4:E5:F6" -m -v
+brios --target-mac "A1:B2:C3:D4:E5:F6" -m -v
 
 # Monitor with file logging
-python3 main.py --target-mac -v -f
+brios --target-mac -v -f
 
 # Monitor using UUID (privacy mode)
-python3 main.py --target-uuid -v
+brios --target-uuid -v
 
 # Monitor specific UUID
-python3 main.py --target-uuid "12345678-1234-5678-1234-567812345678" -v
+brios --target-uuid "12345678-1234-5678-1234-567812345678" -v
 ```
 
 ### Background Service Mode
@@ -729,19 +729,19 @@ Run as a daemon for continuous monitoring:
 
 ```bash
 # Start service with verbose logging to file
-python3 main.py --target-mac -v -f --start
+brios --target-mac -v -f --start
 
 # Check service status
-python3 main.py --status
+brios --status
 
 # View live logs
 tail -f .ble_monitor.log
 
 # Stop service
-python3 main.py --stop
+brios --stop
 
 # Restart service (stop + start)
-python3 main.py --restart
+brios --restart
 ```
 
 **Service Status Output:**
@@ -790,20 +790,20 @@ make run ARGS="--stop"
 
 ```bash
 # Morning: Start background service
-python3 main.py --target-mac -v -f --start
+brios --target-mac -v -f --start
 
 # During day: Check if still running
-python3 main.py --status
+brios --status
 
 # Evening: Stop service before leaving
-python3 main.py --stop
+brios --stop
 ```
 
 #### Scenario 2: Shared Workspace
 
 ```bash
 # Quick setup at hot-desk
-python3 main.py --target-mac -v
+brios --target-mac -v
 
 # Walk away for coffee → Mac locks automatically
 # Return to desk → Notification logged
@@ -814,7 +814,7 @@ python3 main.py --target-mac -v
 ```bash
 # Start monitoring in background on system startup
 # (Add to login items or use launchd)
-python3 main.py --target-mac -f --start
+brios --target-mac -f --start
 
 # Mac stays locked whenever you're not in the room
 ```
@@ -823,7 +823,7 @@ python3 main.py --target-mac -f --start
 
 ```bash
 # Temporary monitoring for presentation
-python3 main.py --target-mac -v
+brios --target-mac -v
 
 # Ctrl+C when done
 ```
@@ -934,10 +934,10 @@ pytest
 pytest -v
 
 # With coverage report
-pytest --cov=. --cov-report=term-missing
+pytest --cov=brios --cov-report=term-missing
 
 # Run specific test
-pytest tests/test_ble_monitor.py::test_estimate_distance -v
+pytest tests/test_utils_system.py::test_estimate_distance -v
 ```
 
 ### Test Categories
@@ -953,8 +953,8 @@ pytest tests/test_ble_monitor.py::test_estimate_distance -v
 ```
 Name                    Stmts   Miss  Cover
 -------------------------------------------
-main.py                   450      0   100%
-tests/test_ble_monitor    280      0   100%
+brios/                xxx      0   100%
+tests/                 xxx      0   100%
 -------------------------------------------
 TOTAL                     730      0   100%
 ```

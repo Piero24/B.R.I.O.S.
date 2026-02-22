@@ -3,15 +3,15 @@
 # 
 # This Makefile defines reusable commands to:
 #  - Format the project with Pyink
-#  - Run your Python app with optional custom arguments
-#  - Combine both actions into one "ble:run" command
+#  - Run the brios CLI with optional custom arguments
+#  - Combine both actions into one "ble-run" command
 #
 # ✅ Usage examples:
 #   make format                     → Format all code using Pyink
-#   make run                        → Run main.py
-#   make run ARGS="--debug"         → Run main.py with parameters
-#   make ble:run                    → Format + run
-#   make ble:run ARGS="--mode prod" → Format + run with arguments
+#   make run                        → Run brios
+#   make run ARGS="--scanner 15 -m"         → Run brios with parameters
+#   make ble-run                    → Format + run
+#   make ble-run ARGS="--target-mac -v" → Format + run with arguments
 #
 # These commands are designed to be shared in GitHub, so
 # everyone cloning the project can use them directly.
@@ -29,7 +29,7 @@ VENV_PYTHON = ./env/bin/python
 # -------------------------------------------------------------------
 # Variable for passing custom CLI args to Python.
 # You can override it like:
-#   make run ARGS="--debug"
+#   make run ARGS="--scanner 15 -m"
 # -------------------------------------------------------------------
 ARGS ?=
 
@@ -38,7 +38,7 @@ ARGS ?=
 # -------------------------------------------------------------------
 check:
 	@echo "🔍 Type-checking with mypy..."
-	$(VENV_PYTHON) -m mypy .
+	$(VENV_PYTHON) -m mypy brios/
 
 # -------------------------------------------------------------------
 # Format all Python files in the current folder using Pyink.
@@ -49,35 +49,35 @@ format:
 	$(VENV_PYTHON) -m pyink .
 
 # -------------------------------------------------------------------
-# Run the main Python application.
+# Run the brios application.
 # This will pass along any arguments given via ARGS.
 # Example:
-#   make run ARGS="--config dev.json"
+#   make run ARGS="--scanner 15 -m"
 # -------------------------------------------------------------------
 run:
-	@echo "🚀 Running main.py with args: $(ARGS)"
-	$(VENV_PYTHON) main.py $(ARGS)
+	@echo "🚀 Running brios with args: $(ARGS)"
+	$(VENV_PYTHON) -m brios $(ARGS)
 
 # -------------------------------------------------------------------
 # Full pipeline: format code first, then run the app.
 # This is your custom “ble-run” command.
 # Example:
-#   make ble-run ARGS="--port 8080"
+#   make ble-run ARGS="--target-mac -v"
 # -------------------------------------------------------------------
 ble-run:
 	@echo "✨ Formatting before run..."
 	$(VENV_PYTHON) -m pyink .
-	@echo "🚀 Running main.py with args: $(ARGS)"
-	$(VENV_PYTHON) main.py $(ARGS)
+	@echo "🚀 Running brios with args: $(ARGS)"
+	$(VENV_PYTHON) -m brios $(ARGS)
 
 # -------------------------------------------------------------------
 # OPTIONAL: Environment file loading (uncomment if needed)
 # Example usage:
-#   make ble:run ENV_FILE=.env.local ARGS="--debug"
+#   make ble-run ENV_FILE=.env.local ARGS="--scanner 15 -m"
 # -------------------------------------------------------------------
 # ENV_FILE ?= .env
-# ble:run:
+# ble-run:
 # 	@echo "🔧 Loading env from $(ENV_FILE)"
 # 	export $$(grep -v '^#' $(ENV_FILE) | xargs) && \
 # 	pyink . && \
-# 	python3 main.py $(ARGS)
+# 	python3 -m brios $(ARGS)

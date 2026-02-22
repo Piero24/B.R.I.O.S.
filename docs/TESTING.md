@@ -34,10 +34,10 @@ pytest
 pytest -v
 
 # Run with coverage report
-pytest --cov=. --cov-report=html
+pytest --cov=brios --cov-report=html
 
 # Run specific test
-pytest tests/test_ble_monitor.py::test_estimate_distance -v
+pytest tests/test_monitor.py::test_out_of_range_triggers_lock -v
 
 # Run in watch mode (requires pytest-watch)
 ptw
@@ -51,13 +51,14 @@ ptw
 
 ```
 tests/
-├── conftest.py              # Pytest configuration and fixtures
-└── test_ble_monitor.py      # All tests for main.py
-    ├── Mock Classes         # Test doubles for BLE components
-    ├── Fixtures             # Reusable test setup
-    ├── Unit Tests           # Function-level tests
-    ├── Integration Tests    # Component interaction tests
-    └── E2E Tests            # Full application flow tests
+├── conftest.py              # Pytest configuration and path setup
+├── test_monitor.py          # Tests for DeviceMonitor (alerts, grace period, lock loop)
+└── test_utils_system.py     # Tests for utility functions and system calls
+    ├── estimate_distance    # Path-loss distance calculation
+    ├── smooth_rssi          # RSSI buffer smoothing
+    ├── determine_target     # Target address resolution
+    ├── is_screen_locked     # macOS screen lock detection
+    └── lock_macbook         # macOS lock command
 ```
 
 ### Test Categories
@@ -67,19 +68,21 @@ tests/
 Test individual functions in isolation:
 
 ```python
-def test_estimate_distance(reloaded_main_new):
-    """Test the distance estimation logic."""
-    assert reloaded_main_new._estimate_distance(-59) == pytest.approx(1.0)
-    assert reloaded_main_new._estimate_distance(-40) < 1.0
-    assert reloaded_main_new._estimate_distance(-80) > 1.0
-    assert reloaded_main_new._estimate_distance(0) == -1.0
+from brios.core.utils import estimate_distance, smooth_rssi
 
-def test_smooth_rssi(reloaded_main_new):
+def test_estimate_distance():
+    """Test the distance estimation logic."""
+    assert estimate_distance(-59, -59, 2.8) == pytest.approx(1.0)
+    assert estimate_distance(-40, -59, 2.8) < 1.0
+    assert estimate_distance(-80, -59, 2.8) > 1.0
+    assert estimate_distance(0, -59, 2.8) == -1.0
+
+def test_smooth_rssi():
     """Test the RSSI smoothing logic."""
     from collections import deque
     buffer = deque([-60, -62, -58], maxlen=3)
-    assert reloaded_main_new._smooth_rssi(buffer) == pytest.approx(-60.0)
-    assert reloaded_main_new._smooth_rssi(deque()) is None
+    assert smooth_rssi(buffer) == pytest.approx(-60.0)
+    assert smooth_rssi(deque()) is None
 ```
 
 #### 2. Integration Tests
@@ -190,10 +193,14 @@ def mock_args(mocker):
 
 ### BLE Components
 
-Mock Bleak before importing main module:
+The `brios.core` modules import Bleak at the module level, so mocking
+must happen before the import:
 
 ```python
-# Mock bleak before it is imported by the main script
+from unittest.mock import MagicMock
+import sys
+
+# Mock bleak before it is imported by brios.core modules
 mock_bleak = MagicMock()
 sys.modules["bleak"] = mock_bleak
 sys.modules["bleak.backends"] = MagicMock()
@@ -201,7 +208,7 @@ sys.modules["bleak.backends.device"] = MagicMock()
 sys.modules["bleak.backends.scanner"] = MagicMock()
 
 # Now safe to import
-import main
+from brios.core.monitor import DeviceMonitor
 ```
 
 ### Mock Data Classes
@@ -250,10 +257,10 @@ pytest --tb=short
 pytest -x
 
 # Run specific test file
-pytest tests/test_ble_monitor.py
+pytest tests/test_monitor.py
 
 # Run specific test
-pytest tests/test_ble_monitor.py::test_estimate_distance
+pytest tests/test_monitor.py::test_out_of_range_triggers_lock
 
 # Run tests matching pattern
 pytest -k "scanner"
@@ -266,14 +273,14 @@ pytest -s
 
 ```bash
 # Terminal coverage
-pytest --cov=. --cov-report=term-missing
+pytest --cov=brios --cov-report=term-missing
 
 # HTML coverage report
-pytest --cov=. --cov-report=html
+pytest --cov=brios --cov-report=html
 open htmlcov/index.html
 
 # XML coverage (for CI)
-pytest --cov=. --cov-report=xml
+pytest --cov=brios --cov-report=xml
 ```
 
 ### CI/CD Pipeline
@@ -509,12 +516,20 @@ pre-commit install
 ### Current Coverage
 
 ```
-Name                    Stmts   Miss  Cover
--------------------------------------------
-main.py                   450      0   100%
-tests/test_ble_monitor    280      0   100%
--------------------------------------------
-TOTAL                     730      0   100%
+Name                           Stmts   Miss  Cover
+--------------------------------------------------
+brios/__init__.py                 xx      0   100%
+brios/cli.py                     xx      0   100%
+brios/core/config.py             xx      0   100%
+brios/core/monitor.py            xx      0   100%
+brios/core/scanner.py            xx      0   100%
+brios/core/service.py            xx      0   100%
+brios/core/system.py             xx      0   100%
+brios/core/utils.py              xx      0   100%
+tests/test_monitor.py            xx      0   100%
+tests/test_utils_system.py       xx      0   100%
+--------------------------------------------------
+TOTAL                           xxx      0   100%
 ```
 
 ### Performance
@@ -528,6 +543,4 @@ TOTAL                     730      0   100%
 ---
 
 For more information, see:
-- [API Reference](API.md)
-- [Architecture Documentation](ARCHITECTURE.md)
 - [Contributing Guide](CONTRIBUTING.md)

@@ -54,6 +54,8 @@ class Brios < Formula
     keep_alive true
     log_path var/"log/brios.log"
     error_log_path var/"log/brios.log"
+    working_dir var
+    environment_variables PATH: std_service_path_env
   end
 
   test do

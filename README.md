@@ -40,19 +40,6 @@ brew tap Piero24/brios https://github.com/Piero24/B.R.I.O.S
 brew install brios
 ```
 
-# Clone and setup
-git clone https://github.com/Piero24/B.R.I.O.S..git && cd B.R.I.O.S.
-python3 -m venv env && source env/bin/activate
-pip install -r requirements/dev.txt
-
-# Discover your device
-python3 main.py --scanner 15 -m
-
-# Configure and start monitoring
-cp .env.example .env  # Edit with your device MAC
-python3 main.py --target-mac -v
-```
-
 ## ✨ Key Features
 
 - 🔍 **BLE Device Discovery** - Find and identify nearby Bluetooth devices
@@ -66,10 +53,10 @@ python3 main.py --target-mac -v
 
 ## 📚 Documentation
 
-- **[Complete Documentation](.github/README.md)** - Full project documentation
 - **[Testing Guide](docs/TESTING.md)** - Running and writing tests
 - **[Contributing Guide](docs/CONTRIBUTING.md)** - How to contribute
 - **[FAQ](docs/FAQ.md)** - Frequently asked questions
+- **[Code of Conduct](docs/CODE_OF_CONDUCT.md)** - Community guidelines
 - **[Changelog](CHANGELOG.md)** - Version history
 
 ## 🛠️ Requirements
@@ -123,10 +110,14 @@ pip install -e .
     *Note the MAC address of your device from the output.*
 
 2.  **Configure**:
-    Create a `.env` file in your project root or home directory:
+    Create a `.env` file in one of these locations (loaded in order):
+    - `.env` (project root / current directory)
+    - `~/.brios.env`
+    - `~/.config/brios/config`
+
+    Add your device's MAC address:
     ```bash
-    cp .env.example .env
-    # Edit .env with your device MAC address
+    echo 'TARGET_DEVICE_MAC_ADDRESS=AA:BB:CC:DD:EE:FF' > .env
     ```
 
 3.  **Start Monitoring**:
@@ -138,27 +129,37 @@ pip install -e .
 
 ## ⚙️ Configuration
 
-B.R.I.O.S. uses environment variables for configuration. You can set these in a `.env` file:
+B.R.I.O.S. uses environment variables for configuration. You can set these in a `.env` file (also supports `~/.brios.env` and `~/.config/brios/config`):
 
 | Parameter | Description | Default |
 | :--- | :--- | :--- |
 | `TARGET_DEVICE_MAC_ADDRESS` | MAC address of the device to track | Required |
+| `TARGET_DEVICE_UUID_ADDRESS` | UUID address (macOS privacy mode) | — |
+| `TARGET_DEVICE_NAME` | Human-readable device name | `"Unknown Device Name"` |
+| `TARGET_DEVICE_TYPE` | Device type (e.g., "phone", "watch") | `"Unknown Device"` |
 | `DISTANCE_THRESHOLD_M` | Distance in meters to trigger lock | `2.0` |
-| `GRACE_PERIOD_SECONDS` | Delay before re-locking after unlock | `15` |
-| `TX_POWER_AT_1M` | RSSI measured at 1 meter | `-59` |
+| `GRACE_PERIOD_SECONDS` | Delay before re-triggering after unlock | `30` |
+| `TX_POWER_AT_1M` | RSSI measured at 1 meter (dBm) | `-59` |
 | `PATH_LOSS_EXPONENT` | Environment factor (2.0-4.0) | `2.8` |
+| `SAMPLE_WINDOW` | Number of RSSI samples for smoothing | `12` |
+| `LOCK_LOOP_THRESHOLD` | Lock events within window to trigger pause | `3` |
+| `LOCK_LOOP_WINDOW` | Time window (seconds) for lock loop detection | `60` |
+| `LOCK_LOOP_PENALTY` | Pause duration (seconds) on lock loop | `120` |
 
 ---
 
 ## 🚀 Usage
 
 ### Command Line Interface
-Once installed, the `brios` command is available globally.
+Once installed, the `brios` command is available globally (also runnable via `python -m brios`).
 
-- **Scan for devices**: `brios --scanner`
-- **Monitor with MAC**: `brios --target-mac "AA:BB:CC..."`
-- **Monitor with UUID**: `brios --target-uuid "XXXXXXXX..."`
-- **Verbose output**: Add `-v` to any monitor command.
+- **Scan for devices**: `brios --scanner` or `brios -s [SECONDS]`
+- **Monitor with MAC**: `brios --target-mac "AA:BB:CC..."` or `brios -tm`
+- **Monitor with UUID**: `brios --target-uuid "XXXXXXXX..."` or `brios -tu`
+- **Use real MAC addresses (macOS)**: Add `-m` to scanner/monitor commands
+- **Verbose output**: Add `-v` to any monitor command
+- **File logging**: Add `-f` to enable logging to file
+- **Restart daemon**: `brios --restart`
 
 ### Background Daemon (macOS)
 You can run B.R.I.O.S. as a background service:

@@ -17,20 +17,6 @@ dependencies = [
     "python-dotenv==1.0.0", 
     "pyobjc-framework-Quartz==9.2; sys_platform == 'darwin'" 
 ]
-# Note: bleak 1.1.1 used in original requirements seems very old (current is 0.22+). 
-# But main.py had a patch for 1.1.1? wait.
-# main.py said: "# --- Monkeypatch for Bleak 1.1.1 Crash ---"
-# But Bleak 1.1.1 is ancient (2018?). Maybe they meant 0.11.1? Or maybe they are using a specific version?
-# requirements.txt said `bleak==1.1.1`?
-# Let's check requirements/base.txt again.
-# It said `bleak==1.1.1`. 
-# Wait, Bleak versioning ... 
-# I will stick to what was in requirements.txt to avoid breaking things, 
-# although 1.1.1 sounds suspicious if it's that old.
-# Actually, checking PyPI, Bleak had 0.x versions for a long time. 
-# Maybe it's a newer version? 
-# I will use the version from requirements.txt but I'll double check if I can.
-# For now, let's use what was in base.txt.
 
 [project.scripts]
 brios = "brios.cli:main"
