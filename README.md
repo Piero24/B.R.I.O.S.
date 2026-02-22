@@ -76,7 +76,7 @@ python3 main.py --target-mac -v
 > 
 > This project has been tested **only** on:
 > - **Hardware**: MacBook Pro M3 Pro with iPhone
-> - **Python Version**: 3.12.6 (should work on Python 3.8+)
+> - **Python Version**: 3.12.6 (should work on Python 3.9+)
 > - **OS**: macOS (Bluetooth stack specific to macOS)
 > 
 > **Critical Device Requirements:**
@@ -89,7 +89,7 @@ python3 main.py --target-mac -v
 **System Requirements:**
 
 - macOS 10.15 (Catalina) or later
-- Python 3.8+
+- Python 3.9+
 - Bluetooth Low Energy adapter (built-in on all modern Macs)
 
 ## 📦 Installation

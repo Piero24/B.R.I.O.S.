@@ -29,7 +29,7 @@
     <img src="https://img.shields.io/github/actions/workflow/status/piero24/B.R.I.O.S./02-unit-tests.yml?branch=main&label=tests">
     </a>
     <a href="https://www.python.org/">
-    <img src="https://img.shields.io/badge/Python-3.8+-blue.svg">
+    <img src="https://img.shields.io/badge/Python-3.9+-blue.svg">
     </a>
     <a href="https://www.apple.com/macos/">
     <img src="https://img.shields.io/badge/Platform-macOS-lightgrey.svg">
@@ -302,7 +302,7 @@ python3 main.py --status  # Check service status
 <tr>
 <td align="center" width="25%">
 <img src="https://www.python.org/static/community_logos/python-logo-generic.svg" width="80"><br/>
-<strong>Python 3.8+</strong><br/>
+<strong>Python 3.9+</strong><br/>
 <sub>Core Language</sub>
 </td>
 <td align="center" width="25%">
@@ -371,7 +371,7 @@ B.R.I.O.S. provides comprehensive documentation for all skill levels:
 
 <h2 id="prerequisites"><br/>🧰  Prerequisites</h2>
 <p>
-    The only prerequisites for running this project are Python 3.8 or higher and the required Python packages. All dependencies are organized in the `requirements/` folder and can be installed with pip.
+    The only prerequisites for running this project are Python 3.9 or higher and the required Python packages. All dependencies are organized in the `requirements/` folder and can be installed with pip.
 </p>
 
 > [!IMPORTANT]
@@ -379,7 +379,7 @@ B.R.I.O.S. provides comprehensive documentation for all skill levels:
 > 
 > This project has been tested **only** on:
 > - **Hardware**: MacBook Pro M3 Pro with iPhone
-> - **Python Version**: 3.12.6 (should work on Python 3.8+)
+> - **Python Version**: 3.12.6 (should work on Python 3.9+)
 > - **OS**: macOS (Bluetooth stack specific to macOS)
 > 
 > **Critical Device Requirements:**
@@ -392,7 +392,7 @@ B.R.I.O.S. provides comprehensive documentation for all skill levels:
 **System Requirements:**
 
 - macOS 10.15 (Catalina) or later
-- Python 3.8+ (tested on 3.12.6)
+- Python 3.9+ (tested on 3.12.6)
 - Bluetooth Low Energy adapter (built-in on all modern Macs)
 
 **Python Dependencies:**

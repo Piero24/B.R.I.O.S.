@@ -75,7 +75,7 @@ async def test_process_signal_out_of_range(
     monitor: Any, mock_device: MagicMock, mock_adv: MagicMock
 ) -> None:
     """Test that out-of-range signal triggers lock."""
-    monitor.resume_time = 0
+    monitor.resume_time = -1000  # Ensure grace period has passed
     monitor.rssi_buffer.clear()
     for _ in range(11):
         monitor.rssi_buffer.append(-80)
@@ -91,13 +91,17 @@ async def test_process_signal_out_of_range(
     import brios.core.system
 
     # Patch the system module as accessed by monitor
-    with patch("brios.core.monitor.system.lock_macbook") as mock_lock:
+    with (
+        patch("brios.core.monitor.system.lock_macbook") as mock_lock,
+        patch("brios.core.monitor.asyncio.create_task") as mock_create_task,
+    ):
         mock_lock.return_value = (True, "Mock Locked")
 
         monitor._detection_callback(mock_device, mock_adv)
 
         mock_lock.assert_called_once()
         assert monitor.alert_triggered is True
+        mock_create_task.assert_called_once()
 
 
 @pytest.mark.asyncio
@@ -106,7 +110,7 @@ async def test_process_signal_back_in_range(
 ) -> None:
     """Test that coming back in range clears alert."""
     monitor.alert_triggered = True
-    monitor.resume_time = 0
+    monitor.resume_time = -1000  # Ensure grace period has passed
     monitor.rssi_buffer.clear()
     for _ in range(11):
         monitor.rssi_buffer.append(-59)

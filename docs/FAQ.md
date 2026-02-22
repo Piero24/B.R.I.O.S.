@@ -34,7 +34,7 @@ Yes! Any BLE 4.0+ compatible device:
 ### What are the system requirements?
 
 - macOS 10.15 (Catalina) or later
-- Python 3.8 or higher
+- Python 3.9 or higher
 - Built-in Bluetooth adapter (all modern Macs have this)
 - Bluetooth permissions for your terminal app
 

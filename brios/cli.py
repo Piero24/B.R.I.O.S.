@@ -194,7 +194,7 @@ class Application:
         • Background service (--start) automatically enables file logging
         • Bluetooth must be enabled on your Mac
         • Requires macOS 10.15 (Catalina) or later
-        • Python 3.8+ required
+        • Python 3.9+ required
 
         FILES:
         .env                  Configuration file with device settings
@@ -305,27 +305,26 @@ def main() -> None:
     if args.scanner is not None and not (5 <= args.scanner <= 60):
         parser.error("Scanner duration must be between 5 and 60 seconds.")
 
-    is_service_command = args.start or args.stop or args.restart or args.status
+    is_service_command = (
+        args.start or args.stop or args.restart or args.status or args.daemon
+    )
     is_mode_command = (
         args.scanner is not None or args.target_mac or args.target_uuid
     )
 
     # If no mode flags are provided, we check if we can default to monitoring
-    if not is_mode_command:
+    if not is_mode_command and not is_service_command:
+        parser.error(
+            "one of the following arguments is required: "
+            "--scanner/-s, --target-mac/-tm, --target-uuid/-tu, "
+            "--start, --stop, --restart, --status"
+        )
+    elif not is_mode_command and is_service_command:
         from .core.utils import determine_target_address
 
         resolved_address = determine_target_address(args)
         if resolved_address:
-            # Explicitly set the resolved address so ServiceManager can reconstruct it
             args.target_mac = resolved_address
-        elif not is_service_command:
-            # Only error if it's not a service command (like --stop)
-            parser.error(
-                "error: one of the following arguments is required: "
-                "--scanner/-s, --target-mac/-tm, --target-uuid/-tu, "
-                "--start, --stop, --restart, --status\n"
-                "Or configure TARGET_DEVICE_MAC_ADDRESS in your .env file."
-            )
 
     try:
         app = Application(args)

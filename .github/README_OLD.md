@@ -183,7 +183,7 @@ B.R.I.O.S. employs a sophisticated distance estimation algorithm based on the **
 ### System Requirements
 
 - **macOS** 10.15 (Catalina) or later
-- **Python** 3.8 or higher
+- **Python** 3.9 or higher
 - **Bluetooth** Low Energy compatible adapter (built-in on all modern Macs)
 
 ### Python Dependencies

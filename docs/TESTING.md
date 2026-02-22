@@ -7,7 +7,7 @@ Complete guide to testing 🥐 B.R.I.O.S. (Bluetooth Reactive Intelligent Operat
 > 
 > All tests have been validated on:
 > - **Hardware**: MacBook Pro M3 Pro
-> - **Python**: 3.12.6 (should work on Python 3.8+)
+> - **Python**: 3.12.6 (should work on Python 3.9+)
 > - **OS**: macOS
 > 
 > If you encounter test failures on other configurations, please [report them](https://github.com/Piero24/B.R.I.O.S./issues).

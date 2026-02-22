@@ -18,12 +18,12 @@ pyobjc-framework-CoreBluetooth==9.2; sys_platform == 'darwin'
 pyobjc-framework-libdispatch==9.2; sys_platform == 'darwin'
 
 # Dependencies
-click==8.3.0
-iniconfig==2.3.0
+click==8.1.8
+iniconfig==2.1.0
 mypy_extensions==1.1.0
 packaging==25.0
 pathspec==0.12.1
-platformdirs==4.5.0
+platformdirs==4.4.0
 pluggy==1.6.0
 Pygments==2.19.2
 typing_extensions==4.15.0
