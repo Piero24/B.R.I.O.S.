@@ -1,0 +1,74 @@
+name: 05 — Automatic Release
+
+################################################################################
+# AUTOMATIC RELEASE WORKFLOW
+#
+# Purpose:
+#   Automates the creation or updating of a GitHub Release whenever changes
+#   are pushed to the main branch. This ensures that the published release
+#   always matches the latest stable code.
+#
+# When it runs:
+#   • On every push to the 'main' branch
+#   • Can be manually triggered via GitHub UI (workflow_dispatch)
+#
+# What it does:
+#   1. Checks out the repository
+#   2. Reads the version from the 'VERSION' file
+#   3. Deletes the existing release and tag for that version (if any)
+#   4. Re-creates the tag on the new commit
+#   5. Creates a new GitHub Release using 'CHANGELOG.md' for notes
+#
+# Success criteria:
+#   A new or updated release exists on GitHub matching the version in the repo.
+################################################################################
+
+on:
+  push:
+    branches: ["main"]
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Create or Update Release
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          # 1. Extract version and prepare tag
+          VERSION=$(cat VERSION)
+          TAG="v$VERSION"
+          
+          echo "🚀 Processing release for $TAG..."
+          
+          # 2. Cleanup existing release if it exists
+          if gh release view "$TAG" >/dev/null 2>&1; then
+            echo "⚠️ Deleting existing release $TAG..."
+            gh release delete "$TAG" --yes
+          fi
+          
+          # 3. Cleanup existing remote tag
+          if git ls-remote --tags origin | grep -q "refs/tags/$TAG"; then
+            echo "⚠️ Deleting existing remote tag $TAG..."
+            git push --delete origin "$TAG"
+          fi
+          
+          # 4. Create and push new tag
+          echo "🏷️ Creating new tag $TAG..."
+          git tag "$TAG"
+          git push origin "$TAG"
+          
+          # 5. Create new release
+          echo "🚢 Creating new GitHub release..."
+          gh release create "$TAG" \
+            --title "$TAG" \
+            --notes-file CHANGELOG.md
