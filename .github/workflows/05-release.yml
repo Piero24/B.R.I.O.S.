@@ -88,15 +88,24 @@ jobs:
           with open('Formula/brios.rb', 'w') as f: f.write(content)
           "
           
-          # 6. Commit and push formula update
+          # 6. Update README.md version
+          echo "📝 Updating README.md version..."
+          python3 -c "
+          import re
+          with open('README.md', 'r') as f: content = f.read()
+          content = re.sub(r'<sub>Version .*?</sub>', f'<sub>Version ${VERSION}</sub>', content, count=1)
+          with open('README.md', 'w') as f: f.write(content)
+          "
+          
+          # 7. Commit and push updates
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git add Formula/brios.rb
+          git add Formula/brios.rb README.md
           
           if ! git diff --cached --quiet; then
-            echo "📦 Committing updated formula..."
-            git commit -m "chore: update Homebrew formula to $TAG [skip ci]"
+            echo "📦 Committing updated formula and README..."
+            git commit -m "chore: update Homebrew formula and README to $TAG [skip ci]"
             git push origin main
           else
-            echo "✅ Formula is already up to date."
+            echo "✅ Formula and README are already up to date."
           fi

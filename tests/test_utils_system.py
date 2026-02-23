@@ -71,54 +71,67 @@ def test_determine_target_address() -> None:
 
 
 # --- System Tests ---
-def test_is_screen_locked_true() -> None:
+@patch("brios.core.system.IS_MACOS", True)
+@patch("ctypes.util.find_library")
+@patch("ctypes.cdll.LoadLibrary")
+def test_is_screen_locked_true(
+    mock_load_library: MagicMock, mock_find_library: MagicMock
+) -> None:
     """Test screen lock detection when locked."""
-    # Mock Quartz before import
-    mock_quartz = MagicMock()
-    sys.modules["Quartz"] = mock_quartz
+    mock_find_library.return_value = "mock_lib"
 
-    # Reload system module to pick up the mock
-    import brios.core.system
+    mock_cg = MagicMock()
+    mock_cf = MagicMock()
 
-    importlib.reload(brios.core.system)
+    def load_library_side_effect(name):
+        if name == "mock_lib":
+            # We can't easily distinguish which mock_lib is which here if they have the same name,
+            # but we can just return a mock that handles both.
+            pass
+        return mock_cg
 
-    mock_quartz.CGSessionCopyCurrentDictionary.return_value = {
-        "CGSSessionScreenIsLocked": 1
-    }
+    # Let's just mock the specific functions on the returned library
+    mock_lib = MagicMock()
+    mock_load_library.return_value = mock_lib
 
-    # Re-import function from reloaded module
+    mock_lib.CGSessionCopyCurrentDictionary.return_value = 12345  # mock pointer
+    mock_lib.CFStringCreateWithCString.return_value = 67890  # mock key pointer
+    mock_lib.CFDictionaryGetValue.return_value = 54321  # mock val pointer
+    mock_lib.CFBooleanGetValue.return_value = True
+
     from brios.core.system import is_screen_locked
 
     assert is_screen_locked() is True
 
 
-def test_is_screen_locked_false() -> None:
+@patch("brios.core.system.IS_MACOS", True)
+@patch("ctypes.util.find_library")
+@patch("ctypes.cdll.LoadLibrary")
+def test_is_screen_locked_false(
+    mock_load_library: MagicMock, mock_find_library: MagicMock
+) -> None:
     """Test screen lock detection when unlocked."""
-    mock_quartz = MagicMock()
-    sys.modules["Quartz"] = mock_quartz
+    mock_find_library.return_value = "mock_lib"
 
-    import brios.core.system
+    mock_lib = MagicMock()
+    mock_load_library.return_value = mock_lib
 
-    importlib.reload(brios.core.system)
-
-    mock_quartz.CGSessionCopyCurrentDictionary.return_value = {
-        "CGSSessionScreenIsLocked": 0
-    }
+    mock_lib.CGSessionCopyCurrentDictionary.return_value = 12345  # mock pointer
+    mock_lib.CFStringCreateWithCString.return_value = 67890  # mock key pointer
+    mock_lib.CFDictionaryGetValue.return_value = 54321  # mock val pointer
+    mock_lib.CFBooleanGetValue.return_value = False
 
     from brios.core.system import is_screen_locked
 
     assert is_screen_locked() is False
 
 
-def test_is_screen_locked_no_quartz() -> None:
+@patch("brios.core.system.IS_MACOS", False)
+def test_is_screen_locked_non_macos() -> None:
     """Test screen lock detection on non-macOS."""
-    import brios.core.system
+    from brios.core.system import is_screen_locked
 
-    # Patch the constant
-    with patch("brios.core.system.HAS_QUARTZ", False):
-        from brios.core.system import is_screen_locked
-
-        assert is_screen_locked() is False
+    assert is_screen_locked() is False
 
 
 @patch("subprocess.run")

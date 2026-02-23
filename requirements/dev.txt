@@ -11,12 +11,6 @@ pytest==8.4.2
 pytest-asyncio==1.2.0
 pytest-mock==3.15.1
 
-# macOS-specific packages (for local development on macOS)
-pyobjc-core==9.2; sys_platform == 'darwin'
-pyobjc-framework-Cocoa==9.2; sys_platform == 'darwin'
-pyobjc-framework-CoreBluetooth==9.2; sys_platform == 'darwin'
-pyobjc-framework-libdispatch==9.2; sys_platform == 'darwin'
-
 # Dependencies
 click==8.1.8
 iniconfig==2.1.0

@@ -1,5 +1,4 @@
 # CI Requirements (Linux/Ubuntu compatible)
-# This file excludes macOS-specific packages (pyobjc-*) that fail on Linux runners.
 # For local development on macOS, use dev.txt instead.
 
 # Core dependencies (cross-platform)
@@ -25,10 +24,3 @@ platformdirs==4.5.0
 pluggy==1.6.0
 Pygments==2.19.2
 typing_extensions==4.15.0
-
-# macOS-specific packages are excluded:
-# pyobjc-framework-Quartz==12.0            # macOS only - skipped on Linux
-# pyobjc-core==12.0                        # macOS only - skipped on Linux
-# pyobjc-framework-Cocoa==12.0             # macOS only - skipped on Linux
-# pyobjc-framework-CoreBluetooth==12.0     # macOS only - skipped on Linux
-# pyobjc-framework-libdispatch==12.0       # macOS only - skipped on Linux

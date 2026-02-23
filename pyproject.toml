@@ -14,8 +14,7 @@ authors = [
 ]
 dependencies = [
     "bleak==0.21.1",
-    "python-dotenv==1.0.0", 
-    "pyobjc-framework-Quartz==9.2; sys_platform == 'darwin'" 
+    "python-dotenv>=1.0.0"
 ]
 
 [project.scripts]
@@ -46,6 +45,11 @@ check_untyped_defs = true
 ignore_missing_imports = true
 show_error_codes = true
 exclude = ["build/", "env/"]
+
+[[tool.mypy.overrides]]
+module = "bleak.*"
+ignore_errors = true
+follow_imports = "skip"
 
 [[tool.mypy.overrides]]
 module = "tests.*"

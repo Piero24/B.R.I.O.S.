@@ -27,9 +27,6 @@ def monitor() -> Any:
     sys.modules["bleak.backends.device"] = mock_bleak.backends.device
     sys.modules["bleak.backends.scanner"] = mock_bleak.backends.scanner
 
-    # Mock Quartz for system module
-    sys.modules["Quartz"] = MagicMock()
-
     # Reload modules to pick up mocks
     import brios.core.monitor
 
@@ -93,7 +90,7 @@ async def test_process_signal_out_of_range(
     # Patch the system module as accessed by monitor
     with (
         patch("brios.core.monitor.system.lock_macbook") as mock_lock,
-        patch("brios.core.monitor.asyncio.create_task") as mock_create_task,
+        patch.object(monitor, "_handle_screen_lock") as mock_handle_lock,
     ):
         mock_lock.return_value = (True, "Mock Locked")
 
@@ -101,7 +98,7 @@ async def test_process_signal_out_of_range(
 
         mock_lock.assert_called_once()
         assert monitor.alert_triggered is True
-        mock_create_task.assert_called_once()
+        mock_handle_lock.assert_called_once()
 
 
 @pytest.mark.asyncio

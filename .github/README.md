@@ -311,11 +311,6 @@ brios --status  # Check service status
 <sub>BLE Communication</sub>
 </td>
 <td align="center" width="25%">
-<img src="https://raw.githubusercontent.com/pyobjc/pyobjc/master/docs/_static/pyobjc.png" width="80"><br/>
-<strong>PyObjC</strong><br/>
-<sub>macOS Integration</sub>
-</td>
-<td align="center" width="25%">
 <img src="https://docs.pytest.org/en/stable/_static/pytest_logo_curves.svg" width="80"><br/>
 <strong>Pytest</strong><br/>
 <sub>Testing Framework</sub>
@@ -399,8 +394,6 @@ B.R.I.O.S. provides comprehensive documentation for all skill levels:
 
 - `bleak` - Cross-platform BLE library
 - `python-dotenv` - Configuration file management
-- `pyobjc-framework-CoreBluetooth` - macOS Bluetooth support
-- `pyobjc-framework-Cocoa` - macOS system integration
 
 <br/>
 
@@ -1159,12 +1152,6 @@ In the event that the software uses third-party components for its operation, th
     <td>BSD-3-Clause</td>
     <td><a href="https://github.com/theskumar/python-dotenv">here</a></td>
   </tr>
-  <tr  align="center">
-    <td>PyObjC</td>
-    <td><a href="https://github.com/ronaldoussoren/pyobjc">PyObjC Team</a></td>
-    <td>MIT</td>
-    <td><a href="https://github.com/ronaldoussoren/pyobjc">here</a></td>
-  </tr>
 </table>
 
 <p align="right"><a href="#top">⇧</a></p>
@@ -1227,7 +1214,6 @@ Current version: **1.0.0** - [Changelog](CHANGELOG.md)
 Special thanks to:
 
 - **[Bleak Team](https://github.com/hbldh/bleak)** - Excellent cross-platform BLE library
-- **[PyObjC Contributors](https://github.com/ronaldoussoren/pyobjc)** - macOS native integration
 - **Open Source Community** - For inspiration and support
 
 ---

@@ -7,7 +7,7 @@
 <p align="center">
   <strong>🥐 Bluetooth Reactive Intelligent Operator for Croissant Safety</strong>
   <br/>
-  <sub>Version 1.0.0</sub>
+  <sub>Version 1.0.3</sub>
   <br/>
   <br/>
   Enterprise-grade proximity monitoring for macOS security automation
@@ -210,7 +210,6 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 ## 🙏 Acknowledgments
 
 - [Bleak](https://github.com/hbldh/bleak) - Cross-platform BLE library
-- [PyObjC](https://github.com/ronaldoussoren/pyobjc) - macOS native integration
 - [Pytest](https://pytest.org/) - Testing framework
 
 ## 📬 Contact

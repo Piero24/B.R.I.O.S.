@@ -30,7 +30,7 @@ automatically locks your Mac when a trusted Bluetooth device moves out of range.
 - `--version` argument to display version information
 - Homebrew formula for easy installation (`brew install brios`)
 - Makefile for developer workflow automation
-- macOS native integration via PyObjC (Quartz)
+- macOS native integration via ctypes (CoreGraphics)
 - Comprehensive help documentation with all parameters and examples
 - CI/CD pipeline with GitHub Actions
   - Code formatting checks (Pyink)
