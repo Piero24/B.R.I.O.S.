@@ -95,8 +95,13 @@ class ServiceManager:
         if self.args.verbose:
             command.append("-v")
 
-        if self.args.file_logging:
+        # Always enable file logging and verbose mode for the daemon,
+        # since its stdout/stderr are redirected to the log file and
+        # the terminal is not available.
+        if "-f" not in command:
             command.append("-f")
+        if "-v" not in command:
+            command.append("-v")
 
         # The '--daemon' flag is an internal signal for the new process to
         # run in daemon mode.
@@ -126,17 +131,22 @@ class ServiceManager:
             print("─" * 50)
 
         try:
-            # Let the background process handle its own logging if enabled.
-            # We redirect the parent's popen stdout/stderr to devnull to
-            # avoid issues when the parent exits.
-            with open(os.devnull, "wb") as devnull:
-                subprocess.Popen(
-                    command,
-                    stdout=devnull,
-                    stderr=devnull,
-                    start_new_session=True,
-                    env={**os.environ, "PYTHONUNBUFFERED": "1"},
-                )
+            # Redirect the daemon's stdout/stderr to the log file so that
+            # any startup errors, tracebacks, or print output are captured
+            # instead of being silently lost to /dev/null.
+            log_dir = os.path.dirname(LOG_FILE)
+            if not os.path.exists(log_dir):
+                os.makedirs(log_dir, exist_ok=True)
+
+            log_fd = open(LOG_FILE, "a")
+            subprocess.Popen(
+                command,
+                stdout=log_fd,
+                stderr=log_fd,
+                start_new_session=True,
+                env={**os.environ, "PYTHONUNBUFFERED": "1"},
+            )
+            log_fd.close()
 
             # Brief wait to let the process start and write PID
             time.sleep(0.5)
@@ -269,12 +279,9 @@ class ServiceManager:
             print(f"Mode:       UUID (Privacy Mode)")
         print("─" * 50)
 
-        if self.args.file_logging:
-            print(
-                f"Log file:   {LOG_FILE} {Colors.GREEN}(enabled){Colors.RESET}"
-            )
-        else:
-            print(f"Logging:    Disabled (use -f to enable)")
+        print(
+            f"Log file:   {LOG_FILE} {Colors.GREEN}(enabled){Colors.RESET}"
+        )
 
         print(
             f"\n{Colors.GREEN}●{Colors.RESET} {__app_name__} running in background"

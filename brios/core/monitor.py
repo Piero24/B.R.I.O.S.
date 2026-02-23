@@ -1,3 +1,4 @@
+import os
 import sys
 import time
 import asyncio
@@ -98,9 +99,39 @@ class DeviceMonitor:
             provide user-friendly feedback in the terminal when the monitoring
             process begins.
 
-        The output is suppressed if the monitor is running in daemon mode.
+        In daemon mode, a plain-text version is written to stdout (which is
+        redirected to the log file) and to the log file handle.
         """
+        timestamp = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+
         if self.flags.daemon_mode:
+            # Write a startup block to the log file (via stdout redirect)
+            lines = [
+                f"[{timestamp}] ══════════════════════════════════════════",
+                f"[{timestamp}] {__app_name__} Daemon Started",
+                f"[{timestamp}] ──────────────────────────────────────────",
+                f"[{timestamp}] Target:     {TARGET_DEVICE_NAME} ({TARGET_DEVICE_TYPE})",
+                f"[{timestamp}] Address:    {self.target_address}",
+                f"[{timestamp}] Threshold:  {DISTANCE_THRESHOLD_M}m",
+                f"[{timestamp}] TX Power:   {TX_POWER_AT_1M} dBm @ 1m",
+                f"[{timestamp}] Path Loss:  {PATH_LOSS_EXPONENT}",
+                f"[{timestamp}] Samples:    {SAMPLE_WINDOW} readings",
+                f"[{timestamp}] Mode:       {'BD_ADDR (MAC)' if self.use_bdaddr else 'UUID'}",
+                f"[{timestamp}] Log file:   {LOG_FILE}",
+                f"[{timestamp}] PID:        {os.getpid()}",
+                f"[{timestamp}] ──────────────────────────────────────────",
+                f"[{timestamp}] Monitoring active - waiting for device...",
+                f"[{timestamp}] ══════════════════════════════════════════",
+            ]
+            for line in lines:
+                print(line)
+            sys.stdout.flush()
+
+            # Also write to the log file handle if available
+            if self.log_file:
+                for line in lines:
+                    self.log_file.write(line + "\n")
+                self.log_file.flush()
             return
 
         print(f"\n{Colors.BOLD}Starting {__app_name__} Monitor{Colors.RESET}")
@@ -459,9 +490,11 @@ class DeviceMonitor:
         )
 
         if self.flags.daemon_mode:
-            if self.flags.file_logging:
-                print(log_message)
-                sys.stdout.flush()
+            print(log_message)
+            sys.stdout.flush()
+            if self.flags.file_logging and self.log_file:
+                self.log_file.write(log_message + "\n")
+                self.log_file.flush()
         else:
             if self.flags.verbose:
                 signal_strength = (
@@ -510,8 +543,12 @@ class DeviceMonitor:
         )
 
         if self.flags.daemon_mode:
-            print(alert_msg)
+            msg = f"[{timestamp}] {alert_msg}"
+            print(msg)
             sys.stdout.flush()
+            if self.log_file:
+                self.log_file.write(msg + "\n")
+                self.log_file.flush()
 
         else:
             print(
@@ -547,8 +584,12 @@ class DeviceMonitor:
         )
 
         if self.flags.daemon_mode:
-            print(f"[{timestamp}] {back_msg_plain}")
+            msg = f"[{timestamp}] {back_msg_plain}"
+            print(msg)
             sys.stdout.flush()
+            if self.log_file:
+                self.log_file.write(msg + "\n")
+                self.log_file.flush()
 
         else:
             back_msg_rich = (
@@ -612,6 +653,16 @@ class DeviceMonitor:
 
         try:
             await self.scanner.start()
+
+            if self.flags.daemon_mode:
+                timestamp = datetime.now().strftime("%H:%M:%S")
+                msg = f"[{timestamp}] Scanner started successfully - listening for BLE advertisements"
+                print(msg)
+                sys.stdout.flush()
+                if self.log_file:
+                    self.log_file.write(msg + "\n")
+                    self.log_file.flush()
+
             asyncio.create_task(self._watchdog_loop())
 
             while True:
@@ -662,9 +713,19 @@ class DeviceMonitor:
                     time_since_packet = int(
                         current_time - self.last_packet_time
                     )
-                    print(
-                        f"{Colors.GREY}[Watchdog] Active - Last packet: {time_since_packet}s ago{Colors.RESET}"
-                    )
+                    timestamp = datetime.now().strftime("%H:%M:%S")
+
+                    if self.flags.daemon_mode:
+                        msg = f"[{timestamp}] [Watchdog] Active - Last packet: {time_since_packet}s ago"
+                        print(msg)
+                        sys.stdout.flush()
+                        if self.log_file:
+                            self.log_file.write(msg + "\n")
+                            self.log_file.flush()
+                    else:
+                        print(
+                            f"{Colors.GREY}[{timestamp}] [Watchdog] Active - Last packet: {time_since_packet}s ago{Colors.RESET}"
+                        )
                     last_log_time = current_time
 
                 if system.is_screen_locked() and not self.is_handling_lock:
