@@ -354,6 +354,23 @@ def main() -> None:
             )
         sys.exit(130)
     except Exception as e:
+        # In daemon mode, stdout/stderr go to /dev/null or the log file.
+        # Always write the crash to the log file so it's not silently lost.
+        if getattr(args, "daemon", False):
+            import traceback
+
+            try:
+                with open(LOG_FILE, "a") as crash_log:
+                    from datetime import datetime
+
+                    ts = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+                    crash_log.write(
+                        f"[{ts}] DAEMON CRASH: {e}\n"
+                        f"{traceback.format_exc()}\n"
+                    )
+                    crash_log.flush()
+            except Exception:
+                pass
         print(f"{Colors.RED}✗ FATAL ERROR:{Colors.RESET} {e}")
         sys.exit(1)
 
