@@ -66,3 +66,37 @@ jobs:
           gh release create "$TAG" \
             --title "$TAG" \
             --notes-file CHANGELOG.md
+
+          # 5. Update Homebrew Formula
+          echo "🍺 Updating Homebrew formula..."
+          TARBALL_URL="https://github.com/Piero24/B.R.I.O.S./archive/refs/tags/$TAG.tar.gz"
+          
+          # Wait a few seconds to ensure GitHub has generated the tarball
+          sleep 5
+          
+          curl -sL "$TARBALL_URL" -o temp.tar.gz
+          SHA256=$(shasum -a 256 temp.tar.gz | awk '{print $1}')
+          rm temp.tar.gz
+          
+          echo "New SHA256: $SHA256"
+          
+          python3 -c "
+          import re
+          with open('Formula/brios.rb', 'r') as f: content = f.read()
+          content = re.sub(r'url \"https://github\.com/Piero24/B\.R\.I\.O\.S\./archive/refs/tags/.*\.tar\.gz\"', 'url \"${TARBALL_URL}\"', content, count=1)
+          content = re.sub(r'sha256 \"[a-f0-9]{64}\"', 'sha256 \"${SHA256}\"', content, count=1)
+          with open('Formula/brios.rb', 'w') as f: f.write(content)
+          "
+          
+          # 6. Commit and push formula update
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add Formula/brios.rb
+          
+          if ! git diff --cached --quiet; then
+            echo "📦 Committing updated formula..."
+            git commit -m "chore: update Homebrew formula to $TAG [skip ci]"
+            git push origin main
+          else
+            echo "✅ Formula is already up to date."
+          fi
