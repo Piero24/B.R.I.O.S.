@@ -83,7 +83,7 @@ def test_is_screen_locked_true(
     mock_cg = MagicMock()
     mock_cf = MagicMock()
 
-    def load_library_side_effect(name):
+    def load_library_side_effect(name: str) -> MagicMock:
         if name == "mock_lib":
             # We can't easily distinguish which mock_lib is which here if they have the same name,
             # but we can just return a mock that handles both.

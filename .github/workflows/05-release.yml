@@ -32,7 +32,70 @@ permissions:
   contents: write
 
 jobs:
+#  # Gate: Ensure all CI checks passed before releasing
+#  check-ci:
+#    runs-on: ubuntu-latest
+#    steps:
+#      - name: Wait for CI workflows to complete
+#        uses: actions/github-script@v7
+#        with:
+#          script: |
+#            const sha = context.sha;
+#            const owner = context.repo.owner;
+#            const repo = context.repo.repo;
+#
+#            const requiredChecks = [
+#              '01 — Code Formatting Check',
+#              '02 — Unit Tests',
+#              '03 — Type Checking',
+#              '04 — Security Audit',
+#            ];
+#
+#            // Wait up to 3 minutes for all checks to complete
+#            const maxWait = 180;
+#            const interval = 10;
+#            let elapsed = 0;
+#
+#            while (elapsed < maxWait) {
+#              const { data: checkRuns } = await github.rest.checks.listForRef({
+#                owner, repo, ref: sha, per_page: 100,
+#              });
+#
+#              const results = requiredChecks.map(name => {
+#                const run = checkRuns.check_runs.find(r => r.name === name);
+#                return { name, status: run?.status, conclusion: run?.conclusion };
+#              });
+#
+#              const allComplete = results.every(r => r.status === 'completed');
+#              const allPassed = results.every(r => r.conclusion === 'success');
+#
+#              if (allComplete) {
+#                if (allPassed) {
+#                  console.log('✅ All CI checks passed!');
+#                  for (const r of results) {
+#                    console.log(`  ✓ ${r.name}: ${r.conclusion}`);
+#                  }
+#                  return;
+#                } else {
+#                  const failed = results.filter(r => r.conclusion !== 'success');
+#                  for (const r of failed) {
+#                    console.log(`  ✗ ${r.name}: ${r.conclusion}`);
+#                  }
+#                  core.setFailed('❌ CI checks failed. Release aborted.');
+#                  return;
+#                }
+#              }
+#
+#              const pending = results.filter(r => r.status !== 'completed');
+#              console.log(`⏳ Waiting for ${pending.length} check(s)... (${elapsed}s)`);
+#              await new Promise(r => setTimeout(r, interval * 1000));
+#              elapsed += interval;
+#            }
+#
+#            core.setFailed('❌ Timeout: CI checks did not complete within 3 minutes.');
+
   release:
+#    needs: check-ci
     runs-on: ubuntu-latest
     steps:
       - name: Checkout code
