@@ -667,7 +667,9 @@ class DeviceMonitor:
             # Handle scanner start failure
             if self.flags.daemon_mode:
                 timestamp = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
-                msg = f"[{timestamp}] DAEMON ERROR: Failed to start scanner: {e}"
+                msg = (
+                    f"[{timestamp}] DAEMON ERROR: Failed to start scanner: {e}"
+                )
                 if self.log_file:
                     self.log_file.write(msg + "\n")
                     self.log_file.flush()

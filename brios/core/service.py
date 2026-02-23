@@ -276,9 +276,7 @@ class ServiceManager:
             print(f"Mode:       UUID (Privacy Mode)")
         print("─" * 50)
 
-        print(
-            f"Log file:   {LOG_FILE} {Colors.GREEN}(enabled){Colors.RESET}"
-        )
+        print(f"Log file:   {LOG_FILE} {Colors.GREEN}(enabled){Colors.RESET}")
 
         print(
             f"\n{Colors.GREEN}●{Colors.RESET} {__app_name__} running in background"

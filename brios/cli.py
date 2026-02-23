@@ -331,8 +331,8 @@ def main() -> None:
         if resolved_address:
             # Detect if the resolved address is a UUID or MAC address
             uuid_pattern = re.compile(
-                r'^[0-9A-Fa-f]{8}-[0-9A-Fa-f]{4}-[0-9A-Fa-f]{4}-'
-                r'[0-9A-Fa-f]{4}-[0-9A-Fa-f]{12}$'
+                r"^[0-9A-Fa-f]{8}-[0-9A-Fa-f]{4}-[0-9A-Fa-f]{4}-"
+                r"[0-9A-Fa-f]{4}-[0-9A-Fa-f]{12}$"
             )
             if uuid_pattern.match(resolved_address):
                 args.target_uuid = resolved_address
