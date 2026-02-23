@@ -70,7 +70,10 @@ class DeviceMonitor:
             use_bdaddr: Whether to use BD_ADDR (MAC) for identification.
             flags: Configuration flags for the monitoring session.
         """
-        self.target_address = target_address
+        # Normalize address to uppercase for case-insensitive matching.
+        # Different pyobjc / macOS versions can return UUIDs in different
+        # cases, causing silent comparison failures.
+        self.target_address = target_address.upper()
         self.use_bdaddr = use_bdaddr
         self.flags = flags
 
@@ -80,6 +83,12 @@ class DeviceMonitor:
         self.is_handling_lock: bool = False
         self.last_packet_time: float = time.monotonic()
         self.lock_handling_start_time: float = 0
+
+        # Diagnostic counters for daemon debugging
+        self._target_matched: bool = False
+        self._callback_count: int = 0
+        self._match_count: int = 0
+        self._error_count: int = 0
 
         # Safety state
         self.resume_time: float = 0
@@ -170,21 +179,36 @@ class DeviceMonitor:
             adv_data: The advertisement data associated with the device.
         """
         self.last_packet_time = time.monotonic()
+        self._callback_count += 1
         is_locked = False
 
         try:
-            if device.address != self.target_address:
+            # Normalize to uppercase for case-insensitive matching.
+            device_addr = device.address.upper() if device.address else ""
+            if device_addr != self.target_address:
                 return
             current_rssi = int(adv_data.rssi)
 
-        except (AttributeError, TypeError):
-            if self.flags.verbose:
-                self._handle_bleak_error()
+        except (AttributeError, TypeError) as exc:
+            self._error_count += 1
+            self._handle_bleak_error(exc)
             return
         except Exception as e:
-            if self.flags.verbose:
-                self._handle_generic_error(e)
+            self._error_count += 1
+            self._handle_generic_error(e)
             return
+
+        # Log first-time match for daemon diagnostics
+        if not self._target_matched:
+            self._target_matched = True
+            if self.flags.daemon_mode and self.log_file:
+                timestamp = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+                self.log_file.write(
+                    f"[{timestamp}] Target device FOUND - "
+                    f"address={device_addr}, rssi={current_rssi}\n"
+                )
+                self.log_file.flush()
+        self._match_count += 1
 
         smoothed_rssi, distance_m = self._process_signal(current_rssi)
         if distance_m is None or smoothed_rssi is None:
@@ -608,29 +632,46 @@ class DeviceMonitor:
                 self.log_file.flush()
         self.alert_triggered = False
 
-    def _handle_bleak_error(self) -> None:
+    def _handle_bleak_error(self, exc: Optional[Exception] = None) -> None:
         """Handles the specific AttributeError for malformed packets.
         Catch the specific "NoneType has no attribute 'hex'" error.
         """
-        print(
-            f"\n{Colors.YELLOW}{'─' * 60}{Colors.RESET}\n{Colors.YELLOW}"
-            f"DEBUG: Malformed Packet Ignored{Colors.RESET}\n{Colors.GREY}   "
-            f"└─> Cause: This is expected when the host Mac is locked or "
-            f"sleeping.{Colors.RESET}\n{Colors.YELLOW}{'─' * 60}"
-            f"{Colors.RESET}\n"
-        )
+        if self.flags.daemon_mode:
+            # In daemon mode, stdout is /dev/null. Write to log file.
+            if self.log_file:
+                timestamp = datetime.now().strftime("%H:%M:%S")
+                self.log_file.write(
+                    f"[{timestamp}] DEBUG: Malformed packet ignored"
+                    f"{f' ({exc})' if exc else ''}\n"
+                )
+                self.log_file.flush()
+        elif self.flags.verbose:
+            print(
+                f"\n{Colors.YELLOW}{'─' * 60}{Colors.RESET}\n{Colors.YELLOW}"
+                f"DEBUG: Malformed Packet Ignored{Colors.RESET}\n{Colors.GREY}   "
+                f"└─> Cause: This is expected when the host Mac is locked or "
+                f"sleeping.{Colors.RESET}\n{Colors.YELLOW}{'─' * 60}"
+                f"{Colors.RESET}\n"
+            )
 
     def _handle_generic_error(self, e: Exception) -> None:
         """Handles unexpected exceptions in the callback.
         Catch any other unexpected errors to keep the scanner alive.
         """
-        print(
-            f"\n{Colors.RED}{'─' * 60}{Colors.RESET}\n{Colors.RED}CRITICAL: "
-            f"Unexpected Callback Error{Colors.RESET}\n{Colors.GREY}   "
-            f"An error was caught, but the scanner will continue to run."
-            f"{Colors.RESET}\n   └─> {Colors.BOLD}Error Details:"
-            f"{Colors.RESET} {e}\n{Colors.RED}{'─' * 60}{Colors.RESET}\n"
-        )
+        if self.flags.daemon_mode:
+            # In daemon mode, stdout is /dev/null. Write to log file.
+            if self.log_file:
+                timestamp = datetime.now().strftime("%H:%M:%S")
+                self.log_file.write(f"[{timestamp}] CALLBACK ERROR: {e}\n")
+                self.log_file.flush()
+        elif self.flags.verbose:
+            print(
+                f"\n{Colors.RED}{'─' * 60}{Colors.RESET}\n{Colors.RED}CRITICAL: "
+                f"Unexpected Callback Error{Colors.RESET}\n{Colors.GREY}   "
+                f"An error was caught, but the scanner will continue to run."
+                f"{Colors.RESET}\n   └─> {Colors.BOLD}Error Details:"
+                f"{Colors.RESET} {e}\n{Colors.RED}{'─' * 60}{Colors.RESET}\n"
+            )
 
     def _setup_logging(self) -> None:
         """Sets up file logging if enabled in the flags."""
@@ -718,7 +759,13 @@ class DeviceMonitor:
                     timestamp = datetime.now().strftime("%H:%M:%S")
 
                     if self.flags.daemon_mode:
-                        msg = f"[{timestamp}] [Watchdog] Active - Last packet: {time_since_packet}s ago"
+                        msg = (
+                            f"[{timestamp}] [Watchdog] Active - "
+                            f"Last packet: {time_since_packet}s ago | "
+                            f"Callbacks: {self._callback_count} | "
+                            f"Target matches: {self._match_count} | "
+                            f"Errors: {self._error_count}"
+                        )
                         if self.log_file:
                             self.log_file.write(msg + "\n")
                             self.log_file.flush()
@@ -737,20 +784,28 @@ class DeviceMonitor:
                     current_time - self.last_packet_time > 120
                     and not self.is_handling_lock
                 ):
-                    if self.flags.verbose:
-                        print(
-                            f"{Colors.YELLOW}Watchdog: Scanner frozen (no data for 120s) -> Restarting...{Colors.RESET}"
-                        )
+                    timestamp = datetime.now().strftime("%H:%M:%S")
+                    msg = "Watchdog: Scanner frozen (no data for 120s) -> Restarting..."
+                    if self.flags.daemon_mode:
+                        if self.log_file:
+                            self.log_file.write(f"[{timestamp}] {msg}\n")
+                            self.log_file.flush()
+                    elif self.flags.verbose:
+                        print(f"{Colors.YELLOW}{msg}{Colors.RESET}")
                     # Spawn handler as a task
                     asyncio.create_task(self._handle_screen_lock())
 
                 # Stuck handler check: If handling lock takes > 60s, force reset
                 if self.is_handling_lock and self.lock_handling_start_time > 0:
                     if current_time - self.lock_handling_start_time > 60:
-                        if self.flags.verbose:
-                            print(
-                                f"{Colors.RED}Watchdog: Lock handler stuck for >60s -> Forcing reset{Colors.RESET}"
-                            )
+                        timestamp = datetime.now().strftime("%H:%M:%S")
+                        msg = "Watchdog: Lock handler stuck for >60s -> Forcing reset"
+                        if self.flags.daemon_mode:
+                            if self.log_file:
+                                self.log_file.write(f"[{timestamp}] {msg}\n")
+                                self.log_file.flush()
+                        elif self.flags.verbose:
+                            print(f"{Colors.RED}{msg}{Colors.RESET}")
                         self.is_handling_lock = False
                         self.lock_handling_start_time = 0
                         # We don't call _handle_screen_lock immediately to avoid recursion loop
@@ -758,6 +813,13 @@ class DeviceMonitor:
 
                 await asyncio.sleep(2.0)
             except Exception as e:
-                if self.flags.verbose:
+                if self.flags.daemon_mode:
+                    if self.log_file:
+                        timestamp = datetime.now().strftime("%H:%M:%S")
+                        self.log_file.write(
+                            f"[{timestamp}] Watchdog error: {e}\n"
+                        )
+                        self.log_file.flush()
+                elif self.flags.verbose:
                     print(f"{Colors.YELLOW}Watchdog error: {e}{Colors.RESET}")
                 await asyncio.sleep(5.0)
