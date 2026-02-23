@@ -7,7 +7,7 @@
 <p align="center">
   <strong>🥐 Bluetooth Reactive Intelligent Operator for Croissant Safety</strong>
   <br/>
-  <sub>Version 1.0.5</sub>
+  <sub>Version 1.0.6</sub>
   <br/>
   <br/>
   Enterprise-grade proximity monitoring for macOS security automation
