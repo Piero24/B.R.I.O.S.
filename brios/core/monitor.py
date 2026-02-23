@@ -89,6 +89,8 @@ class DeviceMonitor:
         self._callback_count: int = 0
         self._match_count: int = 0
         self._error_count: int = 0
+        self._seen_addresses: set = set()
+        self._address_dump_done: bool = False
 
         # Safety state
         self.resume_time: float = 0
@@ -185,6 +187,34 @@ class DeviceMonitor:
         try:
             # Normalize to uppercase for case-insensitive matching.
             device_addr = device.address.upper() if device.address else ""
+
+            # Daemon diagnostic: collect unique addresses seen
+            if (
+                self.flags.daemon_mode
+                and self.log_file
+                and not self._address_dump_done
+            ):
+                self._seen_addresses.add(device_addr)
+                # After 500 callbacks, dump the addresses we've seen
+                if self._callback_count >= 500:
+                    self._address_dump_done = True
+                    timestamp = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+                    self.log_file.write(
+                        f"[{timestamp}] DIAGNOSTIC: Target address = "
+                        f"'{self.target_address}'\n"
+                    )
+                    self.log_file.write(
+                        f"[{timestamp}] DIAGNOSTIC: Unique addresses "
+                        f"seen ({len(self._seen_addresses)}): "
+                        f"{list(self._seen_addresses)[:20]}\n"
+                    )
+                    target_in_seen = self.target_address in self._seen_addresses
+                    self.log_file.write(
+                        f"[{timestamp}] DIAGNOSTIC: Target in seen = "
+                        f"{target_in_seen}\n"
+                    )
+                    self.log_file.flush()
+
             if device_addr != self.target_address:
                 return
             current_rssi = int(adv_data.rssi)
