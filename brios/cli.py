@@ -325,10 +325,19 @@ def main() -> None:
         )
     elif not is_mode_command and is_service_command:
         from .core.utils import determine_target_address
+        import re
 
         resolved_address = determine_target_address(args)
         if resolved_address:
-            args.target_mac = resolved_address
+            # Detect if the resolved address is a UUID or MAC address
+            uuid_pattern = re.compile(
+                r'^[0-9A-Fa-f]{8}-[0-9A-Fa-f]{4}-[0-9A-Fa-f]{4}-'
+                r'[0-9A-Fa-f]{4}-[0-9A-Fa-f]{12}$'
+            )
+            if uuid_pattern.match(resolved_address):
+                args.target_uuid = resolved_address
+            else:
+                args.target_mac = resolved_address
 
     try:
         app = Application(args)

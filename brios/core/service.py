@@ -131,22 +131,19 @@ class ServiceManager:
             print("─" * 50)
 
         try:
-            # Redirect the daemon's stdout/stderr to the log file so that
-            # any startup errors, tracebacks, or print output are captured
-            # instead of being silently lost to /dev/null.
-            log_dir = os.path.dirname(LOG_FILE)
-            if not os.path.exists(log_dir):
-                os.makedirs(log_dir, exist_ok=True)
-
-            log_fd = open(LOG_FILE, "a")
-            subprocess.Popen(
-                command,
-                stdout=log_fd,
-                stderr=log_fd,
-                start_new_session=True,
-                env={**os.environ, "PYTHONUNBUFFERED": "1"},
-            )
-            log_fd.close()
+            # Redirect stdout/stderr to /dev/null for the parent's Popen.
+            # The daemon process handles its own logging via self.log_file
+            # in monitor.py, so we don't need stdout to go anywhere.
+            # Crash tracebacks will be lost, but the daemon writes errors
+            # to the log file before exiting.
+            with open(os.devnull, "wb") as devnull:
+                subprocess.Popen(
+                    command,
+                    stdout=devnull,
+                    stderr=devnull,
+                    start_new_session=True,
+                    env={**os.environ, "PYTHONUNBUFFERED": "1"},
+                )
 
             # Brief wait to let the process start and write PID
             time.sleep(0.5)

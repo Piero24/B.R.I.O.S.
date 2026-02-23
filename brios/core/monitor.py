@@ -99,36 +99,31 @@ class DeviceMonitor:
             provide user-friendly feedback in the terminal when the monitoring
             process begins.
 
-        In daemon mode, a plain-text version is written to stdout (which is
-        redirected to the log file) and to the log file handle.
+        In daemon mode, a plain-text version is written to the log file.
         """
         timestamp = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
 
         if self.flags.daemon_mode:
-            # Write a startup block to the log file (via stdout redirect)
-            lines = [
-                f"[{timestamp}] ══════════════════════════════════════════",
-                f"[{timestamp}] {__app_name__} Daemon Started",
-                f"[{timestamp}] ──────────────────────────────────────────",
-                f"[{timestamp}] Target:     {TARGET_DEVICE_NAME} ({TARGET_DEVICE_TYPE})",
-                f"[{timestamp}] Address:    {self.target_address}",
-                f"[{timestamp}] Threshold:  {DISTANCE_THRESHOLD_M}m",
-                f"[{timestamp}] TX Power:   {TX_POWER_AT_1M} dBm @ 1m",
-                f"[{timestamp}] Path Loss:  {PATH_LOSS_EXPONENT}",
-                f"[{timestamp}] Samples:    {SAMPLE_WINDOW} readings",
-                f"[{timestamp}] Mode:       {'BD_ADDR (MAC)' if self.use_bdaddr else 'UUID'}",
-                f"[{timestamp}] Log file:   {LOG_FILE}",
-                f"[{timestamp}] PID:        {os.getpid()}",
-                f"[{timestamp}] ──────────────────────────────────────────",
-                f"[{timestamp}] Monitoring active - waiting for device...",
-                f"[{timestamp}] ══════════════════════════════════════════",
-            ]
-            for line in lines:
-                print(line)
-            sys.stdout.flush()
-
-            # Also write to the log file handle if available
+            # In daemon mode, only write to self.log_file (not stdout)
+            # to avoid duplicate entries.
             if self.log_file:
+                lines = [
+                    f"[{timestamp}] ══════════════════════════════════════════",
+                    f"[{timestamp}] {__app_name__} Daemon Started",
+                    f"[{timestamp}] ──────────────────────────────────────────",
+                    f"[{timestamp}] Target:     {TARGET_DEVICE_NAME} ({TARGET_DEVICE_TYPE})",
+                    f"[{timestamp}] Address:    {self.target_address}",
+                    f"[{timestamp}] Threshold:  {DISTANCE_THRESHOLD_M}m",
+                    f"[{timestamp}] TX Power:   {TX_POWER_AT_1M} dBm @ 1m",
+                    f"[{timestamp}] Path Loss:  {PATH_LOSS_EXPONENT}",
+                    f"[{timestamp}] Samples:    {SAMPLE_WINDOW} readings",
+                    f"[{timestamp}] Mode:       {'BD_ADDR (MAC)' if self.use_bdaddr else 'UUID'}",
+                    f"[{timestamp}] Log file:   {LOG_FILE}",
+                    f"[{timestamp}] PID:        {os.getpid()}",
+                    f"[{timestamp}] ──────────────────────────────────────────",
+                    f"[{timestamp}] Monitoring active - waiting for device...",
+                    f"[{timestamp}] ══════════════════════════════════════════",
+                ]
                 for line in lines:
                     self.log_file.write(line + "\n")
                 self.log_file.flush()
@@ -249,8 +244,9 @@ class DeviceMonitor:
 
             if self.flags.daemon_mode:
                 msg = f"[{timestamp}] Screen locked - Scanner paused"
-                print(msg)
-                sys.stdout.flush()
+                if self.log_file:
+                    self.log_file.write(msg + "\n")
+                    self.log_file.flush()
             elif self.flags.verbose:
                 print(
                     f"{Colors.YELLOW}[{timestamp}]{Colors.RESET} Screen locked "
@@ -276,11 +272,12 @@ class DeviceMonitor:
                     is_waiting = True
 
                     if self.flags.daemon_mode:
-                        print(
-                            f"[{timestamp}] "
-                            f"Screen still locked - Waiting for unlock"
-                        )
-                        sys.stdout.flush()
+                        if self.log_file:
+                            self.log_file.write(
+                                f"[{timestamp}] "
+                                f"Screen still locked - Waiting for unlock\n"
+                            )
+                            self.log_file.flush()
                     elif self.flags.verbose:
                         print(
                             f"{Colors.GREY}[{timestamp}]{Colors.RESET} "
@@ -302,11 +299,12 @@ class DeviceMonitor:
             self.rssi_buffer.clear()
 
             if self.flags.daemon_mode:
-                print(
-                    f"[{timestamp}] Screen unlocked - "
-                    f"Reconnecting scanner (locked for {total_time}s)"
-                )
-                sys.stdout.flush()
+                if self.log_file:
+                    self.log_file.write(
+                        f"[{timestamp}] Screen unlocked - "
+                        f"Reconnecting scanner (locked for {total_time}s)\n"
+                    )
+                    self.log_file.flush()
             elif self.flags.verbose:
                 print(
                     f"{Colors.GREEN}[{timestamp}]{Colors.RESET} Screen unlocked "
@@ -336,8 +334,9 @@ class DeviceMonitor:
                     timestamp = datetime.now().strftime("%H:%M:%S")
 
                     if self.flags.daemon_mode:
-                        print(f"[{timestamp}] {msg}")
-                        sys.stdout.flush()
+                        if self.log_file:
+                            self.log_file.write(f"[{timestamp}] {msg}\n")
+                            self.log_file.flush()
                     else:
                         print(
                             f"\n{Colors.RED}{Colors.BOLD}{msg}{Colors.RESET}\n"
@@ -384,8 +383,9 @@ class DeviceMonitor:
                     )
 
                     if self.flags.daemon_mode:
-                        print(msg)
-                        sys.stdout.flush()
+                        if self.log_file:
+                            self.log_file.write(f"{msg}\n")
+                            self.log_file.flush()
                     elif self.flags.verbose:
                         print(f"{Colors.YELLOW}{msg}{Colors.RESET}")
 
@@ -398,8 +398,9 @@ class DeviceMonitor:
             timestamp = datetime.now().strftime("%H:%M:%S")
             if self.flags.daemon_mode:
                 msg = f"[{timestamp}] Scanner reconnected - Monitoring resumed"
-                print(msg)
-                sys.stdout.flush()
+                if self.log_file:
+                    self.log_file.write(msg + "\n")
+                    self.log_file.flush()
             elif self.flags.verbose:
                 print(
                     f"{Colors.GREEN}[{timestamp}]{Colors.RESET} Scanner ready "
@@ -422,8 +423,11 @@ class DeviceMonitor:
             timestamp = datetime.now().strftime("%H:%M:%S")
 
             if self.flags.daemon_mode:
-                print(f"[{timestamp}] ERROR: Failed to reconnect scanner - {e}")
-                sys.stdout.flush()
+                if self.log_file:
+                    self.log_file.write(
+                        f"[{timestamp}] ERROR: Failed to reconnect scanner - {e}\n"
+                    )
+                    self.log_file.flush()
             else:
                 print(
                     f"{Colors.RED}[{timestamp}]{Colors.RESET} Error → "
@@ -490,9 +494,7 @@ class DeviceMonitor:
         )
 
         if self.flags.daemon_mode:
-            print(log_message)
-            sys.stdout.flush()
-            if self.flags.file_logging and self.log_file:
+            if self.log_file:
                 self.log_file.write(log_message + "\n")
                 self.log_file.flush()
         else:
@@ -544,8 +546,6 @@ class DeviceMonitor:
 
         if self.flags.daemon_mode:
             msg = f"[{timestamp}] {alert_msg}"
-            print(msg)
-            sys.stdout.flush()
             if self.log_file:
                 self.log_file.write(msg + "\n")
                 self.log_file.flush()
@@ -585,8 +585,6 @@ class DeviceMonitor:
 
         if self.flags.daemon_mode:
             msg = f"[{timestamp}] {back_msg_plain}"
-            print(msg)
-            sys.stdout.flush()
             if self.log_file:
                 self.log_file.write(msg + "\n")
                 self.log_file.flush()
@@ -655,10 +653,8 @@ class DeviceMonitor:
             await self.scanner.start()
 
             if self.flags.daemon_mode:
-                timestamp = datetime.now().strftime("%H:%M:%S")
+                timestamp = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
                 msg = f"[{timestamp}] Scanner started successfully - listening for BLE advertisements"
-                print(msg)
-                sys.stdout.flush()
                 if self.log_file:
                     self.log_file.write(msg + "\n")
                     self.log_file.flush()
@@ -670,8 +666,12 @@ class DeviceMonitor:
         except Exception as e:
             # Handle scanner start failure
             if self.flags.daemon_mode:
-                # In a real daemon, you'd write to the log file here
-                sys.exit(f"DAEMON ERROR: Failed to start scanner: {e}")
+                timestamp = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+                msg = f"[{timestamp}] DAEMON ERROR: Failed to start scanner: {e}"
+                if self.log_file:
+                    self.log_file.write(msg + "\n")
+                    self.log_file.flush()
+                sys.exit(msg)
             else:
                 print(
                     f"\n{Colors.RED}✗{Colors.RESET} {Colors.BOLD}"
@@ -717,8 +717,6 @@ class DeviceMonitor:
 
                     if self.flags.daemon_mode:
                         msg = f"[{timestamp}] [Watchdog] Active - Last packet: {time_since_packet}s ago"
-                        print(msg)
-                        sys.stdout.flush()
                         if self.log_file:
                             self.log_file.write(msg + "\n")
                             self.log_file.flush()
