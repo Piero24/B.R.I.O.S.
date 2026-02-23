@@ -129,7 +129,31 @@ pip install -e .
 
 ## ⚙️ Configuration
 
-B.R.I.O.S. uses environment variables for configuration. You can set these in a `.env` file (also supports `~/.brios.env` and `~/.config/brios/config`):
+B.R.I.O.S. uses environment variables for configuration. You can set these in a `.env` file or across your system in the following locations (loaded in order):
+
+1.  **Local:** `.env` (in the directory where you run the command)
+2.  **Home File:** `~/.brios.env`
+3.  **Home Folder:** `~/.brios/config` or `~/.brios/.env`
+4.  **XDG Config:** `~/.config/brios/config`
+
+### Quick Setup
+
+If you installed via Homebrew, you can copy the example configuration to your home folder:
+
+```bash
+# Recommended: Create a hidden file in your home directory
+cp $(brew --prefix brios)/share/brios/.env.example ~/.brios.env
+
+# Alternative: Create a config folder
+mkdir -p ~/.brios
+cp $(brew --prefix brios)/share/brios/.env.example ~/.brios/config
+```
+
+If you installed manually from source:
+
+```bash
+cp .env.example ~/.brios.env
+```
 
 | Parameter | Description | Default |
 | :--- | :--- | :--- |

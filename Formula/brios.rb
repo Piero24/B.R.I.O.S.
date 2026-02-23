@@ -41,6 +41,7 @@ class Brios < Formula
 
   def install
     virtualenv_install_with_resources
+    pkgshare.install ".env.example"
   end
 
   service do

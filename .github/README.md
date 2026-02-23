@@ -461,13 +461,20 @@ pip install -r requirements/dev.txt
     4.2 Copy the example configuration file and edit it:
   
     ```sh
-    cp .env.example .env
-    nano .env  # or use your preferred editor
+    # If installed via Homebrew:
+    cp $(brew --prefix brios)/share/brios/.env.example ~/.brios.env
+
+    # If installed manually:
+    cp .env.example ~/.brios.env
+    
+    nano ~/.brios.env  # or use your preferred editor
     ```
     
     You can also place the configuration in one of these locations (loaded in order):
     - `.env` (project root / current directory)
     - `~/.brios.env`
+    - `~/.brios/config`
+    - `~/.brios/.env`
     - `~/.config/brios/config`
     
     4.3 Update the `.env` file with your device information:
@@ -587,7 +594,14 @@ Mode:       BD_ADDR (MAC)
 <br/>
 <h2 id="configuration">🔧  Configuration</h2>
 
-B.R.I.O.S. is highly configurable via environment variables. You can set these in a `.env` file (also supports `~/.brios.env` and `~/.config/brios/config`). All settings are documented below.
+B.R.I.O.S. is highly configurable via environment variables. You can set these in a `.env` file or in your system profiles (loaded in order):
+
+1.  **Local:** `.env` (current directory)
+2.  **Home File:** `~/.brios.env`
+3.  **Home Folder:** `~/.brios/config` or `~/.brios/.env`
+4.  **XDG Folder:** `~/.config/brios/config`
+
+All settings are documented below.
 
 | Parameter | Description | Default |
 | :--- | :--- | :--- |

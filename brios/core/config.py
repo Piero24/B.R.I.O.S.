@@ -5,9 +5,13 @@ from dotenv import load_dotenv
 # Load user-defined settings from multiple possible locations:
 # 1. Current working directory (.env)
 # 2. User home directory (~/.brios.env)
-# 3. Dedicated config directory (~/.config/brios/config)
+# 3. Dedicated brios directory (~/.brios/config or ~/.brios/.env)
+# 4. Standard config directory (~/.config/brios/config)
 load_dotenv(".env")
 load_dotenv(os.path.expanduser("~/.brios.env"))
+load_dotenv(os.path.expanduser("~/.brios/config"))
+load_dotenv(os.path.expanduser("~/.brios/.env"))
+load_dotenv(os.path.expanduser("~/.brios/.brios.env"))
 load_dotenv(os.path.expanduser("~/.config/brios/config"))
 
 # --- Application Constants ---
