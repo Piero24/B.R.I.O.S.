@@ -5,130 +5,39 @@ All notable changes to 🥐 B.R.I.O.S. (Bluetooth Reactive Intelligent Operator 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## [Unreleased]
+## [1.0.0] - 2026-02-23
+
+Initial release of 🥐 B.R.I.O.S. — a BLE proximity monitor for macOS that
+automatically locks your Mac when a trusted Bluetooth device moves out of range.
 
 ### Added
-- Project rebranded to 🥐 B.R.I.O.S. (Bluetooth Reactive Intelligent Operator for Croissant Safety)
-- `--version` argument to display version information
-- Version constants in `brios/__init__.py` (`__version__`) and `brios/core/utils.py` (`__app_name__`, `__app_full_name__`)
-- Comprehensive help documentation with all parameters and examples
-- Configuration section in help showing all .env variables
-- Files section in help explaining project files
-- Refactored codebase into `brios/` installable package with modular architecture
-- Installable CLI entry point (`brios` command via `pyproject.toml`)
-- Multi-location config loading (`.env`, `~/.brios.env`, `~/.config/brios/config`)
+- BLE device discovery scanner with RSSI and estimated distance
+- Real-time proximity monitoring with configurable threshold
+- Automatic macOS screen locking on proximity loss
+- Background daemon mode with PID management (`-f` flag)
+- RSSI signal smoothing with configurable buffer size
+- Log-Distance Path Loss Model for accurate distance estimation
+- Verbose output mode with detailed RSSI and distance metrics (`-v` flag)
+- File logging support (`-l` flag)
+- Service management commands: start / stop / restart / status
 - Watchdog loop for scanner health monitoring and automatic recovery
 - Lock loop protection to prevent excessive locking cycles
 - Grace period to suppress false triggers after unlock/resume
 - Scanner reconnection with retry and exponential backoff
 - Bleak monkeypatch for macOS CoreBluetooth `None` address handling
-- Homebrew formula for easy installation
-
-### Changed
-- All terminal output messages now display "🥐 B.R.I.O.S." branding
-- Help documentation completely redesigned with enhanced structure
-- Updated all documentation files to use B.R.I.O.S. naming
-- Reorganized requirements files into `requirements/` folder structure
-- Improved test imports with `conftest.py` for better maintainability
-- Tests split into `test_monitor.py` and `test_utils_system.py`
-
-## [1.0.0] - 2024-11-02
-
-### Added
-- Initial release of 🥐 B.R.I.O.S.
-- BLE device discovery scanner
-- Real-time proximity monitoring
-- Automatic macOS locking on proximity loss
-- Background service/daemon mode
-- RSSI signal smoothing with configurable buffer
-- Log-Distance Path Loss Model for accurate distance estimation
-- Verbose output mode with detailed RSSI and distance metrics
-- File logging support
-- Service management commands (start/stop/restart/status)
-- Comprehensive test suite with 100% coverage
+- Modular `brios/` installable package with CLI entry point (`brios` command)
+- Multi-location config loading (`.env`, `~/.brios.env`, `~/.config/brios/config`)
+- `--version` argument to display version information
+- Homebrew formula for easy installation (`brew install brios`)
+- Makefile for developer workflow automation
+- macOS native integration via PyObjC (Quartz)
+- Comprehensive help documentation with all parameters and examples
 - CI/CD pipeline with GitHub Actions
-  - Code formatting checks (Black/Pyink)
+  - Code formatting checks (Pyink)
   - Type checking (MyPy)
   - Unit tests (Pytest)
   - Security audit (pip-audit)
-- Makefile for developer workflow automation
-- `.env` configuration file support
-- macOS native integration via PyObjC
-
-### Features
-- **Discovery Mode**: Scan for nearby BLE devices with RSSI and distance
-- **Monitor Mode**: Continuous proximity tracking with configurable threshold
-- **Alert System**: Automatic Mac locking when device moves out of range
-- **Signal Processing**: Statistical RSSI smoothing to eliminate false positives
-- **Daemon Support**: Background service with PID management
-- **Logging**: Optional file logging for audit and debugging
-
-### Technical
-- Python 3.9+ support
-- Async/await with asyncio
-- Type hints with MyPy validation
-- Cross-platform BLE via Bleak library
-- Comprehensive docstrings
-- Professional code architecture
-
----
-
-## Release Notes
-
-### v1.0.0 - Initial Release
-
-🥐 B.R.I.O.S. is now production-ready with enterprise-grade features:
-
-**🔍 Smart Device Tracking**
-- Automatic BLE device discovery
-- Real-time RSSI monitoring
-- Accurate distance estimation (±20-30cm in controlled environments)
-
-**🔒 Automated Security**
-- Instant Mac locking on proximity loss
-- Configurable distance thresholds
-- Reconnection detection and alerts
-
-**⚙️ Professional Features**
-- Background daemon mode
-- Comprehensive logging
-- Service management interface
-- Extensive configuration options
-
-**🧪 Quality Assurance**
-- 100% test coverage
-- CI/CD with GitHub Actions
-- Type-safe codebase
-- Security auditing
-
-**📚 Documentation**
-- Complete API reference
-- Architecture documentation
-- Testing guide
-- Contributing guidelines
-
----
-
-<!-- ## Migration Guides
-
-### From Pre-1.0 to 1.0
-
-If you were using pre-release versions:
-
-1. **Requirements Files**: Update import paths
-   ```bash
-   # Old
-   pip install -r requirements.txt
-   
-   # New
-   pip install -r requirements/dev.txt
-   ```
-
-2. **Test Imports**: Tests now use `conftest.py` for path setup
-   - No manual `sys.path` manipulation needed in test files
-
-3. **Environment Variables**: No changes needed
-   - `.env` file format remains compatible -->
+  - Automated release on push to main
 
 ---
 
@@ -142,5 +51,4 @@ If you were using pre-release versions:
 
 ---
 
-[Unreleased]: https://github.com/Piero24/B.R.I.O.S./compare/v1.0.0...HEAD
 [1.0.0]: https://github.com/Piero24/B.R.I.O.S./releases/tag/v1.0.0
