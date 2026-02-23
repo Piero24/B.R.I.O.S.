@@ -4,9 +4,9 @@ name: 05 — Automatic Release
 # AUTOMATIC RELEASE WORKFLOW
 #
 # Purpose:
-#   Automates the creation or updating of a GitHub Release whenever changes
-#   are pushed to the main branch. This ensures that the published release
-#   always matches the latest stable code.
+#   Automates the creation of a GitHub Release whenever a new version
+#   is detected on the main branch. This ensures that a release is
+#   created only when the VERSION file is updated.
 #
 # When it runs:
 #   • On every push to the 'main' branch
@@ -15,12 +15,12 @@ name: 05 — Automatic Release
 # What it does:
 #   1. Checks out the repository
 #   2. Reads the version from the 'VERSION' file
-#   3. Deletes the existing release and tag for that version (if any)
-#   4. Re-creates the tag on the new commit
-#   5. Creates a new GitHub Release using 'CHANGELOG.md' for notes
+#   3. Checks if a tag for this version already exists
+#   4. If the tag is NEW: Creates the tag and a new GitHub Release
+#   5. If the tag EXISTS: Skips creation to preserve release history
 #
 # Success criteria:
-#   A new or updated release exists on GitHub matching the version in the repo.
+#   A GitHub Release exists for the current version in the repo.
 ################################################################################
 
 on:
@@ -40,7 +40,7 @@ jobs:
         with:
           fetch-depth: 0
 
-      - name: Create or Update Release
+      - name: Create Release
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
@@ -48,26 +48,20 @@ jobs:
           VERSION=$(cat VERSION)
           TAG="v$VERSION"
           
-          echo "🚀 Processing release for $TAG..."
+          echo "🚀 Checking if $TAG already exists..."
           
-          # 2. Cleanup existing release if it exists
-          if gh release view "$TAG" >/dev/null 2>&1; then
-            echo "⚠️ Deleting existing release $TAG..."
-            gh release delete "$TAG" --yes
-          fi
-          
-          # 3. Cleanup existing remote tag
+          # 2. Check if tag exists on remote
           if git ls-remote --tags origin | grep -q "refs/tags/$TAG"; then
-            echo "⚠️ Deleting existing remote tag $TAG..."
-            git push --delete origin "$TAG"
+            echo "✅ Tag $TAG already exists. Skipping release creation."
+            exit 0
           fi
           
-          # 4. Create and push new tag
+          # 3. Create and push new tag
           echo "🏷️ Creating new tag $TAG..."
           git tag "$TAG"
           git push origin "$TAG"
           
-          # 5. Create new release
+          # 4. Create new release
           echo "🚢 Creating new GitHub release..."
           gh release create "$TAG" \
             --title "$TAG" \
