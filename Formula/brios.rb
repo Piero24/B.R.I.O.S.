@@ -3,8 +3,8 @@ class Brios < Formula
 
   desc "Bluetooth Reactive Intelligent Operator for Croissant Safety"
   homepage "https://github.com/Piero24/B.R.I.O.S."
-  url "https://github.com/Piero24/B.R.I.O.S./archive/refs/tags/v1.0.2.tar.gz"
-  sha256 "3cbffd1c8dadbd11383a6a39606c4f506659cfe6dfa2b4fb3c4cecc7ef4f64d4"
+  url "https://github.com/Piero24/B.R.I.O.S./archive/refs/tags/v1.0.3.tar.gz"
+  sha256 "e533621d276545843937b8f868686bd348b39ce5653f26edea6a2976edf75984"
   license "MIT"
 
   depends_on "python@3.12"
