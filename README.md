@@ -34,7 +34,7 @@ The easiest way to install B.R.I.O.S. on macOS.
 
 ```bash
 # Tap the repository
-brew tap Piero24/brios https://github.com/Piero24/B.R.I.O.S
+brew tap Piero24/brios https://github.com/Piero24/B.R.I.O.S.
 
 # Install brios
 brew install brios

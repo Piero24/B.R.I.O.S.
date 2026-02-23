@@ -419,6 +419,22 @@ pip install -r requirements/dev.txt
 </p>
 <br/>
 
+### Option 1: Homebrew (Recommended)
+
+The easiest way to install B.R.I.O.S. on macOS:
+
+```bash
+# Tap the repository
+brew tap Piero24/brios https://github.com/Piero24/B.R.I.O.S
+
+# Install brios
+brew install brios
+```
+
+Once installed, you can skip straight to step 4 (Configure your target device).
+
+### Option 2: Manual Installation (Development)
+
 1. Clone the repo
   
 ```sh
@@ -455,6 +471,11 @@ pip install -r requirements/dev.txt
     cp .env.example .env
     nano .env  # or use your preferred editor
     ```
+    
+    You can also place the configuration in one of these locations (loaded in order):
+    - `.env` (project root / current directory)
+    - `~/.brios.env`
+    - `~/.config/brios/config`
     
     4.3 Update the `.env` file with your device information:
     
@@ -504,6 +525,12 @@ pip install -r requirements/dev.txt
     
     # Restart the service
     brios --restart
+    ```
+
+    **Using Homebrew (auto-starts on login):**
+    ```bash
+    brew services start brios    # Start and enable at login
+    brew services stop brios     # Stop the service
     ```
 
 > [!NOTE] 
@@ -567,7 +594,22 @@ Mode:       BD_ADDR (MAC)
 <br/>
 <h2 id="configuration">🔧  Configuration</h2>
 
-B.R.I.O.S. is highly configurable via the `.env` file. All settings are documented below.
+B.R.I.O.S. is highly configurable via environment variables. You can set these in a `.env` file (also supports `~/.brios.env` and `~/.config/brios/config`). All settings are documented below.
+
+| Parameter | Description | Default |
+| :--- | :--- | :--- |
+| `TARGET_DEVICE_MAC_ADDRESS` | MAC address of the device to track | Required |
+| `TARGET_DEVICE_UUID_ADDRESS` | UUID address (macOS privacy mode) | — |
+| `TARGET_DEVICE_NAME` | Human-readable device name | `"Unknown Device Name"` |
+| `TARGET_DEVICE_TYPE` | Device type (e.g., "phone", "watch") | `"Unknown Device"` |
+| `DISTANCE_THRESHOLD_M` | Distance in meters to trigger lock | `2.0` |
+| `TX_POWER_AT_1M` | RSSI measured at 1 meter (dBm) | `-59` |
+| `PATH_LOSS_EXPONENT` | Environment factor (2.0–4.0) | `2.8` |
+| `SAMPLE_WINDOW` | Number of RSSI samples for smoothing | `12` |
+| `GRACE_PERIOD_SECONDS` | Delay before re-triggering after unlock | `30` |
+| `LOCK_LOOP_THRESHOLD` | Lock events within window to trigger pause | `3` |
+| `LOCK_LOOP_WINDOW` | Time window (seconds) for lock loop detection | `60` |
+| `LOCK_LOOP_PENALTY` | Pause duration (seconds) on lock loop | `120` |
 
 ### Configuration File Reference
 
@@ -617,6 +659,22 @@ SAMPLE_WINDOW=12
 # 3.0-4.0m  = Room-level proximity
 # 5.0m+     = Large spaces
 DISTANCE_THRESHOLD_M=2.0
+
+# ============================================
+# LOCK LOOP DETECTION & GRACE PERIOD
+# ============================================
+
+# Grace Period: Delay (seconds) before re-triggering after unlock
+GRACE_PERIOD_SECONDS=30
+
+# Lock Loop Threshold: Number of lock events within window to trigger pause
+LOCK_LOOP_THRESHOLD=3
+
+# Lock Loop Window: Time window (seconds) for lock loop detection
+LOCK_LOOP_WINDOW=60
+
+# Lock Loop Penalty: Pause duration (seconds) when lock loop detected
+LOCK_LOOP_PENALTY=120
 ```
 
 ### Environment Presets
@@ -742,6 +800,12 @@ brios --stop
 
 # Restart service (stop + start)
 brios --restart
+```
+
+**Using Homebrew:**
+```bash
+brew services start brios    # Start and enable at login
+brew services stop brios     # Stop the service
 ```
 
 **Service Status Output:**
