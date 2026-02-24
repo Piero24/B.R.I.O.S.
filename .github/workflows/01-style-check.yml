@@ -9,7 +9,7 @@ name: 01 — Code Formatting Check
 #   pipeline and must pass before any other checks run.
 #
 # When it runs:
-#   • On every push to any branch
+#   • On every push to the 'main' branch
 #   • On every pull request to any branch
 #   • Can be manually triggered via GitHub UI (workflow_dispatch)
 #
@@ -42,7 +42,7 @@ name: 01 — Code Formatting Check
 
 on:
   push:
-    branches: ["**"]          # Wildcard matches all branches
+    branches: ["main"]        # Only runs on direct pushes to main
   pull_request:
     branches: ["**"]          # Runs on PRs targeting any branch
   workflow_dispatch:          # Allows manual execution from GitHub UI
