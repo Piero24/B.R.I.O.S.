@@ -325,10 +325,19 @@ def main() -> None:
         )
     elif not is_mode_command and is_service_command:
         from .core.utils import determine_target_address
+        import re
 
         resolved_address = determine_target_address(args)
         if resolved_address:
-            args.target_mac = resolved_address
+            # Detect if the resolved address is a UUID or MAC address
+            uuid_pattern = re.compile(
+                r"^[0-9A-Fa-f]{8}-[0-9A-Fa-f]{4}-[0-9A-Fa-f]{4}-"
+                r"[0-9A-Fa-f]{4}-[0-9A-Fa-f]{12}$"
+            )
+            if uuid_pattern.match(resolved_address):
+                args.target_uuid = resolved_address
+            else:
+                args.target_mac = resolved_address
 
     try:
         app = Application(args)
@@ -345,6 +354,23 @@ def main() -> None:
             )
         sys.exit(130)
     except Exception as e:
+        # In daemon mode, stdout/stderr go to /dev/null or the log file.
+        # Always write the crash to the log file so it's not silently lost.
+        if getattr(args, "daemon", False):
+            import traceback
+
+            try:
+                with open(LOG_FILE, "a") as crash_log:
+                    from datetime import datetime
+
+                    ts = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+                    crash_log.write(
+                        f"[{ts}] DAEMON CRASH: {e}\n"
+                        f"{traceback.format_exc()}\n"
+                    )
+                    crash_log.flush()
+            except Exception:
+                pass
         print(f"{Colors.RED}✗ FATAL ERROR:{Colors.RESET} {e}")
         sys.exit(1)
 

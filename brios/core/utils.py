@@ -91,10 +91,10 @@ def determine_target_address(args: argparse.Namespace) -> Optional[str]:
         )
 
     # If no explicit target is provided, try to use the default from .env
-    if TARGET_DEVICE_UUID_ADDRESS:
-        return TARGET_DEVICE_UUID_ADDRESS
     if TARGET_DEVICE_MAC_ADDRESS:
         return TARGET_DEVICE_MAC_ADDRESS
+    if TARGET_DEVICE_UUID_ADDRESS:
+        return TARGET_DEVICE_UUID_ADDRESS
 
     return None
 

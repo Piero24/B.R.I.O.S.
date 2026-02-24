@@ -1,6 +1,7 @@
 import os
 import sys
 import time
+import shutil
 import signal
 import argparse
 import subprocess
@@ -76,11 +77,13 @@ class ServiceManager:
             A list of strings representing the command and its arguments.
         """
         if sys.argv[0].endswith("brios"):
-            # If running via 'brios' entry point, use it directly
-            command = [sys.argv[0]]
+            # Resolve to full absolute path for reliability in detached sessions.
+            # shutil.which handles PATH lookup if sys.argv[0] is just "brios".
+            resolved = shutil.which(sys.argv[0]) or os.path.abspath(sys.argv[0])
+            command = [resolved]
         else:
             # Fallback to python + script path
-            command = [sys.executable, sys.argv[0]]
+            command = [sys.executable, os.path.abspath(sys.argv[0])]
 
         if self.args.target_mac:
             command.extend(["--target-mac", self.args.target_mac])
@@ -131,25 +134,25 @@ class ServiceManager:
             print("─" * 50)
 
         try:
-            # Redirect the daemon's stdout/stderr to the log file so that
-            # any startup errors, tracebacks, or print output are captured
-            # instead of being silently lost to /dev/null.
+            # Redirect stdout to /dev/null (daemon has no terminal).
+            # Redirect stderr to the LOG FILE so that crash tracebacks,
+            # ImportErrors, and any unhandled exceptions are captured
+            # instead of being silently lost.
             log_dir = os.path.dirname(LOG_FILE)
-            if not os.path.exists(log_dir):
-                os.makedirs(log_dir, exist_ok=True)
-
-            log_fd = open(LOG_FILE, "a")
+            os.makedirs(log_dir, exist_ok=True)
+            stderr_log = open(LOG_FILE, "a")
             subprocess.Popen(
                 command,
-                stdout=log_fd,
-                stderr=log_fd,
+                stdout=subprocess.DEVNULL,
+                stderr=stderr_log,
                 start_new_session=True,
                 env={**os.environ, "PYTHONUNBUFFERED": "1"},
             )
-            log_fd.close()
+            stderr_log.close()
 
-            # Brief wait to let the process start and write PID
-            time.sleep(0.5)
+            # Wait for the process to start, write PID, and begin scanning.
+            # A longer wait catches daemons that crash during initialization.
+            time.sleep(1.5)
             pid, _ = self._get_pid_status()
         except Exception as e:
             print(
@@ -279,9 +282,7 @@ class ServiceManager:
             print(f"Mode:       UUID (Privacy Mode)")
         print("─" * 50)
 
-        print(
-            f"Log file:   {LOG_FILE} {Colors.GREEN}(enabled){Colors.RESET}"
-        )
+        print(f"Log file:   {LOG_FILE} {Colors.GREEN}(enabled){Colors.RESET}")
 
         print(
             f"\n{Colors.GREEN}●{Colors.RESET} {__app_name__} running in background"
