@@ -215,6 +215,12 @@ __marimo__/
 # Streamlit
 .streamlit/secrets.toml
 
+# Docusaurus
+website/node_modules/
+website/build/
+website/.docusaurus/
+website/.cache-loader/
+
 # Other
 devices.py
 .DS_Store
