@@ -72,11 +72,26 @@ pip install -r requirements/dev.txt
 
 ### 4. Create a Feature Branch
 
+Branch names must follow [Conventional Commits](https://www.conventionalcommits.org/en/v1.0.0/) naming:
+
 ```bash
-git checkout -b feature/your-feature-name
-# or
-git checkout -b fix/your-bug-fix
+git checkout -b feat/add-multi-device-support
+git checkout -b fix/scanner-empty-name
+git checkout -b docs/update-installation-guide
+git checkout -b refactor/simplify-config-loader
+git checkout -b test/add-monitor-edge-cases
+git checkout -b chore/update-dependencies
 ```
+
+| Prefix | Use For |
+|---|---|
+| `feat/` | New features |
+| `fix/` | Bug fixes |
+| `docs/` | Documentation changes |
+| `style/` | Code style / formatting |
+| `refactor/` | Code restructuring (no behavior change) |
+| `test/` | Adding or updating tests |
+| `chore/` | Maintenance tasks, dependencies |
 
 ---
 

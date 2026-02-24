@@ -204,6 +204,8 @@ Check System Settings:
 1. **Energy Saver** — Ensure "Require password" is enabled
 2. **Touch ID & Password** — Set "Require password immediately"
 
+![macOS lock screen settings](/img/macos-lock-screen-settings.png)
+
 ### High CPU usage
 
 B.R.I.O.S. should use minimal CPU (&lt;1%). If you see high usage:

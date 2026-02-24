@@ -2,7 +2,6 @@
 id: intro
 title: Introduction
 sidebar_position: 1
-slug: /
 ---
 
 # 🥐 B.R.I.O.S.
@@ -58,8 +57,8 @@ distance = 10 ^ ((TX_POWER − RSSI) / (10 × PATH_LOSS_EXPONENT))
 ## System Requirements
 
 - **macOS** 10.15 (Catalina) or later
-- **Python** 3.9+
 - **Bluetooth Low Energy** adapter (built-in on all modern Macs)
+- **Python** 3.9+ (installed automatically via Homebrew, only needed manually for source installs)
 
 ---
 
@@ -85,6 +84,8 @@ This project has been tested on:
 - If your Mac and iPhone/device use **different Apple IDs**, you **must pair them first** in **System Settings → Bluetooth**. Otherwise, Apple hides the MAC address and the device won't be discoverable.
 - **Android devices** should work without pairing requirements.
 - **Apple Watch** is currently **not discoverable from Mac** due to Apple's BLE restrictions.
+
+![Bluetooth pairing in System Settings](/img/paring.png)
 
 If you encounter issues on other configurations, please [report them](https://github.com/Piero24/B.R.I.O.S./issues).
 :::

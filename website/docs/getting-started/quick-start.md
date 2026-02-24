@@ -8,6 +8,21 @@ sidebar_position: 2
 
 Get B.R.I.O.S. up and running in under 5 minutes.
 
+:::caution Important: About Distance Accuracy
+B.R.I.O.S. estimates distance using **RSSI (Received Signal Strength Indicator)** and a Log-Distance Path Loss Model. This is the best approach available with the Bluetooth hardware built into consumer Macs — however, **RSSI-based distance estimation is inherently imprecise**.
+
+Factors that affect accuracy include:
+- **Physical obstacles** (walls, furniture, people)
+- **Device orientation** and antenna position
+- **Radio interference** from Wi-Fi, microwaves, other Bluetooth devices
+- **Multipath propagation** (signal reflections off surfaces)
+- **Body absorption** when the device is in a pocket
+
+Unlike UWB (Ultra-Wideband) or Time-of-Flight chips, Bluetooth RSSI does not measure distance directly — it infers it from signal attenuation. Expect typical accuracy of **±0.5–1.0 meters** in real-world conditions.
+
+For best results, **calibrate your setup** by measuring `TX_POWER_AT_1M` and adjusting `PATH_LOSS_EXPONENT` for your specific environment. See the [Configuration Reference](../guide/configuration) for details.
+:::
+
 ---
 
 ## Step 1: Discover Your Device
@@ -52,13 +67,26 @@ Create a `.env` configuration file. B.R.I.O.S. loads configuration from these lo
 3. `~/.brios/config` or `~/.brios/.env`
 4. `~/.config/brios/config`
 
-### Minimal Configuration
+### Recommended Configuration
 
-Set the MAC address of the device to track:
+Create a `~/.brios.env` file with your device settings:
 
 ```bash
-echo 'TARGET_DEVICE_MAC_ADDRESS=AA:BB:CC:DD:EE:FF' > ~/.brios.env
+cat > ~/.brios.env << 'EOF'
+# Target Device
+TARGET_DEVICE_MAC_ADDRESS=AA:BB:CC:DD:EE:FF
+TARGET_DEVICE_NAME=My iPhone
+TARGET_DEVICE_TYPE=phone
+
+# Distance & Signal (calibrate for your environment)
+DISTANCE_THRESHOLD_M=2.0
+TX_POWER_AT_1M=-59
+PATH_LOSS_EXPONENT=2.8
+SAMPLE_WINDOW=12
+EOF
 ```
+
+Replace `AA:BB:CC:DD:EE:FF` with the MAC address from Step 1, and adjust the signal parameters as needed for your environment (see [Configuration](../guide/configuration)).
 
 ### Using the Example Configuration
 
@@ -107,9 +135,19 @@ Samples:    12 readings
 [14:32:02] RSSI:  -55 dBm → Smoothed: -53.8 dBm │ Distance:  0.92m │ Signal: Strong
 ```
 
+### Quick Start (Auto-Resolve from .env)
+
+If your `.env` file is fully configured with a target address, you can simply run:
+
+```bash
+brios --start
+```
+
+B.R.I.O.S. will automatically resolve the target device from your configuration and start as a background daemon.
+
 ### Background Mode (Daemon)
 
-Start B.R.I.O.S. as a background service:
+Start B.R.I.O.S. as a background service with explicit flags:
 
 ```bash
 brios --target-mac -v -f --start

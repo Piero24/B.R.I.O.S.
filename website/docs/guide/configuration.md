@@ -41,6 +41,12 @@ cp .env.example ~/.brios.env
 
 ## Parameter Reference
 
+:::warning Personalize for Your Environment
+The default values listed below are **baseline approximations** for a typical indoor office setup. For reliable results, you **must calibrate** the signal parameters (`TX_POWER_AT_1M`, `PATH_LOSS_EXPONENT`, `DISTANCE_THRESHOLD_M`) for your **specific environment** — your office layout, physical obstacles, device model, and even device case can significantly affect RSSI readings.
+
+See the [Calibrating TX Power](#calibrating-tx-power) and [Path Loss Exponent Guide](#path-loss-exponent-guide) sections below for step-by-step instructions.
+:::
+
 ### Target Device
 
 | Parameter | Type | Default | Description |

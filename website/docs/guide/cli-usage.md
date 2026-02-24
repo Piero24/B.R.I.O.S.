@@ -31,6 +31,10 @@ Manage the B.R.I.O.S. background daemon:
 
 These commands are mutually exclusive — only one can be used per invocation.
 
+:::tip Auto-resolve from .env
+If your `.env` file contains a configured target address (`TARGET_DEVICE_MAC_ADDRESS` or `TARGET_DEVICE_UUID_ADDRESS`), you can run `brios --start` **without** specifying `--target-mac` or `--target-uuid`. B.R.I.O.S. will automatically resolve the target device from your configuration.
+:::
+
 ---
 
 ## Operating Modes

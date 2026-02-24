@@ -24,11 +24,19 @@ brew install brios
 
 After installation, the `brios` command is available globally in your terminal.
 
+:::info Python is installed automatically
+Homebrew automatically installs **Python 3.12** as a dependency — you do **not** need to install Python separately when using the Homebrew method.
+:::
+
 ---
 
 ## Option 2: Manual Installation (Development)
 
 Use this method if you want to contribute to B.R.I.O.S. or run the latest development version.
+
+:::note
+Manual installation requires **Python 3.9+** installed on your system.
+:::
 
 ### 1. Clone the Repository
 
@@ -88,16 +96,31 @@ On macOS, your terminal application needs Bluetooth permissions to scan for devi
 If you see "Permission Denied" errors when scanning, this is almost always a missing Bluetooth permission for your terminal app.
 :::
 
+![macOS Bluetooth permission settings](/img/macos-lock-screen-settings.png)
+
 ---
 
 ## Dependencies
 
 B.R.I.O.S. depends on the following Python packages (installed automatically):
 
+### Direct Dependencies
+
 | Package | Version | Purpose |
 |---|---|---|
 | [Bleak](https://github.com/hbldh/bleak) | 0.21.1 | Cross-platform BLE communication library |
 | [python-dotenv](https://pypi.org/project/python-dotenv/) | ≥1.0.0 | Environment variable loading from `.env` files |
+
+### Transitive Dependencies (macOS)
+
+Bleak requires the following [PyObjC](https://pyobjc.readthedocs.io/) packages on macOS for CoreBluetooth access. These are installed **automatically** as transitive dependencies:
+
+| Package | Purpose |
+|---|---|
+| `pyobjc-core` | Core Python ↔ Objective-C bridge |
+| `pyobjc-framework-Cocoa` | macOS Cocoa framework bindings |
+| `pyobjc-framework-CoreBluetooth` | CoreBluetooth framework bindings |
+| `pyobjc-framework-libdispatch` | Grand Central Dispatch bindings |
 
 ---
 

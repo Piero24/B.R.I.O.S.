@@ -6,18 +6,17 @@ sidebar_position: 7
 
 # Changelog
 
-All notable changes to B.R.I.O.S. are documented here.
+All notable changes to 🥐 B.R.I.O.S. (Bluetooth Reactive Intelligent Operator for Croissant Safety) will be documented in this file.
 
-The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/), and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
+The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
+and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
----
+## [1.0.0] - 2026-02-23
 
-## [1.0.0] — 2026-02-23
-
-Initial release of 🥐 B.R.I.O.S. — a BLE proximity monitor for macOS that automatically locks your Mac when a trusted Bluetooth device moves out of range.
+Initial release of 🥐 B.R.I.O.S. — a BLE proximity monitor for macOS that
+automatically locks your Mac when a trusted Bluetooth device moves out of range.
 
 ### Added
-
 - BLE device discovery scanner with RSSI and estimated distance
 - Real-time proximity monitoring with configurable threshold
 - Automatic macOS screen locking on proximity loss
@@ -50,10 +49,12 @@ Initial release of 🥐 B.R.I.O.S. — a BLE proximity monitor for macOS that au
 
 ## Versioning
 
-B.R.I.O.S. follows [Semantic Versioning](https://semver.org/):
+🥐 B.R.I.O.S. follows [Semantic Versioning](https://semver.org/):
 
-- **MAJOR** — Incompatible API changes
-- **MINOR** — New backwards-compatible functionality
-- **PATCH** — Backwards-compatible bug fixes
+- **MAJOR** version: Incompatible API changes
+- **MINOR** version: New functionality (backwards-compatible)
+- **PATCH** version: Bug fixes (backwards-compatible)
+
+---
 
 [1.0.0]: https://github.com/Piero24/B.R.I.O.S./releases/tag/v1.0.0

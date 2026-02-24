@@ -5,7 +5,7 @@ import type * as Preset from '@docusaurus/preset-classic';
 const config: Config = {
   title: '🥐 B.R.I.O.S.',
   tagline: 'Bluetooth Reactive Intelligent Operator for Croissant Safety',
-  favicon: 'img/favicon.ico',
+  favicon: 'img/favicon.svg',
 
   future: {
     v4: true,
@@ -42,7 +42,7 @@ const config: Config = {
   ],
 
   themeConfig: {
-    image: 'img/brios-social-card.png',
+    // image: 'img/brios-social-card.png',
     colorMode: {
       respectPrefersColorScheme: true,
     },
