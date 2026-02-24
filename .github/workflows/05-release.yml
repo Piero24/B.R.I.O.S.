@@ -99,7 +99,6 @@ jobs:
 #    needs: check-ci
     runs-on: ubuntu-latest
     # Skip if this push is the automated post-release chore commit
-    # (prevents recursive loop when the chore PR merges into main)
     if: >-
       !contains(github.event.head_commit.message,
       'chore: update Homebrew formula and README')
@@ -166,7 +165,7 @@ jobs:
           with open('.github/README.md', 'w') as f: f.write(content)
           "
           
-          # 7. Commit and push updates via PR (main is protected)
+          # 7. Commit and push updates
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
           git add Formula/brios.rb .github/README.md
@@ -188,8 +187,7 @@ jobs:
           - Updates \`Formula/brios.rb\` with new tarball URL and SHA256
           - Updates \`.github/README.md\` version badge
 
-          > This PR was created automatically by the release workflow." \
-              --label "automated"
+          > This PR was created automatically by the release workflow."
           else
             echo "✅ Formula and README are already up to date."
           fi
