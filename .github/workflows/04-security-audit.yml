@@ -9,7 +9,7 @@ name: 04 — Security Audit
 #   production and alerts developers to security issues early in the CI pipeline.
 #
 # When it runs:
-#   • On every push to any branch
+#   • On every push to the 'main' branch
 #   • On every pull request to any branch
 #   • Can be manually triggered via GitHub UI
 #
@@ -60,7 +60,7 @@ name: 04 — Security Audit
 
 on:
   push:
-    branches: ["**"]
+    branches: ["main"]
   pull_request:
     branches: ["**"]
   workflow_dispatch:

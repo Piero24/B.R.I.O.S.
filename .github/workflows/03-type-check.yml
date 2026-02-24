@@ -9,7 +9,7 @@ name: 03 — Type Checking
 #   enable better IDE support, and catch common errors during development.
 #
 # When it runs:
-#   • On every push to any branch
+#   • On every push to the 'main' branch
 #   • On every pull request to any branch
 #   • Can be manually triggered via GitHub UI
 #
@@ -53,7 +53,7 @@ name: 03 — Type Checking
 
 on:
   push:
-    branches: ["**"]
+    branches: ["main"]
   pull_request:
     branches: ["**"]
   workflow_dispatch:
