@@ -10,11 +10,21 @@ import importlib
 # --- Fixtures ---
 @pytest.fixture
 def mock_scanner() -> MagicMock:
+    """Creates a mock BleakScanner instance.
+
+    Returns:
+        A MagicMock standing in for BleakScanner.
+    """
     return MagicMock()
 
 
 @pytest.fixture
 def monitor() -> Any:
+    """Creates a DeviceMonitor instance with mocked Bleak dependencies.
+
+    Returns:
+        A DeviceMonitor configured with a test target address.
+    """
     # Setup mocks before importing monitor
     mock_bleak = MagicMock()
     mock_bleak.BleakScanner = MagicMock()
@@ -46,6 +56,11 @@ def monitor() -> Any:
 
 @pytest.fixture
 def mock_device() -> MagicMock:
+    """Creates a mock BLEDevice with a target address.
+
+    Returns:
+        A MagicMock with address and name attributes set.
+    """
     device = MagicMock()
     device.address = "AA:BB:CC:DD:EE:FF"
     device.name = "Target Device"
@@ -54,6 +69,11 @@ def mock_device() -> MagicMock:
 
 @pytest.fixture
 def mock_adv() -> MagicMock:
+    """Creates a mock AdvertisementData object.
+
+    Returns:
+        A MagicMock standing in for AdvertisementData.
+    """
     adv = MagicMock()
     return adv
 
@@ -61,6 +81,11 @@ def mock_adv() -> MagicMock:
 # --- Tests ---
 @pytest.mark.asyncio
 async def test_monitor_initialization(monitor: Any) -> None:
+    """Tests that DeviceMonitor initializes with correct default values.
+
+    Args:
+        monitor: The DeviceMonitor fixture.
+    """
     assert monitor.target_address == "AA:BB:CC:DD:EE:FF"
     assert monitor.use_bdaddr is True
     assert monitor.flags.verbose is True

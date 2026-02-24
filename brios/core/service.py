@@ -111,8 +111,13 @@ class ServiceManager:
         command.append("--daemon")
         return command
 
-    def start(self) -> None:
-        """Starts the monitor in the background."""
+    def start(self, *, update_available: Optional[str] = None) -> None:
+        """Starts the monitor in the background.
+
+        Args:
+            update_available: The latest version string if an update is
+                available, or None.
+        """
         pid, is_running = self._get_pid_status()
         if is_running:
             print(
@@ -159,7 +164,9 @@ class ServiceManager:
                 f"{Colors.RED}Error starting background process: {e}{Colors.RESET}"
             )
             return
-        self._print_start_status(target_address)
+        self._print_start_status(
+            target_address, update_available=update_available
+        )
 
     def stop(self) -> None:
         """Stops the monitor if it is running."""
@@ -200,8 +207,17 @@ class ServiceManager:
         time.sleep(1)
         self.start()
 
-    def display_status(self) -> None:
-        """Displays the current status of the background monitor."""
+    def display_status(
+        self,
+        *,
+        update_available: Optional[str] = None,
+    ) -> None:
+        """Displays the current status of the background monitor.
+
+        Args:
+            update_available: The latest version string if an update is
+                available, or None.
+        """
         pid, is_running = self._get_pid_status()
 
         print(f"\n{Colors.BOLD}{__app_name__} Monitor Status{Colors.RESET}")
@@ -228,6 +244,12 @@ class ServiceManager:
             print(f"Address:    {TARGET_DEVICE_MAC_ADDRESS}")
             print(f"Threshold:  {DISTANCE_THRESHOLD_M}m")
 
+            if update_available:
+                print(
+                    f"\n{Colors.YELLOW}⚠ Update available: v{update_available}"
+                    f" — run 'brios --update' to upgrade{Colors.RESET}"
+                )
+
             if os.path.exists(LOG_FILE):
                 print(f"\nLog file:   {LOG_FILE}")
                 try:
@@ -246,12 +268,19 @@ class ServiceManager:
 
         print("─" * 50 + "\n")
 
-    def _print_start_status(self, target_address: Optional[str]) -> None:
+    def _print_start_status(
+        self,
+        target_address: Optional[str],
+        *,
+        update_available: Optional[str] = None,
+    ) -> None:
         """Prints a detailed summary after a start attempt.
 
         Args:
-            target_address (Optional[str]): The MAC or UUID address of the
+            target_address: The MAC or UUID address of the
                 device being monitored.
+            update_available: The latest version string if an update is
+                available, or None.
         """
         pid, is_running = self._get_pid_status()
 
@@ -283,6 +312,12 @@ class ServiceManager:
         print("─" * 50)
 
         print(f"Log file:   {LOG_FILE} {Colors.GREEN}(enabled){Colors.RESET}")
+
+        if update_available:
+            print(
+                f"\n{Colors.YELLOW}⚠ Update available: v{update_available}"
+                f" — run 'brios --update' to upgrade{Colors.RESET}"
+            )
 
         print(
             f"\n{Colors.GREEN}●{Colors.RESET} {__app_name__} running in background"

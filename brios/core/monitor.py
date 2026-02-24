@@ -46,6 +46,8 @@ class DeviceMonitor:
         target_address: The MAC or UUID address of the target device.
         use_bdaddr: Whether to use BD_ADDR (MAC) for identification.
         flags: Configuration flags for the monitoring session.
+        update_available: The latest version string if an update is
+            available, or None.
         rssi_buffer: A buffer to hold recent RSSI samples (dBm).
         alert_triggered: Indicates if an out-of-range alert is active.
         log_file: The file object for logging output, if any.
@@ -62,6 +64,8 @@ class DeviceMonitor:
         target_address: str,
         use_bdaddr: bool,
         flags: Flags,
+        *,
+        update_available: Optional[str] = None,
     ) -> None:
         """Initializes the DeviceMonitor.
 
@@ -69,6 +73,8 @@ class DeviceMonitor:
             target_address: The MAC or UUID address of the target device.
             use_bdaddr: Whether to use BD_ADDR (MAC) for identification.
             flags: Configuration flags for the monitoring session.
+            update_available: The latest version string if an update is
+                available, or None.
         """
         # Normalize address to uppercase for case-insensitive matching.
         # Different pyobjc / macOS versions can return UUIDs in different
@@ -76,6 +82,7 @@ class DeviceMonitor:
         self.target_address = target_address.upper()
         self.use_bdaddr = use_bdaddr
         self.flags = flags
+        self.update_available = update_available
 
         self.rssi_buffer: Deque[int] = deque(maxlen=SAMPLE_WINDOW)
         self.alert_triggered: bool = False
@@ -104,13 +111,10 @@ class DeviceMonitor:
     def _print_start_status(self) -> None:
         """Prints the startup status of the monitoring process.
 
-        This method displays formatted information about the current
-            monitor configuration, including target device details, distance
-            and power parameters, and output settings. It is primarily used to
-            provide user-friendly feedback in the terminal when the monitoring
-            process begins.
-
-        In daemon mode, a plain-text version is written to the log file.
+        Displays formatted information about the current monitor
+        configuration, including target device details, distance and power
+        parameters, and output settings.  In daemon mode a plain-text
+        version is written to the log file instead.
         """
         timestamp = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
 
@@ -132,9 +136,22 @@ class DeviceMonitor:
                     f"[{timestamp}] Log file:   {LOG_FILE}",
                     f"[{timestamp}] PID:        {os.getpid()}",
                     f"[{timestamp}] ──────────────────────────────────────────",
-                    f"[{timestamp}] Monitoring active - waiting for device...",
-                    f"[{timestamp}] ══════════════════════════════════════════",
                 ]
+                if self.update_available:
+                    lines.append(
+                        f"[{timestamp}] ⚠ UPDATE:   "
+                        f"v{self.update_available} available "
+                        f"(run: brios --update)"
+                    )
+                    lines.append(
+                        f"[{timestamp}] ──────────────────────────────────────────"
+                    )
+                lines.extend(
+                    [
+                        f"[{timestamp}] Monitoring active - waiting for device...",
+                        f"[{timestamp}] ══════════════════════════════════════════",
+                    ]
+                )
                 for line in lines:
                     self.log_file.write(line + "\n")
                 self.log_file.flush()
@@ -160,6 +177,12 @@ class DeviceMonitor:
         elif self.flags.file_logging:
             print(f"Output:     {Colors.GREEN}File only{Colors.RESET}")
             print(f"Log file:   {LOG_FILE}")
+
+        if self.update_available:
+            print(
+                f"\n{Colors.YELLOW}⚠ Update available: v{self.update_available}"
+                f" — run 'brios --update' to upgrade{Colors.RESET}"
+            )
 
         print(
             f"\n{Colors.GREEN}●{Colors.RESET} Monitoring active - "
@@ -265,13 +288,11 @@ class DeviceMonitor:
             asyncio.create_task(self._handle_screen_lock())
 
     async def _handle_screen_lock(self) -> None:
-        """Handles the screen lock state by monitoring and re-establishing
-            scanner connection.
+        """Handles the screen lock state by re-establishing the scanner.
 
-        This method runs in the background while the screen is locked,
-        periodically checking the lock status. When the screen is unlocked, it
-        restarts the scanner and clears the RSSI buffer to ensure
-        fresh readings.
+        Runs in the background while the screen is locked, periodically
+        checking the lock status.  When the screen is unlocked, it restarts
+        the scanner and clears the RSSI buffer to ensure fresh readings.
         """
         if self.is_handling_lock:
             return
@@ -532,9 +553,9 @@ class DeviceMonitor:
         """Logs the current status to console and/or file.
 
         Args:
-            current_rssi (int): The latest raw RSSI value received.
-            smoothed_rssi (float): The smoothed RSSI value.
-            distance_m (float): The estimated distance in meters.
+            current_rssi: The latest raw RSSI value received.
+            smoothed_rssi: The smoothed RSSI value.
+            distance_m: The estimated distance in meters.
         """
         timestamp = datetime.now().strftime("%H:%M:%S")
 
@@ -583,10 +604,10 @@ class DeviceMonitor:
         """Handles the out-of-range alert logic.
 
         Args:
-            distance_m (float): The estimated distance in meters.
+            distance_m: The estimated distance in meters.
 
         Returns:
-            bool: True if the MacBook was locked, False otherwise.
+            True if the MacBook was locked, False otherwise.
         """
         timestamp = datetime.now().strftime("%H:%M:%S")
 
@@ -628,7 +649,7 @@ class DeviceMonitor:
         """Handles the back-in-range alert logic.
 
         Args:
-            distance_m (float): The estimated distance in meters.
+            distance_m: The estimated distance in meters.
         """
         timestamp = datetime.now().strftime("%H:%M:%S")
 
@@ -663,8 +684,13 @@ class DeviceMonitor:
         self.alert_triggered = False
 
     def _handle_bleak_error(self, exc: Optional[Exception] = None) -> None:
-        """Handles the specific AttributeError for malformed packets.
-        Catch the specific "NoneType has no attribute 'hex'" error.
+        """Handles the specific AttributeError for malformed BLE packets.
+
+        Catches the ``NoneType has no attribute 'hex'`` error that occurs
+        when the host Mac is locked or sleeping.
+
+        Args:
+            exc: The caught exception, if any.
         """
         if self.flags.daemon_mode:
             # In daemon mode, stdout is /dev/null. Write to log file.
@@ -685,8 +711,13 @@ class DeviceMonitor:
             )
 
     def _handle_generic_error(self, e: Exception) -> None:
-        """Handles unexpected exceptions in the callback.
-        Catch any other unexpected errors to keep the scanner alive.
+        """Handles unexpected exceptions in the detection callback.
+
+        Catches any unhandled errors so the scanner remains alive and
+        operational.
+
+        Args:
+            e: The caught exception.
         """
         if self.flags.daemon_mode:
             # In daemon mode, stdout is /dev/null. Write to log file.
@@ -838,8 +869,9 @@ class DeviceMonitor:
                             print(f"{Colors.RED}{msg}{Colors.RESET}")
                         self.is_handling_lock = False
                         self.lock_handling_start_time = 0
-                        # We don't call _handle_screen_lock immediately to avoid recursion loop
-                        # The next watchdog tick will trigger it if needed (via heartbeat or lock check)
+                        # We don't call _handle_screen_lock immediately
+                        # to avoid recursion loop. The next watchdog tick will
+                        # trigger it if needed (via heartbeat or lock check)
 
                 await asyncio.sleep(2.0)
             except Exception as e:

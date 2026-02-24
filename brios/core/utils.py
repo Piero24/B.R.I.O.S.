@@ -42,7 +42,17 @@ IS_MACOS = sys.platform == "darwin"
 # These are loaded from env in cli.py usually, or we can load here if we want
 # global access allowing them to be passed in or set via env vars.
 class Colors:
-    """A utility class for ANSI color codes to enhance terminal output."""
+    """A utility class for ANSI color codes to enhance terminal output.
+
+    Attributes:
+        GREEN: Green color escape code.
+        RED: Red color escape code.
+        YELLOW: Yellow color escape code.
+        BLUE: Blue color escape code.
+        GREY: Grey color escape code.
+        BOLD: Bold text escape code.
+        RESET: Reset formatting escape code.
+    """
 
     GREEN = "\033[92m"
     RED = "\033[91m"
@@ -152,9 +162,6 @@ def apply_robust_bleak_patch() -> None:
     The patch ensures that instead of raising an `AttributeError` when attempting
     to call `.hex()` on a `NoneType` object, the scanner simply skips that
     detection and continues.
-
-    Returns:
-        None
     """
     if not IS_MACOS:
         return
@@ -170,14 +177,8 @@ def apply_robust_bleak_patch() -> None:
         async def patched_start(self: BleakScannerCoreBluetooth) -> None:
             """Patched replacement for BleakScannerCoreBluetooth.start.
 
-            Initializes device tracking and registers the robust callback with
-            the central manager.
-
-            Args:
-                self: The BleakScannerCoreBluetooth instance.
-
-            Returns:
-                None
+            Initializes device tracking and registers the robust callback
+            with the central manager.
             """
             self.seen_devices = {}
 
@@ -191,9 +192,6 @@ def apply_robust_bleak_patch() -> None:
                     p: The peripheral object (CBPeripheral).
                     a: The advertisement data dictionary (NSDictionary).
                     r: The RSSI value.
-
-                Returns:
-                    None
                 """
                 # --- PATCH START ---
                 # This inner callback is where the crash happens.

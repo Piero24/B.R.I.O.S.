@@ -124,6 +124,38 @@ Bleak requires the following [PyObjC](https://pyobjc.readthedocs.io/) packages o
 
 ---
 
+## Updating B.R.I.O.S.
+
+### Self-Update (Recommended)
+
+The easiest way to update B.R.I.O.S. to the latest version:
+
+```bash
+brios --update
+```
+
+This automatically detects whether you installed via Homebrew or pip and runs the correct upgrade command.
+
+### Manual Update
+
+If you prefer to update manually:
+
+```bash
+# Homebrew
+brew update && brew upgrade brios
+
+# pip (from source)
+cd B.R.I.O.S.
+git pull
+pip install -e .
+```
+
+:::tip
+B.R.I.O.S. automatically checks for updates on every launch and displays a yellow warning if a newer version is available. You can always run `brios --update` to upgrade.
+:::
+
+---
+
 ## Next Steps
 
 Once installed, proceed to the [Quick Start](./quick-start) guide to configure and start monitoring your device.

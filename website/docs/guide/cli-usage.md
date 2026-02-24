@@ -37,6 +37,35 @@ If your `.env` file contains a configured target address (`TARGET_DEVICE_MAC_ADD
 
 ---
 
+## Self-Update
+
+B.R.I.O.S. can check for and install updates directly from the command line:
+
+```bash
+# Check for updates and upgrade automatically
+brios --update
+
+# Short alias
+brios -up
+```
+
+B.R.I.O.S. auto-detects your install method (Homebrew or pip) and runs the appropriate upgrade command:
+
+- **Homebrew**: runs `brew update && brew upgrade brios`
+- **pip**: downloads and installs the latest release tarball from GitHub
+
+:::info Automatic update check
+Every time B.R.I.O.S. launches, it silently checks for new versions using a **cached GitHub API call** (24-hour cache, 2-second timeout). If an update is available, a yellow warning appears in the terminal header:
+
+```
+⚠ Update available: v1.1.0 — run 'brios --update' to upgrade
+```
+
+This check never blocks or delays startup. If there's no network, it's silently skipped.
+:::
+
+---
+
 ## Operating Modes
 
 ### Scanner Mode
@@ -100,6 +129,7 @@ On macOS, Bluetooth devices are assigned privacy-preserving UUIDs by default. Us
 | `--macos-use-bdaddr` | `-m` | Use real MAC addresses on macOS instead of UUIDs (recommended) |
 | `--verbose` | `-v` | Enable verbose output with RSSI, smoothed signal, and distance details |
 | `--file-logging` | `-f` | Enable logging to `~/.brios/.ble_monitor.log` |
+| `--update` | `-up` | Check for and install the latest version |
 | `--version` | — | Show version information and exit |
 | `--help` | `-h` | Show help message and exit |
 
@@ -151,6 +181,7 @@ brios --restart
 | `~/.brios/.ble_monitor.pid` | PID file for the background daemon |
 | `~/.brios/.ble_monitor.log` | Log file (when file logging is enabled) |
 | `.env` / `~/.brios.env` | Configuration file with device settings |
+| `~/.brios/.update_cache.json` | Cached version-check result (24-hour TTL) |
 
 ---
 

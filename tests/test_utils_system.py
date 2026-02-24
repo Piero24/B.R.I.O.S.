@@ -7,9 +7,8 @@ import importlib
 
 # --- Utils Tests ---
 def test_estimate_distance() -> None:
-    from brios.core.utils import estimate_distance
-
     """Test the Log-Distance Path Loss calculation."""
+    from brios.core.utils import estimate_distance
     # Test with default constants (TX=-59, N=2.8)
     # If RSSI == TX_POWER, distance should be 1.0m
     assert estimate_distance(-59) == pytest.approx(1.0)
@@ -31,9 +30,9 @@ def test_estimate_distance() -> None:
 
 
 def test_smooth_rssi() -> None:
+    """Test RSSI averaging."""
     from brios.core.utils import smooth_rssi
 
-    """Test RSSI averaging."""
     buffer = deque([-60, -60, -60])
     assert smooth_rssi(buffer) == -60.0
 
@@ -44,9 +43,9 @@ def test_smooth_rssi() -> None:
 
 
 def test_determine_target_address() -> None:
+    """Test logic for picking MAC vs UUID."""
     from brios.core.utils import determine_target_address
 
-    """Test logic for picking MAC vs UUID."""
     args = MagicMock()
 
     # Case 1: Target MAC provided
