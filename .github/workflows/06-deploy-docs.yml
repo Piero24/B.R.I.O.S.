@@ -32,6 +32,7 @@ permissions:
   contents: read
   pages: write
   id-token: write
+  administration: write
 
 # Allow only one concurrent deployment; cancel in-progress runs
 concurrency:
@@ -63,6 +64,11 @@ jobs:
       - name: Build documentation
         working-directory: website
         run: npm run build
+
+      - name: Setup Pages
+        uses: actions/configure-pages@v5
+        with:
+          enablement: true
 
       - name: Upload Pages artifact
         uses: actions/upload-pages-artifact@v3
