@@ -1,5 +1,3 @@
-"""Pytest configuration file to set up the test environment."""
-
 import sys
 from pathlib import Path
 

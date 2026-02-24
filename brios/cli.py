@@ -33,6 +33,7 @@ from brios.core.config import (
 from brios.core.scanner import DeviceScanner
 from brios.core.monitor import DeviceMonitor
 from brios.core.service import ServiceManager
+from brios.core.updater import check_for_update, perform_update
 
 
 # Apply patch immediately
@@ -48,29 +49,45 @@ class Application:
 
     Attributes:
         args: The command-line arguments parsed into a Namespace object.
+        update_available: The latest version string if an update is
+            available, or None.
         service_manager: An instance of ServiceManager for handling
             daemon tasks.
     """
 
-    def __init__(self, args: argparse.Namespace) -> None:
+    def __init__(
+        self,
+        args: argparse.Namespace,
+        update_available: Optional[str] = None,
+    ) -> None:
         """Initializes the Application.
 
         Args:
             args: The parsed command-line arguments.
+            update_available: The latest version string if an update is
+                available, or None.
         """
         self.args = args
+        self.update_available = update_available
         self.service_manager = ServiceManager(args)
 
     async def run(self) -> None:
         """Parses arguments and delegates tasks to the appropriate component."""
+        if self.args.update:
+            perform_update(__version__)
+            return
         if self.args.status:
-            self.service_manager.display_status()
+            self.service_manager.display_status(
+                update_available=self.update_available,
+            )
         elif self.args.stop:
             self.service_manager.stop()
         elif self.args.restart:
             self.service_manager.restart()
         elif self.args.start:
-            self.service_manager.start()
+            self.service_manager.start(
+                update_available=self.update_available,
+            )
         elif self.args.scanner is not None:
             scanner = DeviceScanner(
                 self.args.scanner, self.args.macos_use_bdaddr, self.args.verbose
@@ -94,7 +111,12 @@ class Application:
         )
 
         use_bdaddr = self.args.macos_use_bdaddr or bool(self.args.target_mac)
-        monitor = DeviceMonitor(target_address, use_bdaddr, flags)
+        monitor = DeviceMonitor(
+            target_address,
+            use_bdaddr,
+            flags,
+            update_available=self.update_available,
+        )
 
         if flags.daemon_mode:
             try:
@@ -115,7 +137,7 @@ class Application:
         """Sets up the command-line argument parser.
 
         Returns:
-            argparse.ArgumentParser: The configured argument parser.
+            The configured argument parser.
         """
         help_epilog = f"""
         DESCRIPTION:
@@ -166,6 +188,9 @@ class Application:
           --restart             Restart background daemon
           --status              Show daemon status and statistics
 
+        Update:
+          --update, -up         Check for and install the latest version
+
         Operating Modes:
           --scanner, -s [SEC]   Discover devices (default: 15s, range: 5-60s)
           --target-mac, -tm     Monitor by MAC address (recommended)
@@ -196,6 +221,7 @@ class Application:
         • Use -f flag to enable logging to .ble_monitor.log in project directory
         • Use -v flag for verbose RSSI/distance output in terminal
         • Background service (--start) automatically enables file logging
+        • Run --update to check for and install the latest version
         • Bluetooth must be enabled on your Mac
         • Requires macOS 10.15 (Catalina) or later
         • Python 3.9+ required
@@ -206,6 +232,7 @@ class Application:
         ~/.brios/.ble_monitor.log   Log file (when file logging is enabled)
 
         For more information, visit: https://github.com/Piero24/B.R.I.O.S.
+        Documentation: https://piero24.github.io/B.R.I.O.S./
         """
         parser = argparse.ArgumentParser(
             description=(
@@ -242,6 +269,15 @@ class Application:
             "--status",
             action="store_true",
             help="show daemon status and statistics",
+        )
+
+        # --- Update ---
+        update_group = parser.add_argument_group("Update")
+        update_group.add_argument(
+            "--update",
+            "-up",
+            action="store_true",
+            help="check for and install the latest version",
         )
 
         # --- Operating Modes ---
@@ -303,6 +339,11 @@ class Application:
 
 
 def main() -> None:
+    """Entry point for the B.R.I.O.S. command-line application.
+
+    Parses arguments, performs a non-blocking update check, and runs the
+    appropriate application workflow.
+    """
     parser = Application.setup_parser()
     args = parser.parse_args()
 
@@ -312,16 +353,17 @@ def main() -> None:
     is_service_command = (
         args.start or args.stop or args.restart or args.status or args.daemon
     )
+    is_update_command = args.update
     is_mode_command = (
         args.scanner is not None or args.target_mac or args.target_uuid
     )
 
     # If no mode flags are provided, we check if we can default to monitoring
-    if not is_mode_command and not is_service_command:
+    if not is_mode_command and not is_service_command and not is_update_command:
         parser.error(
             "one of the following arguments is required: "
             "--scanner/-s, --target-mac/-tm, --target-uuid/-tu, "
-            "--start, --stop, --restart, --status"
+            "--start, --stop, --restart, --status, --update"
         )
     elif not is_mode_command and is_service_command:
         from .core.utils import determine_target_address
@@ -339,8 +381,16 @@ def main() -> None:
             else:
                 args.target_mac = resolved_address
 
+    # --- Non-blocking startup version check (cached, 2s timeout) ---
+    update_available: Optional[str] = None
+    if not is_update_command:
+        try:
+            update_available = check_for_update(__version__)
+        except Exception:
+            pass
+
     try:
-        app = Application(args)
+        app = Application(args, update_available=update_available)
         asyncio.run(app.run())
     except KeyboardInterrupt:
         if not (args.start or args.restart):

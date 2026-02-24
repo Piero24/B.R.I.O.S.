@@ -2,10 +2,10 @@ import pathlib
 
 
 def _get_version() -> str:
-    """Read version from VERSION file in the root directory.
+    """Reads the version from the VERSION file in the root directory.
 
     Returns:
-        str: The version string, or "unknown" if it cannot be determined.
+        The version string, or "unknown" if it cannot be determined.
     """
     try:
         # Check for VERSION file relative to this file (in project root)
