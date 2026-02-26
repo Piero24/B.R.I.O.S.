@@ -23,13 +23,14 @@ name: 05 — Automatic Release
 #         whose checksum can change over time)
 #      c. Updates the Homebrew formula with the stable asset URL + SHA256
 #      d. Updates the README version badge
-#      e. Pushes post-release chore commit directly to main
+#      e. Opens a PR with the post-release chore commit using the PAT
+#         so that branch protection is bypassed and the PR auto-merges
 #   5. If the tag EXISTS: Skips creation to preserve release history
 #
 # Branch protection:
-#   Requires 'github-actions[bot]' to be listed as a bypass actor in the
-#   branch protection ruleset so the chore commit can be pushed directly
-#   to main without opening a PR.
+#   RELEASE_PAT must belong to a user who is listed as a bypass actor in
+#   the branch protection ruleset. The bot opens a PR and auto-merges it
+#   using the PAT, which satisfies the PR requirement.
 #
 # Success criteria:
 #   A GitHub Release exists for the current version in the repo.
@@ -42,11 +43,12 @@ on:
 
 permissions:
   contents: write
+  pull-requests: write
 
 jobs:
   release:
     runs-on: ubuntu-latest
-    # Skip if this push is the automated post-release chore commit
+    # Skip if this push is the merge of the automated post-release chore PR
     if: >-
       !contains(github.event.head_commit.message,
       'chore: update Homebrew formula and README')
@@ -136,15 +138,30 @@ jobs:
           with open('.github/README.md', 'w') as f: f.write(content)
           "
 
-          # 8. Commit and push directly to main using the PAT-configured remote
+          # 8. Open a PR with the updated formula and README using the PAT
+          #    (branch protection requires a PR; the PAT owner must be a bypass
+          #    actor so that auto-merge can land without a review)
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
           git add Formula/brios.rb .github/README.md
 
           if ! git diff --cached --quiet; then
             echo "📦 Committing updated formula and README..."
+            BRANCH="chore/release-$TAG"
+            git checkout -b "$BRANCH"
             git commit -m "chore: update Homebrew formula and README to $TAG"
-            git push origin main
+            git push origin "$BRANCH"
+
+            echo "🔀 Opening PR to merge formula/README update into main..."
+            gh pr create \
+              --title "chore: update Homebrew formula and README to $TAG" \
+              --body "Automated post-release update: Homebrew formula URL + SHA256 and README version badge bumped to $TAG." \
+              --base main \
+              --head "$BRANCH" \
+              --label "automated"
+
+            echo "⚡ Merging PR using PAT bypass..."
+            gh pr merge "$BRANCH" --squash --delete-branch
           else
             echo "✅ Formula and README are already up to date."
           fi
