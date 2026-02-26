@@ -138,29 +138,19 @@ jobs:
           with open('.github/README.md', 'w') as f: f.write(content)
           "
 
-          # 8. Open a PR with the updated formula and README using the PAT
-          #    (branch protection requires a PR; the PAT owner must be a bypass
-          #    actor so that auto-merge can land without a review)
+          # 8. Push directly to main bypassing the PR requirement
+          #    (Since the PAT owner has bypass permissions, it can push directly
+          #    to the protected branch without needing to create a PR)
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
           git add Formula/brios.rb .github/README.md
 
           if ! git diff --cached --quiet; then
             echo "📦 Committing updated formula and README..."
-            BRANCH="chore/release-$TAG"
-            git checkout -b "$BRANCH"
             git commit -m "chore: update Homebrew formula and README to $TAG"
-            git push origin "$BRANCH"
 
-            echo "🔀 Opening PR to merge formula/README update into main..."
-            gh pr create \
-              --title "chore: update Homebrew formula and README to $TAG" \
-              --body "Automated post-release update: Homebrew formula URL + SHA256 and README version badge bumped to $TAG." \
-              --base main \
-              --head "$BRANCH"
-
-            echo "⚡ Merging PR using PAT bypass..."
-            gh pr merge "$BRANCH" --squash --delete-branch
+            echo "⚡ Pushing directly to main using PAT bypass..."
+            git push origin HEAD:main
           else
             echo "✅ Formula and README are already up to date."
           fi
