@@ -157,8 +157,7 @@ jobs:
               --title "chore: update Homebrew formula and README to $TAG" \
               --body "Automated post-release update: Homebrew formula URL + SHA256 and README version badge bumped to $TAG." \
               --base main \
-              --head "$BRANCH" \
-              --label "automated"
+              --head "$BRANCH"
 
             echo "⚡ Merging PR using PAT bypass..."
             gh pr merge "$BRANCH" --squash --delete-branch
