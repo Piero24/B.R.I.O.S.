@@ -16,8 +16,20 @@ name: 05 — Automatic Release
 #   1. Checks out the repository
 #   2. Reads the version from the 'VERSION' file
 #   3. Checks if a tag for this version already exists
-#   4. If the tag is NEW: Creates the tag and a new GitHub Release
+#   4. If the tag is NEW:
+#      a. Creates the tag and a new GitHub Release
+#      b. Produces a stable tarball via `git archive` and attaches it
+#         as a release asset (avoids GitHub's auto-generated archive
+#         whose checksum can change over time)
+#      c. Updates the Homebrew formula with the stable asset URL + SHA256
+#      d. Updates the README version badge
+#      e. Pushes post-release chore commit directly to main
 #   5. If the tag EXISTS: Skips creation to preserve release history
+#
+# Branch protection:
+#   Requires 'github-actions[bot]' to be listed as a bypass actor in the
+#   branch protection ruleset so the chore commit can be pushed directly
+#   to main without opening a PR.
 #
 # Success criteria:
 #   A GitHub Release exists for the current version in the repo.
@@ -30,73 +42,9 @@ on:
 
 permissions:
   contents: write
-  pull-requests: write
 
 jobs:
-#  # Gate: Ensure all CI checks passed before releasing
-#  check-ci:
-#    runs-on: ubuntu-latest
-#    steps:
-#      - name: Wait for CI workflows to complete
-#        uses: actions/github-script@v7
-#        with:
-#          script: |
-#            const sha = context.sha;
-#            const owner = context.repo.owner;
-#            const repo = context.repo.repo;
-#
-#            const requiredChecks = [
-#              '01 — Code Formatting Check',
-#              '02 — Unit Tests',
-#              '03 — Type Checking',
-#              '04 — Security Audit',
-#            ];
-#
-#            // Wait up to 3 minutes for all checks to complete
-#            const maxWait = 180;
-#            const interval = 10;
-#            let elapsed = 0;
-#
-#            while (elapsed < maxWait) {
-#              const { data: checkRuns } = await github.rest.checks.listForRef({
-#                owner, repo, ref: sha, per_page: 100,
-#              });
-#
-#              const results = requiredChecks.map(name => {
-#                const run = checkRuns.check_runs.find(r => r.name === name);
-#                return { name, status: run?.status, conclusion: run?.conclusion };
-#              });
-#
-#              const allComplete = results.every(r => r.status === 'completed');
-#              const allPassed = results.every(r => r.conclusion === 'success');
-#
-#              if (allComplete) {
-#                if (allPassed) {
-#                  console.log('✅ All CI checks passed!');
-#                  for (const r of results) {
-#                    console.log(`  ✓ ${r.name}: ${r.conclusion}`);
-#                  }
-#                  return;
-#                } else {
-#                  const failed = results.filter(r => r.conclusion !== 'success');
-#                  for (const r of failed) {
-#                    console.log(`  ✗ ${r.name}: ${r.conclusion}`);
-#                  }
-#                  core.setFailed('❌ CI checks failed. Release aborted.');
-#                  return;
-#                }
-#              }
-#
-#              const pending = results.filter(r => r.status !== 'completed');
-#              console.log(`⏳ Waiting for ${pending.length} check(s)... (${elapsed}s)`);
-#              await new Promise(r => setTimeout(r, interval * 1000));
-#              elapsed += interval;
-#            }
-#
-#            core.setFailed('❌ Timeout: CI checks did not complete within 3 minutes.');
-
   release:
-#    needs: check-ci
     runs-on: ubuntu-latest
     # Skip if this push is the automated post-release chore commit
     if: >-
@@ -110,53 +58,76 @@ jobs:
 
       - name: Create Release
         env:
-          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          RELEASE_PAT: ${{ secrets.RELEASE_PAT }}
         run: |
+          # Require the PAT to be present
+          if [ -z "$RELEASE_PAT" ]; then
+            echo "ERROR: RELEASE_PAT secret is not set. Add the PAT as the repository secret 'RELEASE_PAT'."
+            exit 1
+          fi
+
+          # Validate the PAT quickly against the GitHub API to catch expiration
+          STATUS_CODE=$(curl -s -o /dev/null -w "%{http_code}" -H "Authorization: token $RELEASE_PAT" https://api.github.com/user)
+          if [ "$STATUS_CODE" != "200" ]; then
+            echo "ERROR: RELEASE_PAT appears invalid or expired (HTTP $STATUS_CODE). Please create a new PAT and update the 'RELEASE_PAT' secret."
+            exit 1
+          fi
+
+          # Export GH_TOKEN so 'gh' and other tools pick it up
+          export GH_TOKEN="$RELEASE_PAT"
+
           # 1. Extract version and prepare tag
           VERSION=$(cat VERSION)
           TAG="v$VERSION"
-          
+
           echo "🚀 Checking if $TAG already exists..."
-          
+
+          # Configure git remote to use the provided PAT for pushes
+          git remote set-url origin https://x-access-token:$GH_TOKEN@github.com/$GITHUB_REPOSITORY.git
+
           # 2. Check if tag exists on remote
           if git ls-remote --tags origin | grep -q "refs/tags/$TAG"; then
             echo "✅ Tag $TAG already exists. Skipping release creation."
             exit 0
           fi
-          
+
           # 3. Create and push new tag
           echo "🏷️ Creating new tag $TAG..."
           git tag "$TAG"
           git push origin "$TAG"
-          
+
           # 4. Create new release
           echo "🚢 Creating new GitHub release..."
           gh release create "$TAG" \
             --title "$TAG" \
             --notes-file CHANGELOG.md
 
-          # 5. Update Homebrew Formula
-          echo "🍺 Updating Homebrew formula..."
-          TARBALL_URL="https://github.com/Piero24/B.R.I.O.S./archive/refs/tags/$TAG.tar.gz"
-          
-          # Wait a few seconds to ensure GitHub has generated the tarball
-          sleep 5
-          
-          curl -sL "$TARBALL_URL" -o temp.tar.gz
-          SHA256=$(shasum -a 256 temp.tar.gz | awk '{print $1}')
-          rm temp.tar.gz
-          
+          # 5. Build a stable tarball and attach it as a release asset
+          #    (GitHub's auto-generated /archive/ tarballs can be regenerated
+          #    at any time, changing their checksum — release assets are stable)
+          echo "📦 Creating stable source tarball..."
+          ASSET_NAME="brios-${VERSION}.tar.gz"
+          git archive --format=tar.gz --prefix="B.R.I.O.S.-${VERSION}/" "$TAG" \
+            -o "$ASSET_NAME"
+          gh release upload "$TAG" "$ASSET_NAME"
+
+          TARBALL_URL="https://github.com/Piero24/B.R.I.O.S./releases/download/$TAG/$ASSET_NAME"
+          SHA256=$(shasum -a 256 "$ASSET_NAME" | awk '{print $1}')
+          rm "$ASSET_NAME"
+
           echo "New SHA256: $SHA256"
-          
+
+          # 6. Update Homebrew Formula
+          echo "🍺 Updating Homebrew formula..."
           python3 -c "
           import re
           with open('Formula/brios.rb', 'r') as f: content = f.read()
-          content = re.sub(r'url \"https://github\.com/Piero24/B\.R\.I\.O\.S\./archive/refs/tags/.*\.tar\.gz\"', 'url \"${TARBALL_URL}\"', content, count=1)
+          content = re.sub(r'url \"https://github\.com/Piero24/B\.R\.I\.O\.S\./.*\.tar\.gz\"', 'url \"${TARBALL_URL}\"', content, count=1)
           content = re.sub(r'sha256 \"[a-f0-9]{64}\"', 'sha256 \"${SHA256}\"', content, count=1)
           with open('Formula/brios.rb', 'w') as f: f.write(content)
           "
-          
-          # 6. Update README.md version
+
+          # 7. Update README.md version
           echo "📝 Updating README.md version..."
           python3 -c "
           import re
@@ -164,30 +135,16 @@ jobs:
           content = re.sub(r'<sub>Version .*?</sub>', f'<sub>Version ${VERSION}</sub>', content, count=1)
           with open('.github/README.md', 'w') as f: f.write(content)
           "
-          
-          # 7. Commit and push updates
+
+          # 8. Commit and push directly to main using the PAT-configured remote
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
           git add Formula/brios.rb .github/README.md
-          
+
           if ! git diff --cached --quiet; then
-            BRANCH="chore/release-$TAG"
             echo "📦 Committing updated formula and README..."
-            git checkout -b "$BRANCH"
             git commit -m "chore: update Homebrew formula and README to $TAG"
-            git push origin "$BRANCH"
-            
-            echo "🔀 Creating pull request..."
-            gh pr create \
-              --base main \
-              --head "$BRANCH" \
-              --title "chore: update Homebrew formula and README to $TAG" \
-              --body "Automated post-release update for $TAG.
-
-          - Updates \`Formula/brios.rb\` with new tarball URL and SHA256
-          - Updates \`.github/README.md\` version badge
-
-          > This PR was created automatically by the release workflow."
+            git push origin main
           else
             echo "✅ Formula and README are already up to date."
           fi
