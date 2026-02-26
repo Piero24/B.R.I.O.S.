@@ -34,6 +34,9 @@ automatically locks your Mac when a trusted Bluetooth device moves out of range.
 - Modular `brios/` installable package with CLI entry point (`brios` command)
 - Multi-location config loading (`.env`, `~/.brios.env`, `~/.config/brios/config`)
 - `--version` argument to display version information
+- `--update` / `-up` command for self-updating B.R.I.O.S. in place
+- Automatic version check on launch with update notification (24-hour cache)
+- Auto-detection of install method (Homebrew vs pip) for seamless updates
 - Homebrew formula for easy installation (`brew install brios`)
 - Makefile for developer workflow automation
 - macOS native integration via ctypes (CoreGraphics)
