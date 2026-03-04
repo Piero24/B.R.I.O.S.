@@ -33,6 +33,7 @@ if not os.path.exists(HOME_DIR):
 
 PID_FILE = os.path.join(HOME_DIR, ".ble_monitor.pid")
 LOG_FILE = os.path.join(HOME_DIR, ".ble_monitor.log")
+PAUSE_FILE = os.path.join(HOME_DIR, ".ble_monitor.pause")
 
 # Platform-specific imports
 IS_MACOS = sys.platform == "darwin"

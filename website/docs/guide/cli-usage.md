@@ -26,6 +26,7 @@ Manage the B.R.I.O.S. background daemon:
 |---|---|
 | `brios --start` | Start B.R.I.O.S. as a background daemon |
 | `brios --stop` | Stop the background daemon |
+| `brios --stop [1-24|-d|-w]` | Pause the daemon for the specified number of hours, a day (`-d`), or a week (`-w`) |
 | `brios --restart` | Restart the background daemon |
 | `brios --status` | Display daemon status, PID, uptime, and recent activity |
 
