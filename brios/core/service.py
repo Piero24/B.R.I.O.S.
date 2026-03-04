@@ -178,6 +178,8 @@ class ServiceManager:
             )
             if os.path.exists(PID_FILE):
                 os.remove(PID_FILE)
+            if os.path.exists(PAUSE_FILE):
+                os.remove(PAUSE_FILE)
             return
 
         print(f"Stopping {__app_name__} (PID {pid})...")
@@ -198,6 +200,8 @@ class ServiceManager:
         finally:
             if os.path.exists(PID_FILE):
                 os.remove(PID_FILE)
+            if os.path.exists(PAUSE_FILE):
+                os.remove(PAUSE_FILE)
             # if os.path.exists(LOG_FILE): os.remove(LOG_FILE)
 
     def restart(self) -> None:
