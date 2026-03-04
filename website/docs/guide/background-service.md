@@ -35,8 +35,13 @@ brios --target-mac -v -f --start
 # Check status, PID, and recent activity
 brios --status
 
-# Stop the background monitor
+# Stop the background monitor completely
 brios --stop
+
+# Pause the background monitor
+brios --stop <1-24> # Pause for 1 to 24 hours (e.g. brios --stop 2)
+brios --stop -d     # Pause for 1 day
+brios --stop -w     # Pause for 1 week
 
 # Restart the background monitor
 brios --restart

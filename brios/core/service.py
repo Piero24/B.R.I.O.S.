@@ -7,7 +7,7 @@ import argparse
 import subprocess
 from typing import Optional, Tuple, List
 
-from .utils import PID_FILE, LOG_FILE, Colors, Flags, __app_name__, determine_target_address
+from .utils import PID_FILE, LOG_FILE, PAUSE_FILE, Colors, Flags, __app_name__, determine_target_address
 from .config import (
     TARGET_DEVICE_NAME,
     TARGET_DEVICE_MAC_ADDRESS,
@@ -207,6 +207,40 @@ class ServiceManager:
         time.sleep(1)
         self.start()
 
+    def pause(self, hours: float) -> None:
+        """Pauses the background monitor for a specific duration.
+
+        Args:
+            hours: The number of hours to pause the monitor for.
+        """
+        pid, is_running = self._get_pid_status()
+        if not is_running:
+            print(
+                f"{Colors.YELLOW}●{Colors.RESET} {__app_name__} is not running"
+            )
+            return
+
+        resume_time = time.time() + (hours * 3600)
+        try:
+            with open(PAUSE_FILE, "w") as f:
+                f.write(str(resume_time))
+            if hours == 24:
+                print(
+                    f"{Colors.GREEN}✓{Colors.RESET} {__app_name__} paused for 1 day"
+                )
+            elif hours == 168:
+                print(
+                    f"{Colors.GREEN}✓{Colors.RESET} {__app_name__} paused for 1 week"
+                )
+            else:
+                print(
+                    f"{Colors.GREEN}✓{Colors.RESET} {__app_name__} paused for {hours} hours"
+                )
+        except IOError as e:
+            print(
+                f"{Colors.RED}✗{Colors.RESET} Failed to pause {__app_name__}: {e}"
+            )
+
     def display_status(
         self,
         *,
@@ -243,6 +277,26 @@ class ServiceManager:
             print(f"Target:     {TARGET_DEVICE_NAME}")
             print(f"Address:    {TARGET_DEVICE_MAC_ADDRESS}")
             print(f"Threshold:  {DISTANCE_THRESHOLD_M}m")
+
+            if os.path.exists(PAUSE_FILE):
+                try:
+                    with open(PAUSE_FILE, "r") as f:
+                        resume_time = float(f.read().strip())
+                    remaining = resume_time - time.time()
+                    if remaining > 0:
+                        hours, remainder = divmod(int(remaining), 3600)
+                        minutes, seconds = divmod(remainder, 60)
+                        print(
+                            f"State:      {Colors.YELLOW}PAUSED{Colors.RESET} (Resumes in {hours}h {minutes}m)"
+                        )
+                    else:
+                        print(
+                            f"State:      {Colors.GREEN}RESUMING{Colors.RESET}"
+                        )
+                except (IOError, ValueError):
+                    print(
+                        f"State:      {Colors.YELLOW}PAUSED{Colors.RESET} (Corrupted pause file)"
+                    )
 
             if update_available:
                 print(

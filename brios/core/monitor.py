@@ -17,6 +17,7 @@ from .utils import (
     estimate_distance,
     smooth_rssi,
     LOG_FILE,
+    PAUSE_FILE,
 )
 from . import system
 
@@ -57,6 +58,7 @@ class DeviceMonitor:
         lock_handling_start_time: Timestamp when lock handling began.
         resume_time: Timestamp when monitoring was last resumed.
         lock_history: History of recent lock events to detect loops.
+        is_paused: True if the monitor is currently paused by the user.
     """
 
     def __init__(
@@ -88,6 +90,7 @@ class DeviceMonitor:
         self.alert_triggered: bool = False
         self.log_file: Optional[TextIO] = None
         self.is_handling_lock: bool = False
+        self.is_paused: bool = False
         self.last_packet_time: float = time.monotonic()
         self.lock_handling_start_time: float = 0
 
@@ -798,6 +801,71 @@ class DeviceMonitor:
                     f"{Colors.GREEN}✓{Colors.RESET} {__app_name__} stopped.\n"
                 )
 
+    async def _check_pause_state(self, current_time: float) -> bool:
+        """Checks if the monitor should be paused and handles the pause state.
+
+        Args:
+            current_time: The current monotonic time.
+
+        Returns:
+            True if the monitor is currently paused (and watchdog should skip checks),
+            False otherwise.
+        """
+        if not os.path.exists(PAUSE_FILE):
+            return False
+
+        try:
+            with open(PAUSE_FILE, "r") as f:
+                pause_resume_time = float(f.read().strip())
+
+            if time.time() < pause_resume_time:
+                # We are paused
+                if not self.is_paused:
+                    self.is_paused = True
+                    try:
+                        await asyncio.wait_for(self.scanner.stop(), timeout=5.0)
+                    except Exception:
+                        pass
+                    timestamp = datetime.now().strftime("%H:%M:%S")
+                    msg = f"[{timestamp}] Monitor paused until {datetime.fromtimestamp(pause_resume_time).strftime('%Y-%m-%d %H:%M:%S')} - Scanner stopped"
+                    if self.flags.daemon_mode and self.log_file:
+                        self.log_file.write(msg + "\n")
+                        self.log_file.flush()
+                    elif self.flags.verbose:
+                        print(f"{Colors.YELLOW}{msg}{Colors.RESET}")
+
+                # Keep heartbeat alive while paused
+                self.last_packet_time = current_time
+                await asyncio.sleep(2.0)
+                return True
+            else:
+                # Pause expired
+                os.remove(PAUSE_FILE)
+                if self.is_paused:
+                    self.is_paused = False
+                    # Restart scanner logic:
+                    self.rssi_buffer.clear()
+                    self.scanner = BleakScanner(
+                        detection_callback=self._detection_callback,
+                        cb={"use_bdaddr": self.use_bdaddr},
+                    )
+                    await self.scanner.start()
+                    timestamp = datetime.now().strftime("%H:%M:%S")
+                    msg = f"[{timestamp}] Pause expired - Scanner resumed"
+                    if self.flags.daemon_mode and self.log_file:
+                        self.log_file.write(msg + "\n")
+                        self.log_file.flush()
+                    elif self.flags.verbose:
+                        print(f"{Colors.GREEN}{msg}{Colors.RESET}")
+        except (IOError, ValueError):
+            # Invalid file, ignore and remove
+            try:
+                os.remove(PAUSE_FILE)
+            except OSError:
+                pass
+
+        return False
+
     async def _watchdog_loop(self) -> None:
         """Background task to monitor for external screen lock events.
 
@@ -811,6 +879,11 @@ class DeviceMonitor:
         while True:
             try:
                 current_time = time.monotonic()
+
+                # --- Pause logic execution ---
+                if await self._check_pause_state(current_time):
+                    continue
+                # -----------------------------
 
                 # Periodic liveness log (every 60s)
                 if self.flags.verbose and current_time - last_log_time > 60:

@@ -201,9 +201,12 @@ brew services stop brios     # Stop the service
 
 **Using Internal Service Manager:**
 ```bash
-brios --start    # Start background process
-brios --status   # Check status and PID
-brios --stop     # Stop background process
+brios --start        # Start background process
+brios --status       # Check status and PID
+brios --stop         # Stop background process
+brios --stop <1-24>  # Pause for 1 to 24 hours (e.g. brios --stop 2)
+brios --stop -d      # Pause background process for 1 day
+brios --stop -w      # Pause background process for 1 week
 ```
 
 ---

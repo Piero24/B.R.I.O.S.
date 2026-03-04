@@ -80,8 +80,29 @@ class Application:
             self.service_manager.display_status(
                 update_available=self.update_available,
             )
-        elif self.args.stop:
-            self.service_manager.stop()
+        elif getattr(self.args, "stop", False):
+            val = self.args.stop
+            if getattr(self.args, "d", False):
+                self.service_manager.pause(24)
+            elif getattr(self.args, "w", False):
+                self.service_manager.pause(168)
+            elif val == "now" or val is True:
+                self.service_manager.stop()
+            else:
+                try:
+                    hours = int(val)
+                    if 1 <= hours <= 24:
+                        self.service_manager.pause(hours)
+                    else:
+                        print(
+                            f"{Colors.RED}✗{Colors.RESET} Invalid stop time: {val}. Must be between 1 and 24 hours."
+                        )
+                        sys.exit(1)
+                except ValueError:
+                    print(
+                        f"{Colors.RED}✗{Colors.RESET} Invalid stop parameter: '{val}'. Must be a number (1-24), -d, or -w."
+                    )
+                    sys.exit(1)
         elif self.args.restart:
             self.service_manager.restart()
         elif self.args.start:
@@ -178,13 +199,18 @@ class Application:
         Stop background service:
             $ brios --stop
 
+        Pause background service for 2 hours, 1 day, or 1 week:
+            $ brios --stop <1-24>  # Pause for 1 to 24 hours (e.g. brios --stop 2)
+            $ brios --stop -d      # Pause for 1 day
+            $ brios --stop -w      # Pause for 1 week
+
         Restart background service:
             $ brios --restart
 
         COMMAND-LINE OPTIONS:
         Service Control:
           --start               Start {__app_name__} as background daemon
-          --stop                Stop background daemon
+          --stop [1-24|-d|-w]   Stop daemon completely, or pause for hours/day/week
           --restart             Restart background daemon
           --status              Show daemon status and statistics
 
@@ -260,7 +286,21 @@ class Application:
             help="start monitor as background daemon",
         )
         service_exclusive.add_argument(
-            "--stop", action="store_true", help="stop background daemon"
+            "--stop",
+            nargs="?",
+            const="now",
+            default=False,
+            help="stop daemon completely, or pause for hours (1-24)",
+        )
+        service_group.add_argument(
+            "-d",
+            action="store_true",
+            help=argparse.SUPPRESS,
+        )
+        service_group.add_argument(
+            "-w",
+            action="store_true",
+            help=argparse.SUPPRESS,
         )
         service_exclusive.add_argument(
             "--restart", action="store_true", help="restart background daemon"
@@ -349,6 +389,10 @@ def main() -> None:
 
     if args.scanner is not None and not (5 <= args.scanner <= 60):
         parser.error("Scanner duration must be between 5 and 60 seconds.")
+
+    if getattr(args, "d", False) or getattr(args, "w", False):
+        if not getattr(args, "stop", False):
+            parser.error("-d and -w parameters can only be used with --stop.")
 
     is_service_command = (
         args.start or args.stop or args.restart or args.status or args.daemon
