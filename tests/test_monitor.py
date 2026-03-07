@@ -116,6 +116,7 @@ async def test_process_signal_out_of_range(
     with (
         patch("brios.core.monitor.system.lock_macbook") as mock_lock,
         patch.object(monitor, "_handle_screen_lock") as mock_handle_lock,
+        patch("brios.core.monitor.OUT_OF_RANGE_DEBOUNCE_COUNT", 1),
     ):
         mock_lock.return_value = (True, "Mock Locked")
 

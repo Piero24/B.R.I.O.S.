@@ -11,6 +11,7 @@ from .config import (
     TARGET_DEVICE_MAC_ADDRESS,
     PATH_LOSS_EXPONENT,
     TX_POWER_AT_1M,
+    SMOOTHING_METHOD,
 )
 
 # --- Application Constants ---
@@ -132,21 +133,27 @@ def estimate_distance(
     return 10 ** ((tx_power_at_1m - rssi) / (10 * path_loss_exponent))
 
 
-def smooth_rssi(buffer: Deque[int]) -> Optional[float]:
-    """Calculates the statistical mean of RSSI values in a buffer.
+def smooth_rssi(
+    buffer: Deque[int], method: str = SMOOTHING_METHOD
+) -> Optional[float]:
+    """Calculates the statistical mean or median of RSSI values in a buffer.
 
     This function helps to stabilize the fluctuating RSSI readings by averaging
     a collection of recent samples.
 
     Args:
         buffer: A deque containing recent RSSI samples (integers).
+        method: The smoothing method to use ('mean' or 'median').
 
     Returns:
-        The mean RSSI value as a float, or None if the buffer is empty.
+        The smoothed RSSI value as a float, or None if the buffer is empty.
     """
     if not buffer:
         return None
-    return statistics.mean(buffer)
+    if method == "mean":
+        return float(statistics.mean(buffer))
+    else:
+        return float(statistics.median(buffer))
 
 
 # --- Monkeypatch for Bleak 1.1.1 Crash ---

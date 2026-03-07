@@ -64,11 +64,13 @@ See the [Calibrating TX Power](#calibrating-tx-power) and [Path Loss Exponent Gu
 | `TX_POWER_AT_1M` | `int` | `-59` | RSSI value (in dBm) measured at exactly 1 meter from the device. Critical for accurate distance estimation |
 | `PATH_LOSS_EXPONENT` | `float` | `2.8` | Environment factor for the path loss model. Ranges from `2.0` (open space) to `4.0` (heavy obstacles) |
 | `SAMPLE_WINDOW` | `int` | `12` | Number of RSSI samples to average for signal smoothing. Higher values = more stable but slower response |
+| `SMOOTHING_METHOD` | `str` | `median` | Statistical method to smooth RSSI values. `median` ignores outliers, `mean` averages all readings. |
 
 ### Safety & Reliability
 
 | Parameter | Type | Default | Description |
 |---|---|---|---|
+| `OUT_OF_RANGE_DEBOUNCE_COUNT` | `int` | `3` | Number of consecutive out-of-range checks required before locking. Ranges from `1` to `9`. |
 | `GRACE_PERIOD_SECONDS` | `int` | `30` | Seconds to ignore out-of-range signals after unlocking/resuming. Prevents immediate re-locking while the signal stabilizes |
 | `LOCK_LOOP_THRESHOLD` | `int` | `3` | Number of lock events within `LOCK_LOOP_WINDOW` that trigger the lock loop protection |
 | `LOCK_LOOP_WINDOW` | `int` | `60` | Time window (seconds) for detecting lock loops |
