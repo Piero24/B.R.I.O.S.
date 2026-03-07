@@ -39,6 +39,17 @@ SAMPLE_WINDOW = int(os.getenv("SAMPLE_WINDOW", "12"))
 # The distance (in meters) beyond which a device is considered "out of range."
 DISTANCE_THRESHOLD_M = float(os.getenv("DISTANCE_THRESHOLD_M", "2.0"))
 
+# The method used to smooth RSSI values. Can be 'median' or 'mean'.
+SMOOTHING_METHOD = os.getenv("SMOOTHING_METHOD", "median").lower()
+
+# The number of consecutive out-of-range readings required before locking the Mac.
+# Bounded between 1 and 9.
+try:
+    _debounce_raw = int(os.getenv("OUT_OF_RANGE_DEBOUNCE_COUNT", "3"))
+    OUT_OF_RANGE_DEBOUNCE_COUNT = max(1, min(9, _debounce_raw))
+except ValueError:
+    OUT_OF_RANGE_DEBOUNCE_COUNT = 3
+
 # --- Reliability & Safety Constants ---
 # Time (in seconds) to ignore "out of range" signals after unlocking/resuming.
 # Prevents immediate re-locking while signal stabilizes.

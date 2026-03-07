@@ -171,6 +171,8 @@ cp .env.example ~/.brios.env
 | `TX_POWER_AT_1M` | RSSI measured at 1 meter (dBm) | `-59` |
 | `PATH_LOSS_EXPONENT` | Environment factor (2.0-4.0) | `2.8` |
 | `SAMPLE_WINDOW` | Number of RSSI samples for smoothing | `12` |
+| `SMOOTHING_METHOD` | Statistical method to smooth RSSI values ('median' or 'mean') | `median` |
+| `OUT_OF_RANGE_DEBOUNCE_COUNT` | Consecutive checks to confirm out of range (1-9) | `3` |
 | `LOCK_LOOP_THRESHOLD` | Lock events within window to trigger pause | `3` |
 | `LOCK_LOOP_WINDOW` | Time window (seconds) for lock loop detection | `60` |
 | `LOCK_LOOP_PENALTY` | Pause duration (seconds) on lock loop | `120` |

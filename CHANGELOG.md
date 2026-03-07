@@ -5,6 +5,12 @@ All notable changes to 🥐 B.R.I.O.S. (Bluetooth Reactive Intelligent Operator 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.0.3] - 2026-03-07
+
+### Added
+- Out-of-range debounce counter (`OUT_OF_RANGE_DEBOUNCE_COUNT`) to prevent false positive locking from momentary signal drops
+- RSSI smoothing method configuration (`SMOOTHING_METHOD`) supporting `median` and `mean` algorithms for better outlier rejection
+
 ## [1.0.0] - 2026-02-23
 
 Initial release of 🥐 B.R.I.O.S. — a BLE proximity monitor for macOS that

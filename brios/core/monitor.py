@@ -32,6 +32,7 @@ from .config import (
     SAMPLE_WINDOW,
     TX_POWER_AT_1M,
     PATH_LOSS_EXPONENT,
+    OUT_OF_RANGE_DEBOUNCE_COUNT,
 )
 from .utils import Flags
 
@@ -59,6 +60,7 @@ class DeviceMonitor:
         resume_time: Timestamp when monitoring was last resumed.
         lock_history: History of recent lock events to detect loops.
         is_paused: True if the monitor is currently paused by the user.
+        _out_of_range_counter: Tracks consecutive times distance is above threshold.
     """
 
     def __init__(
@@ -105,6 +107,7 @@ class DeviceMonitor:
         # Safety state
         self.resume_time: float = 0
         self.lock_history: Deque[float] = deque(maxlen=LOCK_LOOP_THRESHOLD)
+        self._out_of_range_counter: int = 0
 
         self.scanner = BleakScanner(
             detection_callback=self._detection_callback,
@@ -272,7 +275,7 @@ class DeviceMonitor:
 
         self._log_status(current_rssi, smoothed_rssi, distance_m)
 
-        if distance_m > DISTANCE_THRESHOLD_M and not self.alert_triggered:
+        if distance_m > DISTANCE_THRESHOLD_M:
             # Check for Grace Period
             time_since_resume = time.monotonic() - self.resume_time
             if time_since_resume < GRACE_PERIOD_SECONDS:
@@ -283,9 +286,16 @@ class DeviceMonitor:
                     )
                 return
 
-            is_locked = self._trigger_out_of_range_alert(distance_m)
-        elif distance_m <= DISTANCE_THRESHOLD_M and self.alert_triggered:
-            self._trigger_in_range_alert(distance_m)
+            self._out_of_range_counter += 1
+            if (
+                self._out_of_range_counter >= OUT_OF_RANGE_DEBOUNCE_COUNT
+                and not self.alert_triggered
+            ):
+                is_locked = self._trigger_out_of_range_alert(distance_m)
+        else:
+            self._out_of_range_counter = 0
+            if distance_m <= DISTANCE_THRESHOLD_M and self.alert_triggered:
+                self._trigger_in_range_alert(distance_m)
 
         if is_locked:
             asyncio.create_task(self._handle_screen_lock())

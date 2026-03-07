@@ -237,6 +237,8 @@ class Application:
         • TX_POWER_AT_1M               RSSI at 1 meter (default: -59 dBm)
         • PATH_LOSS_EXPONENT           Environment factor (default: 2.8)
         • SAMPLE_WINDOW                Signal smoothing samples (default: 12)
+        • SMOOTHING_METHOD             Method to smooth RSSI (median/mean)
+        • OUT_OF_RANGE_DEBOUNCE_COUNT  Consecutive checks to confirm lock (1-9)
         • GRACE_PERIOD_SECONDS         Post-unlock grace period (default: 30)
         • LOCK_LOOP_THRESHOLD          Lock events before pause (default: 3)
         • LOCK_LOOP_WINDOW             Lock loop time window (default: 60s)
