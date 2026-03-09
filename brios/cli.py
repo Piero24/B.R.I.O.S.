@@ -239,6 +239,7 @@ class Application:
         • SAMPLE_WINDOW                Signal smoothing samples (default: 12)
         • SMOOTHING_METHOD             Method to smooth RSSI (median/mean)
         • OUT_OF_RANGE_DEBOUNCE_COUNT  Consecutive checks to confirm lock (1-9)
+        • SCANNER_RECYCLE_INTERVAL_SECONDS Recycle frequency (default: 300)
         • GRACE_PERIOD_SECONDS         Post-unlock grace period (default: 30)
         • LOCK_LOOP_THRESHOLD          Lock events before pause (default: 3)
         • LOCK_LOOP_WINDOW             Lock loop time window (default: 60s)

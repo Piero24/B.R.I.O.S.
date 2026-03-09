@@ -30,9 +30,11 @@ from .config import (
     TARGET_DEVICE_NAME,
     TARGET_DEVICE_TYPE,
     SAMPLE_WINDOW,
+    SMOOTHING_METHOD,
     TX_POWER_AT_1M,
     PATH_LOSS_EXPONENT,
     OUT_OF_RANGE_DEBOUNCE_COUNT,
+    SCANNER_RECYCLE_INTERVAL_SECONDS,
 )
 from .utils import Flags
 
@@ -61,6 +63,7 @@ class DeviceMonitor:
         lock_history: History of recent lock events to detect loops.
         is_paused: True if the monitor is currently paused by the user.
         _out_of_range_counter: Tracks consecutive times distance is above threshold.
+        last_recycle_time: Monotonic timestamp of the last scanner replacement.
     """
 
     def __init__(
@@ -138,6 +141,9 @@ class DeviceMonitor:
                     f"[{timestamp}] TX Power:   {TX_POWER_AT_1M} dBm @ 1m",
                     f"[{timestamp}] Path Loss:  {PATH_LOSS_EXPONENT}",
                     f"[{timestamp}] Samples:    {SAMPLE_WINDOW} readings",
+                    f"[{timestamp}] Smoothing:  {SMOOTHING_METHOD}",
+                    f"[{timestamp}] Debounce:   {OUT_OF_RANGE_DEBOUNCE_COUNT} checks",
+                    f"[{timestamp}] Recycle:    {SCANNER_RECYCLE_INTERVAL_SECONDS}s",
                     f"[{timestamp}] Mode:       {'BD_ADDR (MAC)' if self.use_bdaddr else 'UUID'}",
                     f"[{timestamp}] Log file:   {LOG_FILE}",
                     f"[{timestamp}] PID:        {os.getpid()}",
@@ -171,6 +177,9 @@ class DeviceMonitor:
         print(f"TX Power:   {TX_POWER_AT_1M} dBm @ 1m")
         print(f"Path Loss:  {PATH_LOSS_EXPONENT}")
         print(f"Samples:    {SAMPLE_WINDOW} readings")
+        print(f"Smoothing:  {SMOOTHING_METHOD}")
+        print(f"Debounce:   {OUT_OF_RANGE_DEBOUNCE_COUNT} checks")
+        print(f"Recycle:    {SCANNER_RECYCLE_INTERVAL_SECONDS}s")
         if self.use_bdaddr:
             print(f"Mode:       {Colors.BLUE}BD_ADDR (MAC){Colors.RESET}")
         print("─" * 50)
@@ -298,14 +307,18 @@ class DeviceMonitor:
                 self._trigger_in_range_alert(distance_m)
 
         if is_locked:
-            asyncio.create_task(self._handle_screen_lock())
+            asyncio.create_task(self._restart_scanner(reason="lock"))
 
-    async def _handle_screen_lock(self) -> None:
-        """Handles the screen lock state by re-establishing the scanner.
+    async def _restart_scanner(self, reason: str = "lock") -> None:
+        """Handles scanner restart operations based on external events.
 
-        Runs in the background while the screen is locked, periodically
-        checking the lock status.  When the screen is unlocked, it restarts
-        the scanner and clears the RSSI buffer to ensure fresh readings.
+        This is used when the screen is locked manually, when the scanner freezes,
+        or periodically to prevent CoreBluetooth from retaining stale RSSI models
+        (cache flushing). It stops the scanner, clears buffers, waits
+        for the appropriate condition (e.g., screen unlock), and restarts.
+
+        Args:
+            reason: String indicating why the scanner is restarting ('lock', 'frozen', 'recycle').
         """
         if self.is_handling_lock:
             return
@@ -330,112 +343,79 @@ class DeviceMonitor:
 
             timestamp = datetime.now().strftime("%H:%M:%S")
 
-            if self.flags.daemon_mode:
+            if reason == "lock":
                 msg = f"[{timestamp}] Screen locked - Scanner paused"
-                if self.log_file:
-                    self.log_file.write(msg + "\n")
-                    self.log_file.flush()
+                verbose_msg = f"{Colors.YELLOW}[{timestamp}]{Colors.RESET} Screen locked → Scanner {Colors.BOLD}{Colors.YELLOW}Paused{Colors.RESET} │ Monitoring: Waiting for unlock"
+            elif reason == "frozen":
+                msg = f"[{timestamp}] Scanner frozen -> Forcing restart"
+                verbose_msg = f"{Colors.YELLOW}[{timestamp}]{Colors.RESET} Scanner frozen → Forcing restart"
+            elif reason == "recycle":
+                msg = f"[{timestamp}] Recycling scanner to flush BLE cache"
+                verbose_msg = f"{Colors.YELLOW}[{timestamp}]{Colors.RESET} Recycling scanner to flush BLE cache"
+            else:
+                msg = f"[{timestamp}] Restarting scanner (reason: {reason})"
+                verbose_msg = f"{Colors.YELLOW}[{timestamp}]{Colors.RESET} Restarting scanner (reason: {reason})"
+
+            if self.flags.daemon_mode and self.log_file:
+                self.log_file.write(msg + "\n")
+                self.log_file.flush()
             elif self.flags.verbose:
-                print(
-                    f"{Colors.YELLOW}[{timestamp}]{Colors.RESET} Screen locked "
-                    f"→ Scanner {Colors.BOLD}{Colors.YELLOW}Paused{Colors.RESET}"
-                    f" │ Monitoring: Waiting for unlock"
-                )
+                print(verbose_msg)
 
             if self.flags.file_logging and self.log_file:
-                self.log_file.write(
-                    f"[{timestamp}] Screen locked - Scanner paused\n"
-                )
+                self.log_file.write(msg + "\n")
                 self.log_file.flush()
 
             await asyncio.sleep(2)
 
-            loop_count = 0
-            is_waiting = False
-            while system.is_screen_locked():
-                loop_count += 1
-
-                if not is_waiting:
-                    timestamp = datetime.now().strftime("%H:%M:%S")
-                    is_waiting = True
-
-                    if self.flags.daemon_mode:
-                        if self.log_file:
-                            self.log_file.write(
-                                f"[{timestamp}] "
-                                f"Screen still locked - Waiting for unlock\n"
-                            )
-                            self.log_file.flush()
-                    elif self.flags.verbose:
-                        print(
-                            f"{Colors.GREY}[{timestamp}]{Colors.RESET} "
-                            f"Screen locked → Waiting..."
-                        )
-
-                    if self.flags.file_logging and self.log_file:
-                        self.log_file.write(
-                            f"[{timestamp}] "
-                            f"Screen still locked - Waiting for unlock\n"
-                        )
-                        self.log_file.flush()
-
-                await asyncio.sleep(2)
-
-            timestamp = datetime.now().strftime("%H:%M:%S")
-            total_time = loop_count * 2
-
             self.rssi_buffer.clear()
+            self.alert_triggered = False
+            self._out_of_range_counter = 0
 
-            if self.flags.daemon_mode:
-                if self.log_file:
-                    self.log_file.write(
-                        f"[{timestamp}] Screen unlocked - "
-                        f"Reconnecting scanner (locked for {total_time}s)\n"
-                    )
-                    self.log_file.flush()
-            elif self.flags.verbose:
-                print(
-                    f"{Colors.GREEN}[{timestamp}]{Colors.RESET} Screen unlocked "
-                    f"→ Reconnecting │ Locked: {total_time}s │ "
-                    f"RSSI buffer: Cleared"
-                )
+            # Behavior changes based on reason
+            if reason == "lock":
+                loop_count = 0
+                is_waiting = False
+                while system.is_screen_locked():
+                    loop_count += 1
+                    if not is_waiting:
+                        is_waiting = True
+                    await asyncio.sleep(2)
 
-            if self.flags.file_logging and self.log_file:
-                self.log_file.write(
-                    f"[{timestamp}] Screen unlocked - Reconnecting scanner "
-                    f"(locked for {total_time}s)\n"
-                )
-                self.log_file.flush()
+                total_time = loop_count * 2
 
-            # --- Lock Loop Protection ---
-            now = time.monotonic()
-            self.lock_history.append(now)
+                # --- Lock Loop Protection ---
+                now = time.monotonic()
+                self.lock_history.append(now)
 
-            if len(self.lock_history) == LOCK_LOOP_THRESHOLD:
-                # Check if all events happened within window
-                if now - self.lock_history[0] < LOCK_LOOP_WINDOW:
-                    msg = (
-                        f"⚠️  LOCK LOOP DETECTED! ({LOCK_LOOP_THRESHOLD} locks in "
-                        f"{int(now - self.lock_history[0])}s) -> "
-                        f"PAUSING FOR {LOCK_LOOP_PENALTY}s"
-                    )
-                    timestamp = datetime.now().strftime("%H:%M:%S")
-
-                    if self.flags.daemon_mode:
-                        if self.log_file:
-                            self.log_file.write(f"[{timestamp}] {msg}\n")
-                            self.log_file.flush()
-                    else:
-                        print(
-                            f"\n{Colors.RED}{Colors.BOLD}{msg}{Colors.RESET}\n"
+                if len(self.lock_history) == LOCK_LOOP_THRESHOLD:
+                    if now - self.lock_history[0] < LOCK_LOOP_WINDOW:
+                        msg = (
+                            f"⚠️  LOCK LOOP DETECTED! ({LOCK_LOOP_THRESHOLD} locks in "
+                            f"{int(now - self.lock_history[0])}s) -> "
+                            f"PAUSING FOR {LOCK_LOOP_PENALTY}s"
+                        )
+                        log_msg = (
+                            f"[{datetime.now().strftime('%H:%M:%S')}] {msg}"
                         )
 
-                    if self.flags.file_logging and self.log_file:
-                        self.log_file.write(f"[{timestamp}] {msg}\n")
-                        self.log_file.flush()
+                        if self.flags.daemon_mode and self.log_file:
+                            self.log_file.write(log_msg + "\n")
+                            self.log_file.flush()
+                        else:
+                            print(
+                                f"\n{Colors.RED}{Colors.BOLD}{msg}{Colors.RESET}\n"
+                            )
 
-                    await asyncio.sleep(LOCK_LOOP_PENALTY)
-                    self.lock_history.clear()
+                        await asyncio.sleep(LOCK_LOOP_PENALTY)
+                        self.lock_history.clear()
+            elif reason == "frozen" or reason == "recycle":
+                # Quick pause to let OS clear the device states
+                await asyncio.sleep(2.0)
+
+                # Wait for unlock if it magically locked during this 2 second window
+                while system.is_screen_locked():
+                    await asyncio.sleep(2.0)
 
             # Retry logic for scanner reconnection
             # Recreate scanner instance to ensure fresh connection
@@ -477,60 +457,59 @@ class DeviceMonitor:
                     elif self.flags.verbose:
                         print(f"{Colors.YELLOW}{msg}{Colors.RESET}")
 
-                    if self.flags.file_logging and self.log_file:
-                        self.log_file.write(f"{msg}\n")
-                        self.log_file.flush()
-
-                    await asyncio.sleep(wait_time)
-
-            timestamp = datetime.now().strftime("%H:%M:%S")
-            if self.flags.daemon_mode:
-                msg = f"[{timestamp}] Scanner reconnected - Monitoring resumed"
-                if self.log_file:
-                    self.log_file.write(msg + "\n")
-                    self.log_file.flush()
-            elif self.flags.verbose:
-                print(
-                    f"{Colors.GREEN}[{timestamp}]{Colors.RESET} Scanner ready "
-                    f"→ Monitoring: {Colors.GREEN}{Colors.BOLD}Active{Colors.RESET}"
-                )
-
-            if self.flags.file_logging and self.log_file:
-                self.log_file.write(
-                    f"[{timestamp}] Scanner reconnected - Monitoring resumed\n"
-                )
-                self.log_file.flush()
-
-            # Set resume time for Grace Period logic
+            # Resume/Restart
             self.resume_time = time.monotonic()
+            self.last_recycle_time = self.resume_time
+
+            # Completely recreate the scanner object to avoid leaked state
+            self.scanner = BleakScanner(
+                detection_callback=self._detection_callback,
+                cb={"use_bdaddr": self.use_bdaddr},
+            )
+
+            max_retries = 5
+            retry_delay = 2
+
+            for attempt in range(max_retries):
+                try:
+                    await asyncio.wait_for(self.scanner.start(), timeout=5.0)
+                    break
+                except Exception as e:
+                    if attempt < max_retries - 1:
+                        await asyncio.sleep(retry_delay)
+            else:
+                # Failed all retries
+                err_msg = f"[{datetime.now().strftime('%H:%M:%S')}] ERROR: Failed to reconnect scanner"
+                if self.flags.daemon_mode and self.log_file:
+                    self.log_file.write(err_msg + "\n")
+                    self.log_file.flush()
+                elif self.flags.verbose:
+                    print(f"{Colors.RED}{err_msg}{Colors.RESET}")
+                return  # Exit early
+
+            if reason == "lock":
+                resume_msg = f"[{datetime.now().strftime('%H:%M:%S')}] MacOS unlocked -> Resumed monitoring (Grace period active)"
+            else:
+                resume_msg = f"[{datetime.now().strftime('%H:%M:%S')}] Scanner successfully restarted"
+
+            if self.flags.daemon_mode and self.log_file:
+                self.log_file.write(resume_msg + "\n")
+                self.log_file.flush()
+            elif self.flags.verbose:
+                print(f"{Colors.GREEN}{resume_msg}{Colors.RESET}")
 
         except Exception as e:
-            import traceback
-
-            error_detail = traceback.format_exc()
-            timestamp = datetime.now().strftime("%H:%M:%S")
-
-            if self.flags.daemon_mode:
-                if self.log_file:
-                    self.log_file.write(
-                        f"[{timestamp}] ERROR: Failed to reconnect scanner - {e}\n"
-                    )
-                    self.log_file.flush()
-            else:
-                print(
-                    f"{Colors.RED}[{timestamp}]{Colors.RESET} Error → "
-                    f"Scanner reconnection failed │ {e}"
-                )
-
-            if self.flags.file_logging and self.log_file:
-                self.log_file.write(
-                    f"[{timestamp}] ERROR: Scanner reconnection failed\n"
-                    f"{error_detail}\n"
-                )
+            err_msg = f"[{datetime.now().strftime('%H:%M:%S')}] Failed to resume scanner: {e}"
+            if self.flags.daemon_mode and self.log_file:
+                self.log_file.write(err_msg + "\n")
                 self.log_file.flush()
+            elif self.flags.verbose:
+                print(f"{Colors.RED}{err_msg}{Colors.RESET}")
+
         finally:
             self.is_handling_lock = False
             self.lock_handling_start_time = 0
+            self.last_packet_time = time.monotonic()
 
     def _process_signal(
         self,
@@ -921,7 +900,7 @@ class DeviceMonitor:
 
                 if system.is_screen_locked() and not self.is_handling_lock:
                     # Spawn handler as a task so watchdog keeps running
-                    asyncio.create_task(self._handle_screen_lock())
+                    asyncio.create_task(self._restart_scanner(reason="lock"))
 
                 # Heartbeat check: Restart scanner if no packets received for 120s
                 if (
@@ -937,7 +916,7 @@ class DeviceMonitor:
                     elif self.flags.verbose:
                         print(f"{Colors.YELLOW}{msg}{Colors.RESET}")
                     # Spawn handler as a task
-                    asyncio.create_task(self._handle_screen_lock())
+                    asyncio.create_task(self._restart_scanner(reason="frozen"))
 
                 # Stuck handler check: If handling lock takes > 60s, force reset
                 if self.is_handling_lock and self.lock_handling_start_time > 0:
@@ -952,9 +931,24 @@ class DeviceMonitor:
                             print(f"{Colors.RED}{msg}{Colors.RESET}")
                         self.is_handling_lock = False
                         self.lock_handling_start_time = 0
-                        # We don't call _handle_screen_lock immediately
+                        # We don't call _restart_scanner immediately
                         # to avoid recursion loop. The next watchdog tick will
                         # trigger it if needed (via heartbeat or lock check)
+
+                # Time-based recycling to prevent CoreBluetooth RSSI degradation
+                if SCANNER_RECYCLE_INTERVAL_SECONDS > 0:
+                    if (
+                        current_time - self.last_recycle_time
+                        > SCANNER_RECYCLE_INTERVAL_SECONDS
+                        and not self.is_handling_lock
+                        and not system.is_screen_locked()
+                    ):
+                        # Force scanner restart without registering it as a formal screen lock interruption
+                        asyncio.create_task(
+                            self._restart_scanner(reason="recycle")
+                        )
+                        # Immediately pad the recycle time so it doesn't queue multiple tasks
+                        self.last_recycle_time = current_time
 
                 await asyncio.sleep(2.0)
             except Exception as e:

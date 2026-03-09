@@ -115,7 +115,7 @@ async def test_process_signal_out_of_range(
     # Patch the system module as accessed by monitor
     with (
         patch("brios.core.monitor.system.lock_macbook") as mock_lock,
-        patch.object(monitor, "_handle_screen_lock") as mock_handle_lock,
+        patch.object(monitor, "_restart_scanner") as mock_restart_scanner,
         patch("brios.core.monitor.OUT_OF_RANGE_DEBOUNCE_COUNT", 1),
     ):
         mock_lock.return_value = (True, "Mock Locked")
@@ -124,7 +124,7 @@ async def test_process_signal_out_of_range(
 
         mock_lock.assert_called_once()
         assert monitor.alert_triggered is True
-        mock_handle_lock.assert_called_once()
+        mock_restart_scanner.assert_called_once_with(reason="lock")
 
 
 @pytest.mark.asyncio

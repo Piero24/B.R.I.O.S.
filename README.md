@@ -173,6 +173,7 @@ cp .env.example ~/.brios.env
 | `SAMPLE_WINDOW` | Number of RSSI samples for smoothing | `12` |
 | `SMOOTHING_METHOD` | Statistical method to smooth RSSI values ('median' or 'mean') | `median` |
 | `OUT_OF_RANGE_DEBOUNCE_COUNT` | Consecutive checks to confirm out of range (1-9) | `3` |
+| `SCANNER_RECYCLE_INTERVAL_SECONDS` | Time in seconds to recycle the scanner to clear BLE cache. Set to 0 to disable. | `300` |
 | `LOCK_LOOP_THRESHOLD` | Lock events within window to trigger pause | `3` |
 | `LOCK_LOOP_WINDOW` | Time window (seconds) for lock loop detection | `60` |
 | `LOCK_LOOP_PENALTY` | Pause duration (seconds) on lock loop | `120` |

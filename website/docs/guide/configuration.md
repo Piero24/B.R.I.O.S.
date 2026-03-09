@@ -65,6 +65,7 @@ See the [Calibrating TX Power](#calibrating-tx-power) and [Path Loss Exponent Gu
 | `PATH_LOSS_EXPONENT` | `float` | `2.8` | Environment factor for the path loss model. Ranges from `2.0` (open space) to `4.0` (heavy obstacles) |
 | `SAMPLE_WINDOW` | `int` | `12` | Number of RSSI samples to average for signal smoothing. Higher values = more stable but slower response |
 | `SMOOTHING_METHOD` | `str` | `median` | Statistical method to smooth RSSI values. `median` ignores outliers, `mean` averages all readings. |
+| `SCANNER_RECYCLE_INTERVAL_SECONDS` | `int` | `300` | Frequency in seconds to recreate the BLE scanner, preventing CoreBluetooth cache-related RSSI degradation. Set to 0 to disable. |
 
 ### Safety & Reliability
 
