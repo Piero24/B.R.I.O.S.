@@ -110,6 +110,9 @@ async def test_process_signal_out_of_range(
     monitor.scanner.stop.return_value = asyncio.Future()
     monitor.scanner.stop.return_value.set_result(None)
 
+    # Fake the last processed time so the 0.5s aggregation window triggers immediately
+    monitor._last_processed_time = -1000
+
     import brios.core.system
 
     # Patch the system module as accessed by monitor
@@ -141,6 +144,9 @@ async def test_process_signal_back_in_range(
     monitor.target_address = "AA:BB:CC:DD:EE:FF"
     mock_device.address = "AA:BB:CC:DD:EE:FF"
     mock_adv.rssi = -59
+
+    # Fake the last processed time so the 0.5s aggregation window triggers immediately
+    monitor._last_processed_time = -1000
 
     import brios.core.system
 

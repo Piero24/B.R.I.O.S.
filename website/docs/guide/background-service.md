@@ -86,6 +86,8 @@ When file logging is enabled, all output is written to:
 ~/.brios/.ble_monitor.log
 ```
 
+*(Note: The log file is automatically cleaned every 24 hours to remove entries older than 30 days, preventing excessive file growth).*
+
 ### Viewing Logs
 
 ```bash
@@ -101,12 +103,15 @@ tail -n 50 ~/.brios/.ble_monitor.log
 
 ### Log Format
 
+File logging records critical state changes and rate-limited distance updates.
+
 ```
-[2026-02-23 14:30:01] RSSI: -52 dBm → Smoothed: -53.2 dBm │ Distance:  0.85m
-[2026-02-23 14:30:15] ⚠️ ALERT: Device 'iPhone' is far away! (~3.45 m) - 🔒 MacBook locked
-[2026-02-23 14:30:16] Screen locked - Scanner paused
-[2026-02-23 14:31:20] Screen unlocked - Reconnecting scanner (locked for 64s)
-[2026-02-23 14:31:21] Scanner reconnected - Monitoring resumed
+[2026-03-10 14:30:01] RSSI: -52 dBm → Smoothed: -53.2 dBm │ Distance:  0.85m
+[2026-03-10 14:30:15] ⚠️ ALERT: Device 'iPhone' out of range (~3.45m / threshold: 2.0m) -> 🔒 MacBook locked
+[2026-03-10 14:30:16] Screen locked - Scanner paused
+[2026-03-10 14:31:20] Screen unlocked - Reconnecting scanner (locked for 64s)
+[2026-03-10 14:31:21] Scanner reconnected - Monitoring resumed
+[2026-03-10 14:31:23] ✅ STATUS: Device 'iPhone' back in range (~1.50m / threshold: 2.0m) -> 🔓 MacOS unlocked
 ```
 
 ---

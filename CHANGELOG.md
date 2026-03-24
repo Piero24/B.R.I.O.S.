@@ -5,10 +5,17 @@ All notable changes to 🥐 B.R.I.O.S. (Bluetooth Reactive Intelligent Operator 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## [1.0.4] - 2026-03-09
+## [1.0.4] - 2026-03-10
 
 ### Added
-- Scanning recycling functionality to clear the CoreBluetooth cache periodically (`SCANNER_RECYCLE_INTERVAL_SECONDS`)
+- **Seamless Scanner Recycling**: Refactored the watchdog scanner recycling logic to retain the historical distance buffer. This eliminates the 7-second "blind spot" when the scanner restarts, allowing for instant locking if a device moves out of range during a flush.
+- **0.5s Max-Aggregation Window**: Introduced a packet rate-limiter that absorbs Bluetooth burst anomalies within a half-second window, picking only the strongest signal. This prevents false locks from instantaneous interference and makes a Debounce of `1` perfectly viable.
+- **Automated Log Rotation**: The background daemon will now automatically search for and clean `.ble_monitor.log` files every 24 hours, deleting all entries older than 30 days to prevent excessive file bloat.
+
+### Changed
+- **Log Formatting**: Standardized all logs (file and terminal) to use full date timestamps `[YYYY-MM-DD HH:MM:SS]`.
+- **Log Verbosity Limits**: Background file logs are now strictly rate-limited. Routine distance monitoring will only output to the `.log` file if 30 seconds have passed or the physical distance has shifted by ≥ 0.5 meters.
+- **Single-Line Alerts**: Condensed the verbose multi-line lock/unlock alerts into clean single lines for better file readability.
 
 ## [1.0.3] - 2026-03-07
 

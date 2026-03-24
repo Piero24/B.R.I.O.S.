@@ -313,7 +313,7 @@ SAMPLE_WINDOW=20  # Slower response, more stable
 
 ### What data is logged?
 
-Only operational data: timestamps, RSSI values, calculated distances, and alert events. **No personal data** is logged.
+Only operational data: timestamps, RSSI values, calculated distances, and alert events. **No personal data** is logged. All local background logs are automatically rotated and deleted after 30 days.
 
 ### Can someone spoof my device?
 

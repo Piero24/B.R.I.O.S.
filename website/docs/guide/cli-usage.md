@@ -180,7 +180,7 @@ brios --restart
 | File | Description |
 |---|---|
 | `~/.brios/.ble_monitor.pid` | PID file for the background daemon |
-| `~/.brios/.ble_monitor.log` | Log file (when file logging is enabled) |
+| `~/.brios/.ble_monitor.log` | System log file (automatically cleaned every 30 days) |
 | `.env` / `~/.brios.env` | Configuration file with device settings |
 | `~/.brios/.update_cache.json` | Cached version-check result (24-hour TTL) |
 

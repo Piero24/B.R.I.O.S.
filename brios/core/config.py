@@ -52,7 +52,9 @@ except ValueError:
 
 # Frequency (in seconds) to restart the scanner to clear BLE cache and prevent
 # RSSI degradation. Default: 300s (5 minutes). Set to 0 to disable.
-SCANNER_RECYCLE_INTERVAL_SECONDS = int(os.getenv("SCANNER_RECYCLE_INTERVAL_SECONDS", "300"))
+SCANNER_RECYCLE_INTERVAL_SECONDS = int(
+    os.getenv("SCANNER_RECYCLE_INTERVAL_SECONDS", "300")
+)
 
 # --- Reliability & Safety Constants ---
 # Time (in seconds) to ignore "out of range" signals after unlocking/resuming.

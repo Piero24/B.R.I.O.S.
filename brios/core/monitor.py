@@ -12,12 +12,15 @@ from bleak.backends.device import BLEDevice
 from bleak.backends.scanner import AdvertisementData
 
 from .utils import (
+    LOG_FILE,
+    HOME_DIR,
+    PID_FILE,
+    PAUSE_FILE,
     Colors,
     __app_name__,
+    __app_full_name__,
     estimate_distance,
     smooth_rssi,
-    LOG_FILE,
-    PAUSE_FILE,
 )
 from . import system
 
@@ -27,16 +30,17 @@ from .config import (
     LOCK_LOOP_THRESHOLD,
     LOCK_LOOP_WINDOW,
     LOCK_LOOP_PENALTY,
-    TARGET_DEVICE_NAME,
-    TARGET_DEVICE_TYPE,
+    OUT_OF_RANGE_DEBOUNCE_COUNT,
+    PATH_LOSS_EXPONENT,
     SAMPLE_WINDOW,
+    SCANNER_RECYCLE_INTERVAL_SECONDS,
     SMOOTHING_METHOD,
     TX_POWER_AT_1M,
-    PATH_LOSS_EXPONENT,
-    OUT_OF_RANGE_DEBOUNCE_COUNT,
-    SCANNER_RECYCLE_INTERVAL_SECONDS,
+    TARGET_DEVICE_NAME,
+    TARGET_DEVICE_TYPE,
 )
 from .utils import Flags
+from .logger import clean_old_logs
 
 
 class DeviceMonitor:
@@ -111,6 +115,16 @@ class DeviceMonitor:
         self.resume_time: float = 0
         self.lock_history: Deque[float] = deque(maxlen=LOCK_LOOP_THRESHOLD)
         self._out_of_range_counter: int = 0
+        self.last_recycle_time: float = time.monotonic()
+
+        # Rate-limiting aggregation window for RSSI bursts
+        self._last_processed_time: float = 0.0
+        self._window_max_rssi: int = -999
+
+        # Logging rate limits
+        self.last_log_distance: float = 0.0
+        self.last_status_log_time: float = 0.0
+        self.last_rotation_time: float = time.monotonic()
 
         self.scanner = BleakScanner(
             detection_callback=self._detection_callback,
@@ -278,7 +292,28 @@ class DeviceMonitor:
                 self.log_file.flush()
         self._match_count += 1
 
-        smoothed_rssi, distance_m = self._process_signal(current_rssi)
+        # --- 0.5s Max-Aggregation Window ---
+        # Instead of appending every single burst packet to the buffer (which
+        # floods it and crashes the median), we aggregate them over 0.5s and
+        # only append the STRONGEST (highest) RSSI seen in that window.
+        current_time = time.monotonic()
+
+        if (
+            self._window_max_rssi == -999
+            or current_rssi > self._window_max_rssi
+        ):
+            self._window_max_rssi = current_rssi
+
+        if current_time - self._last_processed_time < 0.5:
+            # We are still inside the aggregation window, do not process yet.
+            return
+
+        # 0.5 seconds have passed. Commit the highest RSSI to the smoothing buffer.
+        self._last_processed_time = current_time
+        highest_rssi_in_window = self._window_max_rssi
+        self._window_max_rssi = -999  # Reset for the next window
+
+        smoothed_rssi, distance_m = self._process_signal(highest_rssi_in_window)
         if distance_m is None or smoothed_rssi is None:
             return
 
@@ -368,9 +403,10 @@ class DeviceMonitor:
 
             await asyncio.sleep(2)
 
-            self.rssi_buffer.clear()
+            if reason != "recycle":
+                self.rssi_buffer.clear()
+                self._out_of_range_counter = 0
             self.alert_triggered = False
-            self._out_of_range_counter = 0
 
             # Behavior changes based on reason
             if reason == "lock":
@@ -409,13 +445,15 @@ class DeviceMonitor:
 
                         await asyncio.sleep(LOCK_LOOP_PENALTY)
                         self.lock_history.clear()
-            elif reason == "frozen" or reason == "recycle":
+            elif reason == "frozen":
                 # Quick pause to let OS clear the device states
                 await asyncio.sleep(2.0)
 
                 # Wait for unlock if it magically locked during this 2 second window
                 while system.is_screen_locked():
                     await asyncio.sleep(2.0)
+            elif reason == "recycle":
+                pass  # No artificial delay for routine cache flushes
 
             # Retry logic for scanner reconnection
             # Recreate scanner instance to ensure fresh connection
@@ -423,39 +461,6 @@ class DeviceMonitor:
                 print(
                     f"{Colors.GREY}[Debug] Recreating BleakScanner instance...{Colors.RESET}"
                 )
-
-            self.scanner = BleakScanner(
-                detection_callback=self._detection_callback,
-                cb={"use_bdaddr": self.use_bdaddr},
-            )
-
-            max_retries = 5
-            retry_delay = 2
-
-            for attempt in range(max_retries):
-                try:
-                    # Try to start scanner with timeout
-                    await asyncio.wait_for(self.scanner.start(), timeout=5.0)
-                    break  # Success!
-                except Exception as e:
-                    if attempt >= max_retries - 1:
-                        raise e
-
-                    timestamp = datetime.now().strftime("%H:%M:%S")
-                    wait_time = retry_delay * (attempt + 1)
-
-                    msg = (
-                        f"[{timestamp}] Scanner start failed (Attempt "
-                        f"{attempt + 1}/{max_retries}) - Retrying in "
-                        f"{wait_time}s... Error: {e}"
-                    )
-
-                    if self.flags.daemon_mode:
-                        if self.log_file:
-                            self.log_file.write(f"{msg}\n")
-                            self.log_file.flush()
-                    elif self.flags.verbose:
-                        print(f"{Colors.YELLOW}{msg}{Colors.RESET}")
 
             # Resume/Restart
             self.resume_time = time.monotonic()
@@ -544,53 +549,61 @@ class DeviceMonitor:
     ) -> None:
         """Logs the current status to console and/or file.
 
+        File logging is rate-limited to reduce disk usage. Updates are only
+        written to the `.ble_monitor.log` file if 30 seconds have passed or
+        if the estimated distance changes by \u2265 0.5 meters.
+
         Args:
             current_rssi: The latest raw RSSI value received.
             smoothed_rssi: The smoothed RSSI value.
             distance_m: The estimated distance in meters.
         """
-        timestamp = datetime.now().strftime("%H:%M:%S")
+        timestamp = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
 
         if not self.flags.verbose and not self.flags.file_logging:
             return
 
-        log_message = (
-            f"[{timestamp}] RSSI: {current_rssi:4d} dBm → "
-            f"Smoothed: {smoothed_rssi:5.1f} dBm │ "
-            f"Distance: {distance_m:5.2f}m"
+        # Terminal format (always printed if verbose)
+        signal_strength = (
+            "Strong"
+            if smoothed_rssi > -50
+            else "Medium"
+            if smoothed_rssi > -70
+            else "Weak"
+        )
+        signal_color = (
+            Colors.GREEN
+            if smoothed_rssi > -50
+            else Colors.YELLOW
+            if smoothed_rssi > -70
+            else Colors.RED
         )
 
-        if self.flags.daemon_mode:
-            if self.log_file:
-                self.log_file.write(log_message + "\n")
-                self.log_file.flush()
-        else:
-            if self.flags.verbose:
-                signal_strength = (
-                    "Strong"
-                    if smoothed_rssi > -50
-                    else "Medium"
-                    if smoothed_rssi > -70
-                    else "Weak"
-                )
-                signal_color = (
-                    Colors.GREEN
-                    if smoothed_rssi > -50
-                    else Colors.YELLOW
-                    if smoothed_rssi > -70
-                    else Colors.RED
-                )
-                print(
-                    f"{Colors.BLUE}[{timestamp}]{Colors.RESET} "
-                    f"RSSI: {current_rssi:4d} dBm → "
-                    f"Smoothed: {smoothed_rssi:5.1f} dBm │ "
-                    f"Distance: {Colors.BOLD}{distance_m:5.2f}m{Colors.RESET} │ "
-                    f"Signal: {signal_color}{signal_strength}{Colors.RESET}"
-                )
+        if not self.flags.daemon_mode and self.flags.verbose:
+            print(
+                f"{Colors.BLUE}[{timestamp}]{Colors.RESET} "
+                f"RSSI: {current_rssi:4d} dBm → "
+                f"Smoothed: {smoothed_rssi:5.1f} dBm │ "
+                f"Distance: {Colors.BOLD}{distance_m:5.2f}m{Colors.RESET} │ "
+                f"Signal: {signal_color}{signal_strength}{Colors.RESET}"
+            )
 
-            if self.flags.file_logging and self.log_file:
-                self.log_file.write(log_message + "\n")
-                self.log_file.flush()
+        # File logging (rate-limited to reduce noise)
+        current_time = time.time()
+        time_elapsed = current_time - self.last_status_log_time
+        distance_changed = abs(distance_m - self.last_log_distance) >= 0.5
+
+        if self.log_file and (time_elapsed >= 30.0 or distance_changed):
+            log_message = (
+                f"[{timestamp}] RSSI: {current_rssi:4d} dBm → "
+                f"Smoothed: {smoothed_rssi:5.1f} dBm │ "
+                f"Distance: {distance_m:5.2f}m"
+            )
+            self.log_file.write(log_message + "\n")
+            self.log_file.flush()
+
+            self.last_status_log_time = current_time
+            self.last_log_distance = distance_m
 
     def _trigger_out_of_range_alert(self, distance_m: float) -> bool:
         """Handles the out-of-range alert logic.
@@ -601,14 +614,14 @@ class DeviceMonitor:
         Returns:
             True if the MacBook was locked, False otherwise.
         """
-        timestamp = datetime.now().strftime("%H:%M:%S")
+        timestamp = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
 
         success, lock_status = system.lock_macbook()
         is_locked = success
 
         alert_msg = (
-            f"⚠️  ALERT: Device '{TARGET_DEVICE_NAME}' is far away! "
-            f"(~{distance_m:.2f} m) - {lock_status}"
+            f"⚠️ ALERT: Device '{TARGET_DEVICE_NAME}' out of range "
+            f"(~{distance_m:.2f}m / threshold: {DISTANCE_THRESHOLD_M}m) -> {lock_status}"
         )
 
         if self.flags.daemon_mode:
@@ -616,20 +629,14 @@ class DeviceMonitor:
             if self.log_file:
                 self.log_file.write(msg + "\n")
                 self.log_file.flush()
-
         else:
-            print(
-                f"\n{Colors.RED}{'─' * 50}{Colors.RESET}\n"
-                f"{Colors.RED}⚠{Colors.RESET}  {Colors.BOLD}"
-                f"ALERT: Device moved out of range{Colors.RESET}\n"
-                f"   Device:    {TARGET_DEVICE_NAME}\n"
-                f"   Distance:  ~{distance_m:.2f}m "
-                f"(threshold: {DISTANCE_THRESHOLD_M}m)\n"
-                f"   Time:      {timestamp}\n"
-                f"   Action:    {lock_status}\n"
-                f"{Colors.RED}{'─' * 50}{Colors.RESET}\n"
+            colored_alert = (
+                f"\n{Colors.RED}[{timestamp}] ⚠️ {Colors.BOLD}ALERT:{Colors.RESET}{Colors.RED} "
+                f"Device '{TARGET_DEVICE_NAME}' out of range (~{distance_m:.2f}m / threshold: {DISTANCE_THRESHOLD_M}m) "
+                f"-> {lock_status}{Colors.RESET}\n"
             )
-            # Write to log file if enabled
+            print(colored_alert)
+            # Write plain line to log file if enabled
             if self.flags.file_logging and self.log_file:
                 self.log_file.write(f"[{timestamp}] {alert_msg}\n")
                 self.log_file.flush()
@@ -643,35 +650,28 @@ class DeviceMonitor:
         Args:
             distance_m: The estimated distance in meters.
         """
-        timestamp = datetime.now().strftime("%H:%M:%S")
+        timestamp = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
 
-        back_msg_plain = (
-            f"STATUS: Device '{TARGET_DEVICE_NAME}' is back in range. "
-            f"(~{distance_m:.2f} m)"
+        status_msg = (
+            f"✅ STATUS: Device '{TARGET_DEVICE_NAME}' back in range "
+            f"(~{distance_m:.2f}m / threshold: {DISTANCE_THRESHOLD_M}m) -> 🔓 MacOS unlocked"
         )
 
         if self.flags.daemon_mode:
-            msg = f"[{timestamp}] {back_msg_plain}"
+            msg = f"[{timestamp}] {status_msg}"
             if self.log_file:
                 self.log_file.write(msg + "\n")
                 self.log_file.flush()
-
         else:
-            back_msg_rich = (
-                f"\n{Colors.GREEN}{'─' * 60}{Colors.RESET}\n"
-                f"{Colors.GREEN}✓{Colors.RESET}  {Colors.BOLD}"
-                f"Device Back in Range{Colors.RESET}\n"
-                f"   Device:    {TARGET_DEVICE_NAME}\n"
-                f"   Distance:  ~{distance_m:.2f}m "
-                f"(Threshold: {DISTANCE_THRESHOLD_M}m)\n"
-                f"   Time:      {timestamp}\n"
-                f"   Status:    🔓 Ready to unlock MacBook\n"
-                f"{Colors.GREEN}{'─' * 60}{Colors.RESET}\n"
+            colored_status = (
+                f"\n{Colors.GREEN}[{timestamp}] ✅ {Colors.BOLD}STATUS:{Colors.RESET}{Colors.GREEN} "
+                f"Device '{TARGET_DEVICE_NAME}' back in range (~{distance_m:.2f}m / threshold: {DISTANCE_THRESHOLD_M}m) "
+                f"-> 🔓 MacOS unlocked{Colors.RESET}\n"
             )
-            print(back_msg_rich)
+            print(colored_status)
 
             if self.flags.file_logging and self.log_file:
-                self.log_file.write(f"[{timestamp}] {back_msg_plain}\n")
+                self.log_file.write(f"[{timestamp}] {status_msg}\n")
                 self.log_file.flush()
         self.alert_triggered = False
 
@@ -815,7 +815,7 @@ class DeviceMonitor:
                         await asyncio.wait_for(self.scanner.stop(), timeout=5.0)
                     except Exception:
                         pass
-                    timestamp = datetime.now().strftime("%H:%M:%S")
+                    timestamp = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
                     msg = f"[{timestamp}] Monitor paused until {datetime.fromtimestamp(pause_resume_time).strftime('%Y-%m-%d %H:%M:%S')} - Scanner stopped"
                     if self.flags.daemon_mode and self.log_file:
                         self.log_file.write(msg + "\n")
@@ -839,7 +839,7 @@ class DeviceMonitor:
                         cb={"use_bdaddr": self.use_bdaddr},
                     )
                     await self.scanner.start()
-                    timestamp = datetime.now().strftime("%H:%M:%S")
+                    timestamp = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
                     msg = f"[{timestamp}] Pause expired - Scanner resumed"
                     if self.flags.daemon_mode and self.log_file:
                         self.log_file.write(msg + "\n")
@@ -874,12 +874,26 @@ class DeviceMonitor:
                     continue
                 # -----------------------------
 
+                # 24-Hour Log Rotation Check
+                if current_time - self.last_rotation_time > 86400:  # 24 hours
+                    active_log = self.log_file.name if self.log_file else None
+                    paths_to_clean = [
+                        os.path.join(HOME_DIR, ".ble_monitor.log"),
+                        "./.ble_monitor.log",
+                    ]
+                    if active_log and active_log not in paths_to_clean:
+                        paths_to_clean.append(active_log)
+
+                    # Execute scrub
+                    clean_old_logs(paths_to_clean, days_to_keep=30)
+                    self.last_rotation_time = current_time
+
                 # Periodic liveness log (every 60s)
                 if self.flags.verbose and current_time - last_log_time > 60:
                     time_since_packet = int(
                         current_time - self.last_packet_time
                     )
-                    timestamp = datetime.now().strftime("%H:%M:%S")
+                    timestamp = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
 
                     if self.flags.daemon_mode:
                         msg = (
@@ -907,7 +921,7 @@ class DeviceMonitor:
                     current_time - self.last_packet_time > 120
                     and not self.is_handling_lock
                 ):
-                    timestamp = datetime.now().strftime("%H:%M:%S")
+                    timestamp = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
                     msg = "Watchdog: Scanner frozen (no data for 120s) -> Restarting..."
                     if self.flags.daemon_mode:
                         if self.log_file:
@@ -921,7 +935,7 @@ class DeviceMonitor:
                 # Stuck handler check: If handling lock takes > 60s, force reset
                 if self.is_handling_lock and self.lock_handling_start_time > 0:
                     if current_time - self.lock_handling_start_time > 60:
-                        timestamp = datetime.now().strftime("%H:%M:%S")
+                        timestamp = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
                         msg = "Watchdog: Lock handler stuck for >60s -> Forcing reset"
                         if self.flags.daemon_mode:
                             if self.log_file:
@@ -954,7 +968,7 @@ class DeviceMonitor:
             except Exception as e:
                 if self.flags.daemon_mode:
                     if self.log_file:
-                        timestamp = datetime.now().strftime("%H:%M:%S")
+                        timestamp = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
                         self.log_file.write(
                             f"[{timestamp}] Watchdog error: {e}\n"
                         )
